@@ -354,3 +354,4 @@ int analyze_operand(operand* operand, const symbol_table symbol_table) {
         //send error for not fitting any of the types above.
         return 0;
 }
+//dfsdfdsfds
