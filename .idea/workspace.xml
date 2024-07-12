@@ -1,0 +1,221 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="AutoImportSettings">
+    <option name="autoReloadType" value="SELECTIVE" />
+  </component>
+  <component name="CMakePresetLoader">{
+  &quot;useNewFormat&quot;: true
+}</component>
+  <component name="CMakeReloadState">
+    <option name="reloaded" value="true" />
+  </component>
+  <component name="CMakeRunConfigurationManager">
+    <generated />
+  </component>
+  <component name="CMakeSettings">
+    <configurations>
+      <configuration PROFILE_NAME="Debug" ENABLED="true" CONFIG_NAME="Debug" />
+    </configurations>
+  </component>
+  <component name="ChangeListManager">
+    <list default="true" id="f9a5b32d-083d-4052-af96-6e26fecfb487" name="Changes" comment="first commit">
+      <change beforePath="$PROJECT_DIR$/cmake-build-debug/CMakeFiles/clion-Debug-log.txt" beforeDir="false" afterPath="$PROJECT_DIR$/cmake-build-debug/CMakeFiles/clion-Debug-log.txt" afterDir="false" />
+    </list>
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="ChangesViewManager">
+    <option name="groupingKeys">
+      <option value="directory" />
+    </option>
+  </component>
+  <component name="ClangdSettings">
+    <option name="formatViaClangd" value="false" />
+  </component>
+  <component name="ExecutionTargetManager" SELECTED_TARGET="CMakeBuildProfile:Debug" />
+  <component name="Git.Settings">
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+    <option name="UPDATE_TYPE" value="REBASE" />
+  </component>
+  <component name="GitHubPullRequestSearchHistory">{
+  &quot;lastFilter&quot;: {
+    &quot;state&quot;: &quot;OPEN&quot;,
+    &quot;assignee&quot;: &quot;raz1242&quot;
+  }
+}</component>
+  <component name="GithubPullRequestsUISettings">{
+  &quot;selectedUrlAndAccountId&quot;: {
+    &quot;url&quot;: &quot;https://github.com/raz1242/Maman_14.git&quot;,
+    &quot;accountId&quot;: &quot;cca6a0b0-ff5f-47a7-a335-35aceb1c6fbf&quot;
+  }
+}</component>
+  <component name="HighlightingSettingsPerFile">
+    <setting file="file://$APPLICATION_HOME_DIR$/bin/mingw/lib/gcc/x86_64-w64-mingw32/13.1.0/include/stdbool.h" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$APPLICATION_HOME_DIR$/bin/mingw/x86_64-w64-mingw32/include/stdio.h" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$APPLICATION_HOME_DIR$/bin/mingw/x86_64-w64-mingw32/include/stdlib.h" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$APPLICATION_HOME_DIR$/bin/mingw/x86_64-w64-mingw32/include/string.h" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/assembler_stage_1.h" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/table_utils.h" root0="FORCE_HIGHLIGHTING" />
+  </component>
+  <component name="ProjectApplicationVersion">
+    <option name="ide" value="CLion" />
+    <option name="majorVersion" value="2024" />
+    <option name="minorVersion" value="1.4" />
+    <option name="productBranch" value="Classic" />
+  </component>
+  <component name="ProjectColorInfo">{
+  &quot;associatedIndex&quot;: 2
+}</component>
+  <component name="ProjectId" id="2iLC5AS3o6QK0ChzQiZ6bM2AsVl" />
+  <component name="ProjectLevelVcsManager" settingsEditedManually="true" />
+  <component name="ProjectViewState">
+    <option name="hideEmptyMiddlePackages" value="true" />
+    <option name="showLibraryContents" value="true" />
+  </component>
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "CMake Application.Maman_14.executor": "Run",
+    "RunOnceActivity.RadMigrateCodeStyle": "true",
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "RunOnceActivity.cidr.known.project.marker": "true",
+    "RunOnceActivity.readMode.enableVisualFormatting": "true",
+    "cf.first.check.clang-format": "false",
+    "cidr.known.project.marker": "true",
+    "git-widget-placeholder": "master",
+    "ignore.virus.scanning.warn.message": "true",
+    "last_opened_file_path": "C:/Users/raz12/CLionProjects/Maman_14",
+    "node.js.detected.package.eslint": "true",
+    "node.js.detected.package.tslint": "true",
+    "node.js.selected.package.eslint": "(autodetect)",
+    "node.js.selected.package.tslint": "(autodetect)",
+    "nodejs_package_manager_path": "npm",
+    "settings.editor.selected.configurable": "reference.settings.ide.settings.file-colors",
+    "vue.rearranger.settings.migration": "true"
+  }
+}]]></component>
+  <component name="RunManager">
+    <configuration name="Maman_14" type="CMakeRunConfiguration" factoryName="Application" PROGRAM_PARAMS="test1" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" EMULATE_TERMINAL="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="Project" TARGET_NAME="Maman_14" CONFIG_NAME="Debug" RUN_TARGET_PROJECT_NAME="Project" RUN_TARGET_NAME="Maman_14">
+      <method v="2">
+        <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
+      </method>
+    </configuration>
+    <configuration default="true" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" EMULATE_TERMINAL="false" PASS_PARENT_ENVS_2="true">
+      <method v="2">
+        <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
+      </method>
+    </configuration>
+  </component>
+  <component name="SpellCheckerSettings" RuntimeDictionaries="0" Folders="0" CustomDictionaries="0" DefaultDictionary="application-level" UseSingleDictionary="true" transferred="true" />
+  <component name="SvnConfiguration">
+    <configuration>C:\Users\raz12\AppData\Roaming\Subversion</configuration>
+  </component>
+  <component name="TaskManager">
+    <task active="true" id="Default" summary="Default task">
+      <changelist id="f9a5b32d-083d-4052-af96-6e26fecfb487" name="Changes" comment="" />
+      <created>1719260285997</created>
+      <option name="number" value="Default" />
+      <option name="presentableId" value="Default" />
+      <updated>1719260285997</updated>
+      <workItem from="1719260289162" duration="126000" />
+      <workItem from="1719260424725" duration="81000" />
+      <workItem from="1719406273987" duration="12233000" />
+      <workItem from="1719501152701" duration="9108000" />
+      <workItem from="1719587383209" duration="10139000" />
+      <workItem from="1719661281143" duration="25061000" />
+      <workItem from="1719693850881" duration="2163000" />
+      <workItem from="1719707994540" duration="4596000" />
+      <workItem from="1719712660651" duration="71000" />
+      <workItem from="1719712744363" duration="1152000" />
+      <workItem from="1719749151382" duration="31653000" />
+      <workItem from="1719839113424" duration="6959000" />
+      <workItem from="1719868615366" duration="2539000" />
+      <workItem from="1719879573896" duration="740000" />
+      <workItem from="1719929217513" duration="1359000" />
+      <workItem from="1719934290441" duration="12049000" />
+      <workItem from="1720012308732" duration="9341000" />
+      <workItem from="1720104194612" duration="14665000" />
+      <workItem from="1720189458328" duration="15530000" />
+      <workItem from="1720270538470" duration="10361000" />
+      <workItem from="1720286538018" duration="12484000" />
+      <workItem from="1720357817053" duration="16969000" />
+      <workItem from="1720430516894" duration="2499000" />
+      <workItem from="1720452553420" duration="13579000" />
+      <workItem from="1720530100097" duration="12759000" />
+      <workItem from="1720626487278" duration="5888000" />
+      <workItem from="1720707750896" duration="20332000" />
+      <workItem from="1720795814245" duration="1504000" />
+      <workItem from="1720799226579" duration="709000" />
+    </task>
+    <task id="LOCAL-00001" summary="first commit">
+      <option name="closed" value="true" />
+      <created>1719410573944</created>
+      <option name="number" value="00001" />
+      <option name="presentableId" value="LOCAL-00001" />
+      <option name="project" value="LOCAL" />
+      <updated>1719410573944</updated>
+    </task>
+    <task id="LOCAL-00002" summary="first commit">
+      <option name="closed" value="true" />
+      <created>1719712687941</created>
+      <option name="number" value="00002" />
+      <option name="presentableId" value="LOCAL-00002" />
+      <option name="project" value="LOCAL" />
+      <updated>1719712687942</updated>
+    </task>
+    <task id="LOCAL-00003" summary="first commit">
+      <option name="closed" value="true" />
+      <created>1719713158255</created>
+      <option name="number" value="00003" />
+      <option name="presentableId" value="LOCAL-00003" />
+      <option name="project" value="LOCAL" />
+      <updated>1719713158255</updated>
+    </task>
+    <task id="LOCAL-00004" summary="first commit">
+      <option name="closed" value="true" />
+      <created>1719840914164</created>
+      <option name="number" value="00004" />
+      <option name="presentableId" value="LOCAL-00004" />
+      <option name="project" value="LOCAL" />
+      <updated>1719840914164</updated>
+    </task>
+    <task id="LOCAL-00005" summary="first commit">
+      <option name="closed" value="true" />
+      <created>1720798372109</created>
+      <option name="number" value="00005" />
+      <option name="presentableId" value="LOCAL-00005" />
+      <option name="project" value="LOCAL" />
+      <updated>1720798372109</updated>
+    </task>
+    <option name="localTasksCounter" value="6" />
+    <servers />
+  </component>
+  <component name="TypeScriptGeneratedFilesManager">
+    <option name="version" value="3" />
+  </component>
+  <component name="VCPKGProject">
+    <isAutomaticCheckingOnLaunch value="false" />
+    <isAutomaticFoundErrors value="true" />
+    <isAutomaticReloadCMake value="true" />
+  </component>
+  <component name="Vcs.Log.Tabs.Properties">
+    <option name="TAB_STATES">
+      <map>
+        <entry key="MAIN">
+          <value>
+            <State />
+          </value>
+        </entry>
+      </map>
+    </option>
+  </component>
+  <component name="VcsManagerConfiguration">
+    <MESSAGE value="first commit" />
+    <option name="LAST_COMMIT_MESSAGE" value="first commit" />
+  </component>
+  <component name="XSLT-Support.FileAssociations.UIState">
+    <expand />
+    <select />
+  </component>
+</project>
