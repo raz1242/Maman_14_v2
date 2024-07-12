@@ -13,4 +13,5 @@ add_executable(Maman_14
         utils.c
         utils.h
         table_utils.c
-        table_utils.h)
+        table_utils.h
+        assembler_stage_1.c)

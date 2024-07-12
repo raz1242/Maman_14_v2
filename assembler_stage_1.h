@@ -43,7 +43,7 @@ int lineLocation(const char *str);
 void labelArrayAllocator(label_array *array, const int size);
 int labelArrayAdd(label_array* array, const char* name, const int value, const char* characteristic);
 char* directiveContent(const char* line, const int type);
-int commandLocator(const char* command, int L);
+int commandLocator(const char* command, int *L);
 char* firstWordInLine(char* str);
 int isCommand(const char* command);
 int analyze_operand(operand* operand, const symbol_table symbol_table);

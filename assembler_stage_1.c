@@ -15,7 +15,6 @@ int stage_1_process_file(const char* am_version, symbol_table* symbol_table, dat
     label_array* DC_array;
     data_node* data_node;
     FILE* am_extension;
-
     
     label_header[0] = '\0', command_value[0] = '\0', command[0] = '\0' ;
     labelArrayAllocator(&IC_array, MIN_LENGTH_OF_LABEL_BODY);
@@ -55,13 +54,13 @@ int stage_1_process_file(const char* am_version, symbol_table* symbol_table, dat
                 labelArrayAdd(DC_array, label_header, DC, command_type); // maybe make command_type an int, like commands in manan 22
             }
             if(location == DATA) {
-                symbolAdd(symbol_table, label_header, DC, DATA);
+                symbolAdd(symbol_table, label_header, &DC, DATA);
                 parseData(non_space_line, &parced_array, &size);
                 data_node = newDataNode(non_space_line, DC, location, parced_array);
                 dataNodeAdd(data_image, data_node);
             }
             else if(location == STRING) {
-                symbolAdd(symbol_table, label_header, DC, STRING);
+                symbolAdd(symbol_table, label_header, &DC, STRING);
                 parseData(non_space_line, &parced_array, &size);
                 data_node = newDataNode(non_space_line, DC, location, parced_array);
                 dataNodeAdd(data_image, data_node);
@@ -69,7 +68,7 @@ int stage_1_process_file(const char* am_version, symbol_table* symbol_table, dat
             continue;
         }
         else if(location == EXTERN) {
-            valid = symbolAdd(symbol_table, label_header, DC, EXTERN);
+            valid = symbolAdd(symbol_table, label_header, &DC, EXTERN);
             if(valid != 1){
                 //HANDLE_AST_ERROR_NON_POINTER(&ast_line_info, ERROR_SYMBOL_ALREADY_EXISTS);
                 //is_error = TRUE;
