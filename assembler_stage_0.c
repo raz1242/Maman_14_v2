@@ -18,14 +18,14 @@ int stage_0_process_file(const char* fileName) {
     }
 
     while (fgets(line, MAX_LENGTH_OF_MACRO_BODY, as_extension)) {
-        non_space_line = firstNonSpaceCharacter(line);
+        non_space_line = firstWordInLine(line);
         firstWordOfLineLength = firstWordLengthCounter(non_space_line);
         lineLocation = macroLocation(non_space_line, insideMacroFlag, firstWordOfLineLength);
 
         if (lineLocation == HEADER) {
             insideMacroFlag = 1;
             non_space_line += firstWordOfLineLength;
-            non_space_line = firstNonSpaceCharacter(non_space_line);
+            non_space_line = firstWordInLine(non_space_line);
             firstWordOfLineLength = firstWordLengthCounter(non_space_line) + 1;
             strncpy(macro_header, non_space_line, firstWordOfLineLength+1);
             *(macro_header + firstWordOfLineLength) = '\n';

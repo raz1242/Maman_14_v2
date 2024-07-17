@@ -27,7 +27,7 @@
 					[
 						0
 					],
-					"name" : "Maman_14",
+					"name" : "Maman_14v2",
 					"targetIndexes" : 
 					[
 						0
@@ -38,9 +38,9 @@
 			[
 				{
 					"directoryIndex" : 0,
-					"id" : "Maman_14::@6890427a1f51a3e7e1df",
-					"jsonFile" : "target-Maman_14-Debug-9e81f18ffd82bc9e19be.json",
-					"name" : "Maman_14",
+					"id" : "Maman_14v2::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-Maman_14v2-Debug-00dbf5624bce99ae21ba.json",
+					"name" : "Maman_14v2",
 					"projectIndex" : 0
 				}
 			]

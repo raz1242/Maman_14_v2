@@ -2,10 +2,10 @@
 	"artifacts" : 
 	[
 		{
-			"path" : "Maman_14.exe"
+			"path" : "Maman_14v2.exe"
 		},
 		{
-			"path" : "Maman_14.pdb"
+			"path" : "Maman_14v2.pdb"
 		}
 	],
 	"backtrace" : 1,
@@ -60,7 +60,7 @@
 			]
 		}
 	],
-	"id" : "Maman_14::@6890427a1f51a3e7e1df",
+	"id" : "Maman_14v2::@6890427a1f51a3e7e1df",
 	"link" : 
 	{
 		"commandFragments" : 
@@ -80,8 +80,8 @@
 		],
 		"language" : "C"
 	},
-	"name" : "Maman_14",
-	"nameOnDisk" : "Maman_14.exe",
+	"name" : "Maman_14v2",
+	"nameOnDisk" : "Maman_14v2.exe",
 	"paths" : 
 	{
 		"build" : ".",

@@ -4,24 +4,18 @@
 #include "assembler_stage_0.h"
 #include "assembler_stage_1.h"
 
-/*
-int main(){
-    FILE *file = fopen(test1.txt, "r");
 
-    char line[400];
-    process_assembly_file(file);
-    return 0;
-}*/
-
-int main(const int argc, char *argv[]) {
+int main(int argc, char *argv[]) {
     int i;
     data_image *my_data_image;
     code_image *my_code_image;
-    symbol_table *symbol_table;
+    //symbol_table *symbol_table;
+    label_array* label_table;
+
     /* Check that at least one file name was passed to the program */
     if (argc == 1) {
         //PRINT_MESSAGE(ERROR_MSG_TYPE, ERROR_NO_FILES_PROVIDED);
-        exit(1);
+        //exit(1);
     }
 
     /* Process each file if the file name does not exceed the maximum length */
@@ -31,16 +25,15 @@ int main(const int argc, char *argv[]) {
             //PRINT_MESSAGE(ERROR_MSG_TYPE, ERROR_FILE_NAME_TOO_LONG);
             continue;
         }
-        printf("\n");
         //PRINT_MESSAGE(INFO_MSG_TYPE, argv[i]);
         stage_0_process_file(argv[i]);
 
+        //symbol_table = symbolTableAllocator();
         my_data_image = dataImageAllocator();
         my_code_image = codeImageAllocator();
-        symbol_table = symbolTableAllocator();
+        labelArrayAllocator(&label_table, MIN_LENGTH_OF_LABEL_BODY);
 
-        stage_1_process_file(argv[i], symbol_table, my_data_image);
-
+        stage_1_process_file(argv[i], &label_table, &my_data_image, &my_code_image);
     }
     printf("\n");
     //PRINT_MESSAGE(INFO_MSG_TYPE, INFO_ALL_FILES_HAVE_BEEN_PROCESSED);
