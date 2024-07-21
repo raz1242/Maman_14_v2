@@ -9,7 +9,7 @@ void printLabelTable(const label_array* array) {
     int i;
     printf("Label Table:\n");
     for (i = 0; i < array->rep; i++) {
-        printf("Label %d: %s and the address is :%d\n ", i + 1, array->label_element[i].name, array -> label_element[i].address);
+        printf("Label %d: %s and the address is :%d\n", i + 1, array->label_element[i].name, array -> label_element[i].address);
     }
 }
 
@@ -20,16 +20,27 @@ void printDataImage(const data_image* image) {
     while (current != NULL) {
         printf("Original line: %s\n", current->original_line);
         printf("Data: ");
-        for (i = 0; i < current->L; i++) {
-            printf("%d ", current->word[i]);
+        for (i = 0; i < current->length; i++) {
+            //if(current->word[i] != 0)
+                printf("%d ", current->word[i]);
         }
         printf("\n");
         current = current->next_node;
     }
 }
 
+void printCodeImage(const code_image* image) {
+    code_node* current = image->first;
+    while (current != NULL) {
+        printf("Original line: %s\n", current->original_line);
+        printf("Binary representation: %s\n", current->word);
+        // Add more printf statements here if you need to print more fields
+        current = current->next_node;
+    }
+}
+
 int stage_1_process_file(const char* am_version, label_array* label_table, data_image* data_image, code_image* code_image) {
-    int IC = 0, DC = 0, L = 0, location, firstWordInLineLength,  labelFlag = 0, is_error = 0, command_name, array_length;
+    int i, IC = 0, DC = 0, L = 0, location, firstWordInLineLength,  labelFlag = 0, is_error = 0, command_name, array_size;
     const int LENGTH_OF_SPACE = 1;
     int* parced_array;
     char line[MAX_LENGTH_OF_LINE], label_header[MAX_LENGTH_OF_LABEL_HEADER], word_in_binary[LENGTH_OF_BINARY_WORD];
@@ -39,8 +50,6 @@ int stage_1_process_file(const char* am_version, label_array* label_table, data_
     FILE* am_extension;
 
     label_header[0] = '\0';
-    //labelArrayAllocator(&IC_array, MIN_LENGTH_OF_LABEL_BODY);
-    //labelArrayAllocator(&DC_array, MIN_LENGTH_OF_LABEL_BODY);
 
     am_version = fileTypeCreator(am_version,".am");
     am_extension = fopen(am_version, "r");
@@ -77,20 +86,20 @@ int stage_1_process_file(const char* am_version, label_array* label_table, data_
         strncpy(command_type, non_space_line, firstWordInLineLength);
         command_type[firstWordInLineLength] = '\0';
         if(location == DATA || location == STRING) {
-            DC++;
             if(labelFlag == 1) {
                 labelArrayAdd(label_table, label_header, DC, location); // maybe make command_type an int, like commands in manan 22
             }
             if(location == DATA)
-                parseData(non_space_line, &parced_array, &array_length, &DC);
+                parseData(non_space_line, &parced_array, &array_size, &DC);
             else
-                parseString(non_space_line, &parced_array, &array_length, &DC);
-            data_node = newDataNode(non_space_line, DC, location, &parced_array);
-            dataNodeAdd(&data_image, data_node);
+                parseString(non_space_line, &parced_array, &array_size, &DC);
+            data_node = newDataNode(non_space_line, location, &parced_array, array_size);
+            dataNodeAdd(data_image, data_node);
+            //printDataImage(data_image); - testing
             continue;
         }
         else if(location == EXTERN || location == ENTRY) {
-            non_space_line += sizeof(".extern");
+            non_space_line += sizeof(".extern ");
             non_space_line = firstWordInLine(non_space_line);
             labelArrayAdd(label_table, label_header, 0, EXTERN);
             /*if(valid != 1){
@@ -105,7 +114,7 @@ int stage_1_process_file(const char* am_version, label_array* label_table, data_
             non_space_line = firstWordInLine(non_space_line);
             command_name = commandLocator(non_space_line, &L);
 
-            analyze_command(non_space_line, command_name, &L, *label_table, &word_in_binary);
+            analyze_command(non_space_line, command_name, &L, *label_table, word_in_binary);
 
             code_node = newCodeNode(non_space_line, L, word_in_binary);
             codeNodeAdd(code_image, code_node);
@@ -114,50 +123,55 @@ int stage_1_process_file(const char* am_version, label_array* label_table, data_
 
         }
     }
-    printLabelTable(label_table);
-    printDataImage(data_image);
+
+    //printDataImage(data_image);
 
     if (is_error) {
         //PRINT_MESSAGE(ERROR_MSG_TYPE, ERROR_IN_FIRST_PASS);
         fclose(am_extension);
         return 0;
     } else {
+        for(i = 0; i < label_table->rep ; i++) {
+            if(label_table->label_element[i].characteristic == DATA || label_table->label_element[i].characteristic == STRING) {
+                label_table->label_element[i].address += (IC + 100);
+            }
+        }
+        printLabelTable(label_table);
+        printCodeImage(code_image);
+
         // PRINT_MESSAGE(INFO_MSG_TYPE, INFO_FIRST_PASS);
         fclose(am_extension);
         return 1;
     }
+
     /*
      *update label table every label of type DATA by inc IC by 100 (IC+=100)
      */
 }
 
 
-int lineLocation(const char *str) {
+int lineLocation(char *str) {
     int i = 0;
-    char* firstWord = firstWordInLine(str);
+    char* ptr_to_firstWord = firstWordInLine(str);
 
-    /*if (*firstWord) {
-        if (isalpha(*firstWord) == 1 && firstWord[strlen(firstWord)])
-            return LABEL;
-    }*/
-    if (isalpha(firstWord[0])) {
-        while (firstWord[i] && firstWord[i] != ':') {
-            if (!isalnum(firstWord[i])) {
+    if (isalpha(ptr_to_firstWord[0])) {
+        while (ptr_to_firstWord[i] && ptr_to_firstWord[i] != ':') {
+            if (!isalnum(ptr_to_firstWord[i])) {
                 break;
             }
             i++;
         }
-        if (firstWord[i] == ':' && (i > 0) && (firstWord[i + 1] == ' ' || firstWord[i + 1] == '\0')) {
+        if (ptr_to_firstWord[i] == ':' && (i > 0) && (ptr_to_firstWord[i + 1] == ' ' || ptr_to_firstWord[i + 1] == '\0')) {
             return LABEL;
         }
     }
-    if (strncmp(firstWord, ".data ", 6) == 0)
+    if (strncmp(ptr_to_firstWord, ".data ", 6) == 0)
         return DATA;
-    else if (strncmp(firstWord, ".string ", 8) == 0)
+    else if (strncmp(ptr_to_firstWord, ".string ", 8) == 0)
         return STRING;
-    else if (strncmp(firstWord, ".entry ", 7) == 0)
+    else if (strncmp(ptr_to_firstWord, ".entry ", 7) == 0)
         return ENTRY;
-    else if (strncmp(firstWord, ".extern ", 8) == 0)
+    else if (strncmp(ptr_to_firstWord, ".extern ", 8) == 0)
         return EXTERN;
     return CODE;
 }
@@ -241,19 +255,27 @@ void analyze_command(char* ptr, const int command, int* L, const label_array lab
     strcpy(first_operand.name, first_operand_name);
     strcpy(second_operand.name, second_operand_name);
 
-    if(analyze_operand(&first_operand, label_table) == 0 || analyze_operand(&second_operand, label_table) == 0) {
-        //sending error
-    }
+
+
 
     if(command <= 15) {
         (*L)++;
         if(command <= 13) {
+            analyze_operand(&first_operand, label_table);
+            second_operand.type = UNKNOWN;
             (*L)++;
-            if(command <= 4)
-                (*L)++;
+            if(command <= 4) {
+                analyze_operand(&second_operand, label_table);
+                if(first_operand.type != second_operand.type)
+                    (*L)++;
+            }
         }
     }
-
+    if(second_operand.type == UNKNOWN) {
+        strcpy(second_operand.name, first_operand.name);
+        second_operand.type = first_operand.type;
+        first_operand.type = UNKNOWN;
+    }
     if(command == 1) {
         if (first_operand.name[0] == '\0' || second_operand.name[0] == '\0') {
             //error
@@ -305,18 +327,18 @@ void analyze_command(char* ptr, const int command, int* L, const label_array lab
     strcpy(word_in_binary, command_to_binary(command, first_operand, second_operand, *L));
 }
 
-int analyze_operand(operand* operand, const label_array label_table) {
+void analyze_operand(operand* operand, const label_array label_table) {
     int i;
     operand -> type = UNKNOWN;
     switch (operand->name[0]) {
         case '#':
             operand->type = IMMEDIATE;
-        return 1;
+        return;
         case '*':
             for (i = 0; i < 8; i++) {
                 if (strncmp(operand->name + 1, register_list[i], 2) == 0) {
                     operand->type = REGISTER_PTR;
-                    return 1;
+                    return;
                 }
             }
         break;
@@ -324,19 +346,11 @@ int analyze_operand(operand* operand, const label_array label_table) {
             for (i = 0; i < 8; i++) {
                 if (strncmp(operand->name, register_list[i], 2) == 0) {
                     operand->type = REGISTER;
-                    return 1;
+                    return;
                 }
             }
-            if(isLabel(&label_table, operand->name)) {
-                operand->type = LABEL_VALUE;
-                return 1;
-            }
+            operand->type = LABEL_VALUE;
         }
-        //it reach here should send error, maybe set defult value of type UNKNOWN
-        break;
     }
-        // not suppost to reach here.
-        //send error for not fitting any of the types above.
-        return 0;
 }
 

@@ -9,7 +9,6 @@ int main(int argc, char *argv[]) {
     int i;
     data_image *my_data_image;
     code_image *my_code_image;
-    //symbol_table *symbol_table;
     label_array* label_table;
 
     /* Check that at least one file name was passed to the program */
@@ -31,9 +30,9 @@ int main(int argc, char *argv[]) {
         //symbol_table = symbolTableAllocator();
         my_data_image = dataImageAllocator();
         my_code_image = codeImageAllocator();
-        labelArrayAllocator(&label_table, MIN_LENGTH_OF_LABEL_BODY);
+        label_table = labelArrayAllocator(MIN_LENGTH_OF_LABEL_BODY);
 
-        stage_1_process_file(argv[i], &label_table, &my_data_image, &my_code_image);
+        stage_1_process_file(argv[i], label_table, my_data_image, my_code_image);
     }
     printf("\n");
     //PRINT_MESSAGE(INFO_MSG_TYPE, INFO_ALL_FILES_HAVE_BEEN_PROCESSED);

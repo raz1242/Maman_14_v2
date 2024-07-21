@@ -1,7 +1,7 @@
 #include "table_utils.h"
 
 code_image *codeImageAllocator() {
-    code_image *new_code_image = malloc(sizeof(code_image));
+    code_image *new_code_image = (code_image*)malloc(sizeof(code_image));
     if (new_code_image == NULL) {
         //PRINT_MESSAGE(ERROR_MSG_TYPE, ERROR_FAILED_TO_ALLOCATE_MEM);
         exit(1);
@@ -35,7 +35,7 @@ code_node *newCodeNode(const char *line, const int L, const char* word_in_binary
     }
     strcpy(new_node->original_line, line);
 
-    new_node->L = L;
+    new_node->length = L;
     new_node->next_node = NULL;
     return new_node;
 }
@@ -64,7 +64,7 @@ data_image *dataImageAllocator() {
     return new_data_image;
 }
 
-data_node *newDataNode(const char *line, const int L, const int command_type, const int** data) {
+data_node *newDataNode(const char *line, const int command_type, const int** data, const int array_size) {
     int i;
     data_node *new_node = (data_node *) malloc(sizeof(data_node));
     if (new_node == NULL) {
@@ -72,15 +72,14 @@ data_node *newDataNode(const char *line, const int L, const int command_type, co
         free(new_node);
         exit(1);
     }
-    new_node->word = (int *) malloc(L * sizeof(int));
+    new_node->word = (int *) malloc(array_size * sizeof(int));
     if (new_node->word == NULL) {
         //PRINT_MESSAGE(ERROR_MSG_TYPE, ERROR_FAILED_TO_ALLOCATE_MEM);
         free(new_node->word);
         exit(1);
     }
-    if (command_type == 2 /*STRING*/)
-        for (i = 0; i < sizeof(**data); i++)
-            new_node->word[i] = (*data)[i];
+    for (i = 0; i < array_size; i++)
+        new_node->word[i] = (*data)[i];
 
     new_node->original_line = (char *) malloc(strlen(line) + 1);
     if (new_node->original_line == NULL) {
@@ -91,7 +90,7 @@ data_node *newDataNode(const char *line, const int L, const int command_type, co
     }
     strcpy(new_node->original_line, line);
 
-    new_node->L = L;
+    new_node->length = array_size;
     new_node->next_node = NULL;
     return new_node;
 }

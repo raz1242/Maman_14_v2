@@ -16,12 +16,12 @@
 
 
 int stage_1_process_file(const char* am_version, label_array* label_table, data_image* data_image, code_image* code_image);
-int lineLocation(const char *str);
+int lineLocation(char *str);
 char* directiveContent(const char* line, const int type);
 int commandLocator(const char* command, int *L);
 char* firstWordInLine(char* str);
 int isCommand(const char* command);
-int analyze_operand(operand* operand, const label_array label_table);
+void analyze_operand(operand* operand, const label_array label_table);
 void analyze_command(char* ptr, const int command, int* L, const label_array label_table, char* word_in_binary);
 
 #endif //ASSEMBLER_STAGE_1_H

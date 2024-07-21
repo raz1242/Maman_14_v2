@@ -30,8 +30,7 @@ typedef struct oprator_structure{
     enum addressing_method type;
 } operand;
 
-
-typedef struct label_structure{
+typedef struct label{
     char *name;
     int address;
     line_type characteristic;
@@ -53,8 +52,9 @@ int isEndOfLine(char *str);
 void parseData(const char *input, int **array, int *size, int* DC);
 void parseString(const char *input, int  **array, int *size, int *DC);
 void parseCommandString(const char *input_ptr, const int command, char** source, char** dest);
-void labelArrayAllocator(label_array *array, const int size);
+label_array *labelArrayAllocator(const int size);
 int labelArrayAdd(label_array* array, const char* name, const int address, const line_type label_characteristic);
 int isLabel(const label_array* label_table, const char* name);
+char* command_to_binary(const int command, const operand first_operand, const operand second_operand, const int L);
 
 #endif //UTILS_H

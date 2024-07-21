@@ -73,24 +73,26 @@ int isEndOfLine(char *str) {
 }
 
 void parseData(const char *input, int **array, int *size, int* DC) {
-    int count = 0, index = 0;
     const int DATA_COMMAND_LENGTH = strlen(".data ");
-    char *ptr;
     const char *dataStart;
+    int count = 0, index = 0;
+    char *ptr;
+    *size = 0;
 
     dataStart = strstr(input, ".data ");
-    ptr = (char*)dataStart;
-    if(dataStart) {
+
+    if(dataStart)
         dataStart += DATA_COMMAND_LENGTH;
-    }
     else{
         *array = NULL;
         *size = 0;
         return;
     }
-    dataStart += DATA_COMMAND_LENGTH;
 
+    ptr = (char*)dataStart;
     while (*ptr) {
+        if(*ptr == '\n')
+            break;
         while (isspace(*ptr)) {
             ptr++;
         }
@@ -114,9 +116,10 @@ void parseData(const char *input, int **array, int *size, int* DC) {
         return;
     }
 
-
     ptr = (char*)dataStart;
     while (*ptr) {
+        if(*ptr == '\n')
+            break;
         while (isspace(*ptr)) {
             ptr++;
         }
@@ -126,11 +129,12 @@ void parseData(const char *input, int **array, int *size, int* DC) {
         }
         if (isdigit(*ptr) || ((*ptr == '-' || *ptr == '+') && isdigit(*(ptr + 1)))) {
             (*array)[index++] = strtol(ptr, &ptr, 10);
-        } else {
-            ptr++;
         }
+        else
+            ptr++;
     }
     *size = count;
+    *DC += count;
 }
 
 void parseString(const char *input, int  **array, int *size, int *DC) {
@@ -138,10 +142,9 @@ void parseString(const char *input, int  **array, int *size, int *DC) {
     const char *stringStart;
     char *ptr;
     int count = 0, index = 0;
+    *size = 0;
 
     stringStart = strstr(input, ".string ");
-    ptr = (char*)stringStart;
-
     if(stringStart)
         stringStart += STRING_COMMAND_LENGTH;
     else{
@@ -149,7 +152,8 @@ void parseString(const char *input, int  **array, int *size, int *DC) {
         *size = 0;
         return;
     }
-    while (*stringStart != '"' && *stringStart != '“') {
+    ptr = (char*)stringStart;
+    while (*stringStart && *stringStart != '"' && *stringStart != '“') {
         stringStart++;
     }
     if (*stringStart != '"' && *stringStart != '“') {
@@ -171,12 +175,12 @@ void parseString(const char *input, int  **array, int *size, int *DC) {
 
     ptr = (char *)(stringStart + 1);
     for(index = 0; index < count; index++){
-        (*array)[index] = (int)(*ptr);
+        (*array)[index] = (int)*ptr;
         (*DC)++;
         ptr++;
     }
 
-    (*array)[++index] = 0;
+    (*array)[index] = 0;
     (*DC)++;
 
     *size = count + 1;
@@ -184,10 +188,10 @@ void parseString(const char *input, int  **array, int *size, int *DC) {
 
 void parseCommandString(const char *input_ptr, const int command, char** source, char** dest) {
     int command_length, first_operand_length = 0, second_operand_length = 0;
-    char* first_operand , *second_operand;
+    char* first_operand, *second_operand;
     first_operand = malloc(5); // Allocate space for the first operand
     second_operand = malloc(5); // Allocate space for the second operand
-
+    second_operand[0] = '\0';
     if(command < 15)
         command_length = 3;
     else
@@ -245,16 +249,18 @@ void parseCommandString(const char *input_ptr, const int command, char** source,
     return;
 }
 
-void labelArrayAllocator(label_array *array, const int size) {
-    array->label_element = malloc(size * sizeof(label));
+label_array *labelArrayAllocator(const int size) {
+    label_array* array = (label_array*) malloc(sizeof(label_array));
+    array->label_element = (label*) malloc(size * sizeof(label));
     if (array->label_element == NULL) {
-        //PRINT_MESSAGE(ERROR_MSG_TYPE, ERROR_FAILED_TO_ALLOCATE_MEM);
-        free(array->label_element);
+        //PRINT_MESSAGE(ERROR_FAILED_TO_ALLOCATE_MEM);
         exit(1);
     }
     array->rep = 0;
     array->length = size;
+    return array;
 }
+
 
 int labelArrayAdd(label_array* array, const char* name, const int address, const line_type label_characteristic) {
     label* new_label;
@@ -365,8 +371,7 @@ char* command_to_binary(const int command, const operand first_operand, const op
             strcpy(str, "Invalid command");
         break;
     }
-
-    if(L >= 2) {
+    if(L >= 2 && first_operand.type != UNKNOWN) {
         if(first_operand.type == IMMEDIATE)
             strcat(str, "0001");
         else if(first_operand.type == LABEL_VALUE)
@@ -379,7 +384,7 @@ char* command_to_binary(const int command, const operand first_operand, const op
     else
         strcat(str, "0000");
 
-    if(L == 3) {
+    if(L == 3 || first_operand.type == UNKNOWN || first_operand.type == second_operand.type) {
         if(second_operand.type == IMMEDIATE)
             strcat(str, "0001");
         else if(second_operand.type == LABEL_VALUE)
