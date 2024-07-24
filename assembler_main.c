@@ -38,3 +38,4 @@ int main(int argc, char *argv[]) {
     //PRINT_MESSAGE(INFO_MSG_TYPE, INFO_ALL_FILES_HAVE_BEEN_PROCESSED);
     return 0;
 }
+// reminder to free all the memory like label_table, my_data_image, my_code_image

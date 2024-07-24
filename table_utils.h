@@ -77,7 +77,7 @@ code_image *codeImageAllocator();
 code_node *newCodeNode(const char *line, const int L, const char* word_in_binary);
 void codeNodeAdd(code_image *code_image, code_node *new_node);
 data_image *dataImageAllocator();
-data_node *newDataNode(const char *line, const int command_type, const int **data, const int array_size);
+data_node *newDataNode(const char *line, const int command_type, const int *data, const int array_size);
 void dataNodeAdd(data_image *data_image, data_node *new_node);
 
 

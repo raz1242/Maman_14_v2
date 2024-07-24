@@ -56,5 +56,6 @@ label_array *labelArrayAllocator(const int size);
 int labelArrayAdd(label_array* array, const char* name, const int address, const line_type label_characteristic);
 int isLabel(const label_array* label_table, const char* name);
 char* command_to_binary(const int command, const operand first_operand, const operand second_operand, const int L);
+void error_handler(const char* error_message, const char* file_name, const int line_number);
 
 #endif //UTILS_H

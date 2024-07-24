@@ -1,12 +1,18 @@
 #include "assembler_stage_0.h"
 
-int stage_0_process_file(const char* fileName) {
+/**
+ * the function receives a file name and processes it to create a .am file with the macros expanded
+ * @param fileName - the name of the file to process
+ * @return 1 if the file was processed successfully, 0 otherwise
+ */
+int stage_0_process_file(const char *fileName) {
     int i, insideMacroFlag = 0, firstWordOfLineLength, lineLocation, matchFound = 0;
     macro_array array;
-    char macro_header[MAX_LENGTH_OF_MACRO_HEADER], macro_body[MAX_LENGTH_OF_MACRO_BODY], line[MAX_LENGTH_OF_MACRO_HEADER];
-    char* non_space_line;
-    FILE *as_extension = fopen(fileTypeCreator(fileName,".as"), "r");
-    FILE *am_extension = fopen(fileTypeCreator(fileName,".am"), "w");
+    char macro_header[MAX_LENGTH_OF_MACRO_HEADER], macro_body[MAX_LENGTH_OF_MACRO_BODY], line[
+        MAX_LENGTH_OF_MACRO_HEADER];
+    char *non_space_line;
+    FILE *as_extension = fopen(fileTypeCreator(fileName, ".as"), "r");
+    FILE *am_extension = fopen(fileTypeCreator(fileName, ".am"), "w");
 
     macro_header[0] = '\0', macro_body[0] = '\0';
     macroArrayAllocator(&array, MIN_LENGTH_OF_MACRO_BODY);
@@ -27,7 +33,7 @@ int stage_0_process_file(const char* fileName) {
             non_space_line += firstWordOfLineLength;
             non_space_line = firstWordInLine(non_space_line);
             firstWordOfLineLength = firstWordLengthCounter(non_space_line) + 1;
-            strncpy(macro_header, non_space_line, firstWordOfLineLength+1);
+            strncpy(macro_header, non_space_line, firstWordOfLineLength + 1);
             *(macro_header + firstWordOfLineLength) = '\n';
 
             if (isReservedWord(macro_header, firstWordOfLineLength)) {
@@ -35,19 +41,16 @@ int stage_0_process_file(const char* fileName) {
                 //free_macro_array(&array);
                 return 0;
             }
-        }
-        else if (lineLocation == BODY) {
+        } else if (lineLocation == BODY) {
             strncat(macro_body, line, strlen(line) + 1);
-        }
-        else if (lineLocation == END) {
+        } else if (lineLocation == END) {
             macroArrayAdd(&array, macro_header, macro_body);
             macro_body[0] = 0;
             insideMacroFlag = 0;
-        }
-        else if (lineLocation == REGULAR) {
+        } else if (lineLocation == REGULAR) {
             for (i = 0; i < array.rep; i++) {
-                if (strncmp(non_space_line, array.macro_element[i].name, firstWordOfLineLength-1) == 0) {
-                    if(isEndOfLine(non_space_line + firstWordOfLineLength) == 1) {
+                if (strncmp(non_space_line, array.macro_element[i].name, firstWordOfLineLength - 1) == 0) {
+                    if (isEndOfLine(non_space_line + firstWordOfLineLength) == 1) {
                         matchFound = 1;
                         fputs(array.macro_element[i].body, am_extension);
                         break;
@@ -65,6 +68,12 @@ int stage_0_process_file(const char* fileName) {
     return 1;
 }
 
+/**
+ * Allocates memory for the macro array and initializes its properties.
+ * This function is responsible for initializing a macro array with a given size.
+ * @param array - Pointer to the macro_array to allocate memory for.
+ * @param size - The initial size of the macro array.
+ */
 void macroArrayAllocator(macro_array *array, const int size) {
     array->macro_element = malloc(size * sizeof(macro));
     if (array->macro_element == NULL) {
@@ -76,6 +85,17 @@ void macroArrayAllocator(macro_array *array, const int size) {
     array->length = size;
 }
 
+
+/**
+ * This function checks if a given line is the start of a macro definition (HEADER),
+ * part of a macro body (BODY), the end of a macro (END), or a regular line (REGULAR).
+ *
+ * @param str The string to be analyzed.
+ * @param flag An integer flag indicating whether the current processing context is within a macro definition.
+ * @param length The length of the first word in the line. This is used to help identify the end of
+ *               a macro definition by comparing against the length of the "endmacr" keyword.
+ * @return An integer representing the location type of the line.
+ */
 int macroLocation(const char *str, const int flag, const int length) {
     if (str && str[4]) {
         if (str[4] == ' ' && strncmp(str, "macr", 4) == 0)
@@ -88,8 +108,15 @@ int macroLocation(const char *str, const int flag, const int length) {
     return REGULAR;
 }
 
-int macroArrayAdd(macro_array* array, const char* name, const char* body) {
-    macro* new_array;
+/**
+ * Adds a macro to the macro array, resizing the array size if needed.
+ * @param array Macro array to add to.
+ * @param name Name of the macro.
+ * @param body Content of the macro.
+ * @return 0 on success.
+ */
+int macroArrayAdd(macro_array *array, const char *name, const char *body) {
+    macro *new_array;
     const int number_of_reps = (array->rep);
     int length_of_array = (array->length);
 

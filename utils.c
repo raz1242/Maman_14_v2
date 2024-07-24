@@ -7,7 +7,10 @@ const char* reserved_words[] = {
 
 char* fileTypeCreator(const char* str, const char* type) {
     char* file_type = malloc(strlen(str) + strlen(type) + 1);
-
+    if (!file_type) {
+        // Handle memory allocation failure
+        return NULL;
+    }
     strcpy(file_type, str);
     strcat(file_type, type);
     return file_type;
@@ -189,6 +192,7 @@ void parseString(const char *input, int  **array, int *size, int *DC) {
 void parseCommandString(const char *input_ptr, const int command, char** source, char** dest) {
     int command_length, first_operand_length = 0, second_operand_length = 0;
     char* first_operand, *second_operand;
+
     first_operand = malloc(5); // Allocate space for the first operand
     second_operand = malloc(5); // Allocate space for the second operand
     second_operand[0] = '\0';
@@ -198,7 +202,6 @@ void parseCommandString(const char *input_ptr, const int command, char** source,
         command_length = 4;
 
     if(!input_ptr) {
-        //print error - missing command operand
         return;
     }
     if(command != 14 /*rts*/ && command != 15 /*stop*/) {
@@ -240,13 +243,16 @@ void parseCommandString(const char *input_ptr, const int command, char** source,
     }
     *source = malloc(first_operand_length + 1);
     *dest = malloc(second_operand_length + 1);
+    if (!*source || !*dest) {
+        free(first_operand);
+        free(second_operand);
+        // Handle memory allocation failure
+        return;
+    }
     strncpy(*source, first_operand, first_operand_length + 1);
-    //*source[first_operand_length] = '\0';
     strncpy(*dest, second_operand, second_operand_length + 1);
-    //*dest[second_operand_length] = '\0';
     free(first_operand);
     free(second_operand);
-    return;
 }
 
 label_array *labelArrayAllocator(const int size) {
@@ -281,17 +287,11 @@ int labelArrayAdd(label_array* array, const char* name, const int address, const
         array->length = length_of_array; /* Update the length in the array structure*/
     }
     array->label_element[number_of_reps].name = malloc(strlen(name) + 1);
-
     if (!array->label_element[number_of_reps].name) {
         //PRINT_MESSAGE(ERROR_MSG_TYPE, ERROR_FAILED_TO_ALLOCATE_MEM);
-        exit(1);
+        return -1;
     }
-    if (label_characteristic == EXTERN) {
-        array->label_element[number_of_reps].address = EXTERN_ADDRESS;
-    }
-    else {
-        array->label_element[number_of_reps].address = address;
-    }
+    array->label_element[number_of_reps].address = address;
     strcpy(array->label_element[number_of_reps].name, name);
     array->label_element[number_of_reps].characteristic = label_characteristic;
 
@@ -405,3 +405,8 @@ char* command_to_binary(const int command, const operand first_operand, const op
 char* operand_to_binary(operand operand) {
 
 }*/
+
+void error_handler(const char* error_message, const char* file_name, const int line_number) {
+    printf("Error: %s in file %s at line %d\n", error_message, file_name, line_number);
+    exit(1);
+}

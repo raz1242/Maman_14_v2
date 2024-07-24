@@ -64,22 +64,20 @@ data_image *dataImageAllocator() {
     return new_data_image;
 }
 
-data_node *newDataNode(const char *line, const int command_type, const int** data, const int array_size) {
+data_node *newDataNode(const char *line, const int command_type, const int* data, const int array_size) {
     int i;
     data_node *new_node = (data_node *) malloc(sizeof(data_node));
     if (new_node == NULL) {
         //PRINT_MESSAGE(ERROR_MSG_TYPE, ERROR_FAILED_TO_ALLOCATE_MEM);
-        free(new_node);
         exit(1);
     }
     new_node->word = (int *) malloc(array_size * sizeof(int));
     if (new_node->word == NULL) {
         //PRINT_MESSAGE(ERROR_MSG_TYPE, ERROR_FAILED_TO_ALLOCATE_MEM);
-        free(new_node->word);
         exit(1);
     }
     for (i = 0; i < array_size; i++)
-        new_node->word[i] = (*data)[i];
+        new_node->word[i] = data[i];
 
     new_node->original_line = (char *) malloc(strlen(line) + 1);
     if (new_node->original_line == NULL) {
