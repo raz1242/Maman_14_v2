@@ -20,7 +20,8 @@ int lineLocation(char *str);
 int whichCommand(const char* command);
 char* firstWordInLine(char* str);
 int isCommand(const char* command);
-void analyze_operand(operand* operand, const label_array label_table);
-void analyze_command(const char* ptr, const int command, int* L, const label_array label_table, char* word_in_binary);
+void analyze_command(char* ptr, int command, int* L, char* word_in_binary, const char* file_name, int line_counter);
+
+int analyze_operand(operand *operand);
 
 #endif //ASSEMBLER_STAGE_1_H

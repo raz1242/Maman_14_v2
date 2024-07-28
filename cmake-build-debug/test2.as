@@ -1,9 +1,9 @@
 .entry LENGTH
 .extern W
-MAIN: 	mov @r3, LENGTH
+MAIN: 	mov r3, LENGTH
 LOOP: 	jmp L1
 	macr auto1
-		sub @r1, @r4
+		sub r1, r4
 		bne L3
 	endmacr
 	prn -5

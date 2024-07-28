@@ -20,14 +20,15 @@ void printDataImage(const data_image *image) { //-  testing
     data_node *current = image->first;
     int i;
 
+    printf("\n");
     while (current != NULL) {
-        printf("Original line: %s\n", current->original_line);
+        printf("Original line: %s", current->original_line);
         printf("Data: ");
         for (i = 0; i < current->length; i++) {
             //if(current->word[i] != 0)
             printf("%d ", current->word[i]);
         }
-        printf("\n");
+        printf("\n\n");
         current = current->next_node;
     }
 }
@@ -35,10 +36,11 @@ void printDataImage(const data_image *image) { //-  testing
 void printCodeImage(const code_image *image) {  //- testing
     code_node *current = image->first;
     while (current != NULL) {
-        printf("Original line: %s\n", current->original_line);
-        printf("Binary representation: %s\n", current->word);
+        printf("Original line: %s", current->original_line);
+        printf("Binary representation: %s\n\n", current->word);
         // Add more printf statements here if you need to print more fields
         current = current->next_node;
+
     }
 }
 
@@ -55,22 +57,23 @@ void printExternLabels(const label_array *array) { //- testing
 int stage_1_process_file(const char *file_name, label_array *label_table, data_image *data_image,
                          code_image *code_image) {
     const int LENGTH_OF_COLON = 1;
-    int i, IC = 0, DC = 0, L = 0, location, firstWordInLineLength, labelFlag, is_error = 0, command_in_line, array_size, line_counter = 0;
-    int *parced_array;
-    char line[MAX_LENGTH_OF_LINE], label_header[MAX_LENGTH_OF_LABEL_HEADER], word_in_binary[LENGTH_OF_BINARY_WORD];
-    char *am_version, *ptr, *non_space_ptr;
-    data_node *data_node;
-    code_node *code_node;
-    FILE *am_extension;
+    int i, IC = 0, DC = 0, L = 0, location, firstWordInLineLength, labelFlag, error_found = 0, command_in_line, array_size, line_counter = 0;
+    int *parced_array = NULL;
+    char line[MAX_LENGTH_OF_LINE], label_header[MAX_LENGTH_OF_LABEL_HEADER + 1], word_in_binary[LENGTH_OF_BINARY_WORD];
+    char *am_version = NULL, *ptr = NULL, *non_space_ptr = NULL;
+    data_node *data_node = NULL;
+    code_node *code_node = NULL;
+    FILE *am_extension = NULL;
 
     label_header[0] = '\0';
-
     am_version = fileTypeCreator(file_name, ".am");
     am_extension = fopen(am_version, "r");
-    free(am_version);
+
     if (am_extension == NULL) {
-        printf("error opening file\n");
-        return 0;
+        printf("Error opening file\n");
+        free(am_version);
+        am_version = NULL;
+        return 1;
     }
 
     while (fgets(line, MAX_LENGTH_OF_LINE, am_extension)) {
@@ -79,16 +82,20 @@ int stage_1_process_file(const char *file_name, label_array *label_table, data_i
         non_space_ptr = firstWordInLine(line);
         firstWordInLineLength = firstWordLengthCounter(non_space_ptr);
         location = lineLocation(non_space_ptr);
+        if(location == -1) {
+            error_handler("ERROR_UNKNOWN_LINE_TYPE", am_version, line_counter);
+            error_found = 1;
+        }
 
         if (location == LABEL) {
             labelFlag = 1;
             memset(label_header, '\0', sizeof(label_header));
             strncpy(label_header, non_space_ptr, firstWordInLineLength);
             if (isReservedWord(label_header, strlen(label_header))) {
-                //error_handler(ERROR_LABEL_NAME_IS_RESERVED_WORD, am_version, line_counter);
+                error_handler("ERROR_LABEL_NAME_IS_A_RESERVED_WORD", am_version, line_counter);
+                error_found = 1;
                 //free label_table here as it might cause double-free issues outside this function
-                fclose(am_extension);
-                return 0;
+                //might be a better idea to free it ouside this function. not sure why I wrote the comment above...
             }
             ptr = non_space_ptr + firstWordInLineLength + LENGTH_OF_COLON;
             non_space_ptr = firstWordInLine(ptr);
@@ -98,75 +105,83 @@ int stage_1_process_file(const char *file_name, label_array *label_table, data_i
 
         if (location == DATA || location == STRING) {
             if (labelFlag == 1) {
-                labelArrayAdd(label_table, label_header, DC, location);
+                if(labelArrayAdd(label_table, label_header, DC, location, am_version, line_counter) == 1)
+                    error_found = 1;
             }
             if (location == DATA)
-                parseData(non_space_ptr, &parced_array, &array_size, &DC);
+                parseData(non_space_ptr, &parced_array, &array_size, &DC, am_version, line_counter);
             else
-                parseString(non_space_ptr, &parced_array, &array_size, &DC);
-            data_node = newDataNode(non_space_ptr, location, parced_array, array_size);
+                parseString(non_space_ptr, &parced_array, &array_size, &DC, am_version, line_counter);
+            data_node = newDataNode(non_space_ptr, parced_array, array_size);
             dataNodeAdd(data_image, data_node);
             free(parced_array);
+            parced_array = NULL;
         } else if (location == EXTERN) {
             ptr = non_space_ptr + firstWordInLineLength;
             non_space_ptr = firstWordInLine(ptr);
-            strncpy(label_header, non_space_ptr, strlen(non_space_ptr) - 1);
-            labelArrayAdd(label_table, label_header, EXTERN_ADDRESS, EXTERN);
-            /*if(valid != 1){
-                //HANDLE_AST_ERROR_NON_POINTER(&ast_line_info, ERROR_SYMBOL_ALREADY_EXISTS);
-                //is_error = TRUE;
-            }*/
+            firstWordInLineLength = firstWordLengthCounter(non_space_ptr);
+            strncpy(label_header, non_space_ptr, firstWordInLineLength);
+            if (isReservedWord(label_header, strlen(label_header))) {
+                error_handler("ERROR_LABEL_NAME_IS_A_RESERVED_WORD", am_version, line_counter);
+                error_found = 1;
+                //free label_table here as it might cause double-free issues outside this function
+                //might be a better idea to free it ouside this function. not sure why I wrote the comment above...
+            }
+            if(labelArrayAdd(label_table, label_header, EXTERN_ADDRESS, EXTERN, am_version, line_counter) == 1)
+                error_found = 1;
         } else if (location == ENTRY) {
         } else {
             if (labelFlag == 1)
-                labelArrayAdd(label_table, label_header, IC + 100, CODE);
+                if(labelArrayAdd(label_table, label_header, IC + 100, CODE, am_version, line_counter) == 1)
+                    error_found = 1;
             ptr = non_space_ptr;
             non_space_ptr = firstWordInLine(ptr);
             command_in_line = whichCommand(non_space_ptr);
-            analyze_command(non_space_ptr, command_in_line, &L, *label_table, word_in_binary);
+            if(command_in_line == -1) {
+                error_handler("ERROR_COMMAND_NOT_FOUND", am_version, line_counter);
+                error_found = 1;
+            }
+
+            analyze_command(non_space_ptr, command_in_line, &L, word_in_binary, am_version, line_counter);
 
             code_node = newCodeNode(non_space_ptr, L, word_in_binary);
             codeNodeAdd(code_image, code_node);
             IC += L;
             L = 0;
-
         }
     }
-
-
-    if (is_error) {
-        //PRINT_MESSAGE(ERROR_MSG_TYPE, ERROR_IN_FIRST_PASS);
-        fclose(am_extension);
-        return 0;
-    } else {
-        for (i = 0; i < label_table->rep; i++) {
-            if (label_table->label_element[i].characteristic == DATA || label_table->label_element[i].characteristic ==
-                STRING) {
-                label_table->label_element[i].address += (IC + 100);
-            }
-        }
-
-        printLabelTable(label_table); //- testing
-        printDataImage(data_image); //- testing
-        printCodeImage(code_image); //- testing
-        printExternLabels(label_table); //- testing
-
-
-        // PRINT_MESSAGE(INFO_MSG_TYPE, INFO_FIRST_PASS);
-
+    free(am_version);
+    am_version = NULL;
+    ptr = NULL;
+    non_space_ptr = NULL;
+    if (error_found) {
         fclose(am_extension);
         return 1;
     }
+    for (i = 0; i < label_table->rep; i++) {
+        if (label_table->label_element[i].characteristic == DATA || label_table->label_element[i].characteristic ==
+            STRING) {
+            label_table->label_element[i].address += (IC + 100);
+            }
+    }
+
+    printLabelTable(label_table); //- testing
+    printDataImage(data_image); //- testing
+    printCodeImage(code_image); //- testing
+    printExternLabels(label_table); //- testing
+
+    fclose(am_extension);
+    return 0;
 }
 
 /**
  * Determines the type of a line in the source code.
- * @param str Pointer to the line to analyze.
+ * @param str Pointer to the line string.
  * @return An integer representing the type of the line.
  */
 int lineLocation(char *str) {
     int i = 0;
-    char *ptr_to_firstWord = firstWordInLine(str);
+    const char *ptr_to_firstWord = firstWordInLine(str);
 
     if (isalpha(ptr_to_firstWord[0])) {
         while (ptr_to_firstWord[i] && ptr_to_firstWord[i] != ':') {
@@ -176,7 +191,7 @@ int lineLocation(char *str) {
             i++;
         }
         if (ptr_to_firstWord[i] == ':' && (i > 0) && (
-                ptr_to_firstWord[i + 1] == ' ' || ptr_to_firstWord[i + 1] == '\0')) {
+                ptr_to_firstWord[i + 1] == ' ' || ptr_to_firstWord[i + 1] == '\t' || ptr_to_firstWord[i + 1] == '\0')) {
             return LABEL;
         }
     }
@@ -188,7 +203,9 @@ int lineLocation(char *str) {
         return ENTRY;
     else if (strncmp(ptr_to_firstWord, ".extern ", 8) == 0)
         return EXTERN;
-    return CODE;
+    else if(isCommand(ptr_to_firstWord))
+        return CODE;
+    return -1;
 }
 
 /**
@@ -228,7 +245,6 @@ int whichCommand(const char *command) {
             return i;
         }
     }
-    //PRINT ERROR, command in not the command_list
     return -1;
 }
 
@@ -239,119 +255,176 @@ int whichCommand(const char *command) {
  * @param ptr Pointer to the command string.
  * @param command The command index in the commands_list.
  * @param L Pointer to the length of the command in memory.
- * @param label_table The table of labels.
  * @param word_in_binary Pointer to the string where the binary representation will be stored.
+ * @param file_name The name of the file being processed.
+ * @param line_counter The current line number in the source code.
  */
-void analyze_command(const char *ptr, const int command, int *L, const label_array label_table, char *word_in_binary) {
-    char *first_operand_name, *second_operand_name;
+void analyze_command(char *ptr, const int command, int *L, char *word_in_binary, const char* file_name, const int line_counter) {
+    char *first_operand_name = NULL, *second_operand_name = NULL;
     operand first_operand, second_operand;
 
-    parseCommandString(ptr, command, &first_operand_name, &second_operand_name);
+    parseCommandString(ptr, command, &first_operand_name, &second_operand_name, file_name, line_counter);
 
-    first_operand.name = malloc(strlen(first_operand_name) + 1);
-    second_operand.name = malloc(strlen(second_operand_name) + 1);
-    strcpy(first_operand.name, first_operand_name);
-    strcpy(second_operand.name, second_operand_name);
+
+    if (first_operand_name) {
+        first_operand.name = malloc(strlen(first_operand_name) + 1);
+        if (first_operand.name) {
+            strcpy(first_operand.name, first_operand_name);
+        }
+        else {
+            error_handler("Failed to allocate memory ", file_name, line_counter);
+            free(first_operand_name);
+            return;
+        }
+    } else {
+        first_operand.name = NULL;
+    }
     free(first_operand_name);
+
+    if (second_operand_name) {
+        second_operand.name = malloc(strlen(second_operand_name) + 1);
+        if (second_operand.name) {
+            strcpy(second_operand.name, second_operand_name);
+        }
+        else {
+            error_handler("Failed to allocate memory", file_name, line_counter);
+            free(first_operand_name);
+            free(second_operand_name);
+            return;
+        }
+    } else {
+        second_operand.name = NULL;
+    }
     free(second_operand_name);
 
+    first_operand.type = UNKNOWN;
+    second_operand.type = UNKNOWN;
     if (command <= 15) {
         (*L)++;
         if (command <= 13) {
-            analyze_operand(&first_operand, label_table);
-            second_operand.type = UNKNOWN;
+            analyze_operand(&first_operand);
             (*L)++;
             if (command <= 4) {
-                analyze_operand(&second_operand, label_table);
+                analyze_operand(&second_operand);
                 if (first_operand.type != second_operand.type)
                     (*L)++;
             }
         }
     }
-    if (second_operand.type == UNKNOWN) {
-        strcpy(second_operand.name, first_operand.name);
-        second_operand.type = first_operand.type;
-        first_operand.type = UNKNOWN;
-    }
     if (command == 1) {
         if (first_operand.name[0] == '\0' || second_operand.name[0] == '\0') {
             //error
+            return;
         }
     } else if (command <= 3) {
         if (first_operand.name[0] == '\0' || second_operand.name[0] == '\0') {
             if (second_operand.type == IMMEDIATE) {
                 //error
+                return;
+
             }
         }
     } else if (command == 4) {
         if (first_operand.name[0] == '\0' || second_operand.name[0] == '\0') {
             if (first_operand.type != LABEL_VALUE) {
                 //error
+                return;
+
             }
             if (second_operand.type == IMMEDIATE) {
                 //error
+                return;
+
             }
         }
     } else if ((command <= 8 && command >= 5) || command == 11) {
         if (second_operand.type != UNKNOWN) {
             //error
+            return;
+
         }
         if (first_operand.type == IMMEDIATE) {
             //error
+            return;
+
         }
     } else if (command == 9 || command == 10 || command == 13) {
         if (second_operand.type != UNKNOWN) {
             //error
+            return;
+
         }
         if (first_operand.type == IMMEDIATE || first_operand.type == REGISTER) {
             //error
+            return;
+
         }
     } else if (command == 12) {
         if (second_operand.type != UNKNOWN) {
             //error
+            return;
+
         }
     } else if (command == 14 || command == 15) {
         if (first_operand.type != UNKNOWN || second_operand.type != UNKNOWN) {
             //error
+            return;
+
         }
     }
     strcpy(word_in_binary, command_to_binary(command, first_operand, second_operand, *L));
-    free(first_operand.name);
-    free(second_operand.name);
+    if (word_in_binary == NULL) {
+        // Handle error
+        error_handler("Memory allocation failed", file_name, line_counter);
+        return;
+
+    }
+    if (first_operand.name)
+        free(first_operand.name);
+    if (second_operand.name)
+        free(second_operand.name);
 }
 
 /**
  * Analyzes an operand and determines its type.
  *
  * This function examines the operand string to determine if it is an immediate value,
- * a register, a register pointer, or a label value.
+ * a register, a register pointer, or a label address(label value).
  *
  * @param operand Pointer to the operand structure to analyze.
- * @param label_table The table of labels.
  */
-void analyze_operand(operand *operand, const label_array label_table) {
+int analyze_operand(operand *operand) {
     int i;
     operand->type = UNKNOWN;
     switch (operand->name[0]) {
         case '#':
             operand->type = IMMEDIATE;
-            return;
+        return 0;
         case '*':
             for (i = 0; i < 8; i++) {
                 if (strncmp(operand->name + 1, register_list[i], 2) == 0) {
                     operand->type = REGISTER_PTR;
-                    return;
+                    return 0;
                 }
             }
-            break;
+        break;
         default: {
             for (i = 0; i < 8; i++) {
                 if (strncmp(operand->name, register_list[i], 2) == 0) {
                     operand->type = REGISTER;
-                    return;
+                    return 0;
                 }
             }
-            operand->type = LABEL_VALUE;
+            if(strlen(operand->name) <= MAX_LENGTH_OF_LABEL_VALUE && isalpha(operand->name[0])) {
+                for(i = 1; i < strlen(operand->name); i++) {
+                    if(!isalnum(operand->name[i])) {
+                        operand->type = UNKNOWN;
+                        return 1;
+                    }
+                }
+                operand->type = LABEL_VALUE;
+            }
         }
     }
+    return 0;
 }

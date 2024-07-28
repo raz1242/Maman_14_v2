@@ -21,13 +21,15 @@ int main(int argc, char *argv[]) {
     //PRINT_MESSAGE(INFO_MSG_TYPE, INFO_START_OF_ASSEMBLER);
     for (i = 1; i < argc; i++) {
         if (strlen(argv[i]) > 80) {
-            //PRINT_MESSAGE(ERROR_MSG_TYPE, ERROR_FILE_NAME_TOO_LONG);
-            continue;
+            printf("ERROR_FILE_NAME_IS_TOO_LONG");
+            return 1;
         }
         //PRINT_MESSAGE(INFO_MSG_TYPE, argv[i]);
-        stage_0_process_file(argv[i]);
+        if(stage_0_process_file(argv[i])) {
+            printf(" pre stage failed\n");
+            return 1 ;
+        }
 
-        //symbol_table = symbolTableAllocator();
         my_data_image = dataImageAllocator();
         my_code_image = codeImageAllocator();
         label_table = labelArrayAllocator(MIN_LENGTH_OF_LABEL_BODY);

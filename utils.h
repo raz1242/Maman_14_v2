@@ -49,13 +49,14 @@ int firstWordLengthCounter(const char *str);
 int operandLengthCounter(const char* str);
 int isReservedWord(char* word, int length);
 int isEndOfLine(char *str);
-void parseData(const char *input, int **array, int *size, int* DC);
-void parseString(const char *input, int  **array, int *size, int *DC);
-void parseCommandString(const char *input_ptr, const int command, char** source, char** dest);
-label_array *labelArrayAllocator(const int size);
-int labelArrayAdd(label_array* array, const char* name, const int address, const line_type label_characteristic);
+int parseData(const char *input, int **array, int *size, int *DC, const char* file_name, int line_counter);
+
+int parseString(const char *input, int **array, int *size, int *DC, const char *file_name, int line_counter);
+int parseCommandString(char *input_ptr, int command, char **source, char **dest, const char *file_name, int line_counter);
+label_array *labelArrayAllocator(int size);
+int labelArrayAdd(label_array* array, const char* name, int address, line_type label_characteristic, const char* file_name, int line_counter);
 int isLabel(const label_array* label_table, const char* name);
-char* command_to_binary(const int command, const operand first_operand, const operand second_operand, const int L);
-void error_handler(const char* error_message, const char* file_name, const int line_number);
+char* command_to_binary(int command, operand first_operand, operand second_operand, int L);
+void error_handler(const char* error_message, const char* file_name, int line_counter);
 
 #endif //UTILS_H
