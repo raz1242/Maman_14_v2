@@ -3,9 +3,10 @@
 #include <stdlib.h>
 #include "assembler_stage_0.h"
 #include "assembler_stage_1.h"
+#include "assembler_stage_2.h"
 
 
-int main(int argc, char *argv[]) {
+int main(const int argc, char *argv[]) {
     int i;
     data_image *my_data_image;
     code_image *my_code_image;
@@ -35,6 +36,7 @@ int main(int argc, char *argv[]) {
         label_table = labelArrayAllocator(MIN_LENGTH_OF_LABEL_BODY);
 
         stage_1_process_file(argv[i], label_table, my_data_image, my_code_image);
+        stage_2_process_file(argv[i], label_table, my_code_image);
     }
     printf("\n");
     //PRINT_MESSAGE(INFO_MSG_TYPE, INFO_ALL_FILES_HAVE_BEEN_PROCESSED);

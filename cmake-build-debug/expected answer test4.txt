@@ -1,0 +1,56 @@
+C:\Users\raz12\CLionProjects\Maman_14v2\cmake-build-debug\Maman_14v2.exe test2
+Label Table:
+Label 1: W and the address is :-1
+Label 2: MAIN and the address is :100
+Label 3: LOOP and the address is :103
+Label 4: L1 and the address is :113
+Label 5: END and the address is :117
+Label 6: STR and the address is :118
+Label 7: LENGTH and the address is :125
+Label 8: K and the address is :128
+Label 9: L3 and the address is :-1
+Label 10: L1 and the address is :-1
+
+Original line: .string "abcdef"
+Data: 97 98 99 100 101 102 0 
+
+Original line: .data 6,-9,15
+Data: 6 -9 15 
+
+Original line: .data 22
+Data: 22 
+
+Original line: mov r3, LENGTH
+Binary representation: 000010000010100
+
+Original line: jmp L1
+Binary representation: 100100000010100
+
+Original line: prn #-5
+Binary representation: 110000000001100
+
+Original line: bne W
+Binary representation: 101000000010100
+
+Original line: sub r1, r4
+Binary representation: 001110001000100
+
+Original line: bne L3
+Binary representation: 101000000010100
+
+Original line: inc K
+Binary representation: 011100000010100
+
+Original line: jmp W
+Binary representation: 100100000010100
+
+Original line: stop
+Binary representation: 111100000000100
+
+Extern Labels:
+Label: W, Address: -1
+Label: L3, Address: -1
+Label: L1, Address: -1
+
+
+Process finished with exit code 0

@@ -1,0 +1,138 @@
+C:\Users\raz12\CLionProjects\Maman_14v2\cmake-build-debug\Maman_14v2.exe test3
+Label Table:
+Label 1: fn1 and the address is :-1
+Label 2: MAIN and the address is :100
+Label 3: LOOP and the address is :105
+Label 4: END and the address is :131
+Label 5: STR and the address is :132
+Label 6: LIST and the address is :137
+Label 7: K and the address is :140
+Label 8: L3 and the address is :-1
+
+Original line: .string "abcd"
+Data: 97 98 99 100 0 
+
+Original line: .data 6, -9
+Data: 6 -9 
+
+Original line: .data -100
+Data: -100 
+
+Original line: .data 31
+Data: 31 
+
+Original line: add r3, LIST
+Binary representation: 001010000010100
+
+Original line: jsr fn1
+Binary representation: 110100000010100
+
+Original line: prn #48
+Binary representation: 110000000001100
+
+Original line: lea STR, r6
+Binary representation: 010000101000100
+
+Original line: inc r6
+Binary representation: 011100001000100
+
+Original line: mov *r6, L3
+Binary representation: 000001000010100
+
+Original line: sub r1, r4
+Binary representation: 001110001000100
+
+Original line: cmp r3, #-6
+Binary representation: 000110000001100
+
+Original line: bne END
+Binary representation: 101000000010100
+
+Original line: add r7, *r6
+Binary representation: 001010000100100
+
+Original line: clr K
+Binary representation: 010100000010100
+
+Original line: sub L3, L3
+Binary representation: 001100100010100
+
+Original line: jmp LOOP
+Binary representation: 100100000010100
+
+Original line: stop
+Binary representation: 111100000000100
+
+Extern Labels:
+Label: fn1, Address: -1
+Label: L3, Address: -1
+
+command_line: add r3, LIST
+first operand: 000000011000100
+second operand: 000010001001010
+
+command_line: jsr fn1
+first operand: 000000000000001
+second operand: 
+
+command_line: prn #48
+first operand: 000000110000100
+second operand: 
+
+command_line: lea STR, r6
+first operand: 000010000100010
+second operand: 000000000110100
+
+command_line: inc r6
+first operand: 000000000110100
+second operand: 
+
+command_line: mov *r6, L3
+first operand: 000000110000100
+second operand: 000000000000001
+
+command_line: sub r1, r4
+first operand: 000000001100100
+second operand: 
+
+command_line: cmp r3, #-6
+first operand: 000000011000100
+second operand: 111111111010100
+
+command_line: bne END
+first operand: 000010000011010
+second operand: 
+
+command_line: add r7, *r6
+first operand: 000000111110100
+second operand: 
+
+command_line: clr K
+first operand: 000010001100010
+second operand: 
+
+command_line: sub L3, L3
+first operand: 000000000000001
+second operand: 000000000000001
+
+command_line: jmp LOOP
+first operand: 000001101001010
+second operand: 
+
+command_line: stop
+first operand: 
+second operand: 
+
+Label: fn1, Characteristic: EXTERN
+Label: MAIN, Characteristic: ENTRY
+Label: MAIN, Characteristic: IRRLEVANT
+Label: LOOP, Characteristic: IRRLEVANT
+Label: END, Characteristic: IRRLEVANT
+Label: STR, Characteristic: IRRLEVANT
+Label: LIST, Characteristic: ENTRY
+Label: LIST, Characteristic: IRRLEVANT
+Label: K, Characteristic: IRRLEVANT
+Label: L3, Characteristic: EXTERN
+
+
+Process finished with exit code 0

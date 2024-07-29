@@ -54,9 +54,8 @@ void printExternLabels(const label_array *array) { //- testing
     }
 }
 
-int stage_1_process_file(const char *file_name, label_array *label_table, data_image *data_image,
-                         code_image *code_image) {
-    const int LENGTH_OF_COLON = 1;
+int stage_1_process_file(const char *file_name, label_array *label_table, data_image *data_image, code_image *code_image) {
+
     int i, IC = 0, DC = 0, L = 0, location, firstWordInLineLength, labelFlag, error_found = 0, command_in_line, array_size, line_counter = 0;
     int *parced_array = NULL;
     char line[MAX_LENGTH_OF_LINE], label_header[MAX_LENGTH_OF_LABEL_HEADER + 1], word_in_binary[LENGTH_OF_BINARY_WORD];
@@ -79,6 +78,7 @@ int stage_1_process_file(const char *file_name, label_array *label_table, data_i
     while (fgets(line, MAX_LENGTH_OF_LINE, am_extension)) {
         line_counter++;
         labelFlag = 0;
+        memset(label_header, '\0', sizeof(label_header));
         non_space_ptr = firstWordInLine(line);
         firstWordInLineLength = firstWordLengthCounter(non_space_ptr);
         location = lineLocation(non_space_ptr);
@@ -89,7 +89,6 @@ int stage_1_process_file(const char *file_name, label_array *label_table, data_i
 
         if (location == LABEL) {
             labelFlag = 1;
-            memset(label_header, '\0', sizeof(label_header));
             strncpy(label_header, non_space_ptr, firstWordInLineLength);
             if (isReservedWord(label_header, strlen(label_header))) {
                 error_handler("ERROR_LABEL_NAME_IS_A_RESERVED_WORD", am_version, line_counter);
@@ -100,9 +99,8 @@ int stage_1_process_file(const char *file_name, label_array *label_table, data_i
             ptr = non_space_ptr + firstWordInLineLength + LENGTH_OF_COLON;
             non_space_ptr = firstWordInLine(ptr);
             firstWordInLineLength = firstWordLengthCounter(non_space_ptr);
+            location = lineLocation(non_space_ptr);
         }
-        location = lineLocation(non_space_ptr);
-
         if (location == DATA || location == STRING) {
             if (labelFlag == 1) {
                 if(labelArrayAdd(label_table, label_header, DC, location, am_version, line_counter) == 1)
@@ -132,7 +130,7 @@ int stage_1_process_file(const char *file_name, label_array *label_table, data_i
         } else if (location == ENTRY) {
         } else {
             if (labelFlag == 1)
-                if(labelArrayAdd(label_table, label_header, IC + 100, CODE, am_version, line_counter) == 1)
+                if(labelArrayAdd(label_table, label_header, IC + 100, IRRLEVANT, am_version, line_counter) == 1)
                     error_found = 1;
             ptr = non_space_ptr;
             non_space_ptr = firstWordInLine(ptr);
@@ -141,9 +139,7 @@ int stage_1_process_file(const char *file_name, label_array *label_table, data_i
                 error_handler("ERROR_COMMAND_NOT_FOUND", am_version, line_counter);
                 error_found = 1;
             }
-
             analyze_command(non_space_ptr, command_in_line, &L, word_in_binary, am_version, line_counter);
-
             code_node = newCodeNode(non_space_ptr, L, word_in_binary);
             codeNodeAdd(code_image, code_node);
             IC += L;
@@ -176,6 +172,7 @@ int stage_1_process_file(const char *file_name, label_array *label_table, data_i
 
 /**
  * Determines the type of a line in the source code.
+ *
  * @param str Pointer to the line string.
  * @return An integer representing the type of the line.
  */
@@ -259,12 +256,12 @@ int whichCommand(const char *command) {
  * @param file_name The name of the file being processed.
  * @param line_counter The current line number in the source code.
  */
-void analyze_command(char *ptr, const int command, int *L, char *word_in_binary, const char* file_name, const int line_counter) {
+int analyze_command(char *ptr, const int command, int *L, char *word_in_binary, const char *file_name, const int line_counter) {
+    int is_error = 0;
     char *first_operand_name = NULL, *second_operand_name = NULL;
     operand first_operand, second_operand;
 
     parseCommandString(ptr, command, &first_operand_name, &second_operand_name, file_name, line_counter);
-
 
     if (first_operand_name) {
         first_operand.name = malloc(strlen(first_operand_name) + 1);
@@ -274,7 +271,7 @@ void analyze_command(char *ptr, const int command, int *L, char *word_in_binary,
         else {
             error_handler("Failed to allocate memory ", file_name, line_counter);
             free(first_operand_name);
-            return;
+            return 1;
         }
     } else {
         first_operand.name = NULL;
@@ -290,7 +287,7 @@ void analyze_command(char *ptr, const int command, int *L, char *word_in_binary,
             error_handler("Failed to allocate memory", file_name, line_counter);
             free(first_operand_name);
             free(second_operand_name);
-            return;
+            return 1;
         }
     } else {
         second_operand.name = NULL;
@@ -311,78 +308,73 @@ void analyze_command(char *ptr, const int command, int *L, char *word_in_binary,
             }
         }
     }
-    if (command == 1) {
-        if (first_operand.name[0] == '\0' || second_operand.name[0] == '\0') {
-            //error
-            return;
-        }
-    } else if (command <= 3) {
-        if (first_operand.name[0] == '\0' || second_operand.name[0] == '\0') {
-            if (second_operand.type == IMMEDIATE) {
-                //error
-                return;
-
-            }
-        }
-    } else if (command == 4) {
-        if (first_operand.name[0] == '\0' || second_operand.name[0] == '\0') {
-            if (first_operand.type != LABEL_VALUE) {
-                //error
-                return;
-
-            }
-            if (second_operand.type == IMMEDIATE) {
-                //error
-                return;
-
-            }
-        }
-    } else if ((command <= 8 && command >= 5) || command == 11) {
-        if (second_operand.type != UNKNOWN) {
-            //error
-            return;
-
-        }
-        if (first_operand.type == IMMEDIATE) {
-            //error
-            return;
-
-        }
-    } else if (command == 9 || command == 10 || command == 13) {
-        if (second_operand.type != UNKNOWN) {
-            //error
-            return;
-
-        }
-        if (first_operand.type == IMMEDIATE || first_operand.type == REGISTER) {
-            //error
-            return;
-
-        }
-    } else if (command == 12) {
-        if (second_operand.type != UNKNOWN) {
-            //error
-            return;
-
-        }
-    } else if (command == 14 || command == 15) {
-        if (first_operand.type != UNKNOWN || second_operand.type != UNKNOWN) {
-            //error
-            return;
-
+    if (command == 1){}
+    else if (command <= 3) {
+        if (second_operand.type == IMMEDIATE) {
+            error_handler("ERROR_INVALID_TYPE_IN_SECOND_OPERAND", file_name, line_counter);
+            is_error = 1;
         }
     }
+    if (command == 4) {
+        if (first_operand.type != LABEL_VALUE) {
+            error_handler("ERROR_INVALID_TYPE_IN_FIRST_OPERAND", file_name, line_counter);
+            is_error = 1;
+        }
+        if (second_operand.type == IMMEDIATE) {
+            error_handler("ERROR_INVALID_TYPE_IN_SECOND_OPERAND", file_name, line_counter);
+            is_error = 1;
+        }
+    }
+    if ((command >= 5 &&command <= 8) || command == 11) {
+        if (first_operand.type == IMMEDIATE) {
+            error_handler("ERROR_INVALID_TYPE_IN_FIRST_OPERAND", file_name, line_counter);
+            is_error = 1;
+        }
+        if (second_operand.type != UNKNOWN) {
+            error_handler("ERROR_REQUIERED_COMMAND_DOES_NOT_SUPPORT_A_SECOND_OPERAND", file_name, line_counter);
+            is_error = 1;
+        }
+    }
+    if (command == 9 || command == 10 || command == 13) {
+        if (first_operand.type == IMMEDIATE || first_operand.type == REGISTER) {
+            error_handler("ERROR_INVALID_TYPE_IN_FIRST_OPERAND", file_name, line_counter);
+            is_error = 1;
+        }
+        if (second_operand.type != UNKNOWN) {
+            error_handler("ERROR_REQUIERED_COMMAND_DOES_NOT_SUPPORT_A_SECOND_OPERAND", file_name, line_counter);
+            is_error = 1;
+        }
+    }
+    if (command == 12) {
+        if (second_operand.type != UNKNOWN) {
+            error_handler("ERROR_REQUIERED_COMMAND_DOES_NOT_SUPPORT_A_SECOND_OPERAND", file_name, line_counter);
+            is_error = 1;
+        }
+    }
+    if (command == 14 || command == 15) {
+        if (first_operand.type != UNKNOWN || second_operand.type != UNKNOWN) {
+            error_handler("ERROR_REQUIERED_COMMAND_DOES_NOT_SUPPORT_OPERANDS", file_name, line_counter);
+            is_error = 1;
+        }
+    }
+    if (is_error) {
+        if (first_operand.name)
+            free(first_operand.name);
+        if (second_operand.name)
+            free(second_operand.name);
+        return 1;
+    }
+
     strcpy(word_in_binary, command_to_binary(command, first_operand, second_operand, *L));
     if (word_in_binary == NULL) {
-        // Handle error
-        error_handler("Memory allocation failed", file_name, line_counter);
-        return;
-
+        error_handler("ERROR_BINARY_VERSION_CLOUD_NOT_BE_CREATED", file_name, line_counter);
+        return 1;
     }
     if (first_operand.name)
         free(first_operand.name);
     if (second_operand.name)
         free(second_operand.name);
+    return 0;
 }
 
 /**

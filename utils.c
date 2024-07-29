@@ -1,5 +1,7 @@
 #include "utils.h"
 
+#include "assembler_stage_2.h"
+
 const char *reserved_words[] = {
     "mov"/*0*/, "cmp"/*1*/, "add"/*2*/, "sub"/*3*/, "lea"/*4*/, "clr"/*5*/, "not"/*6*/, "inc"/*7*/, "dec"/*8*/,
     "jmp"/*9*/, "bne"/*10*/, "red"/*11*/, "prn"/*12*/, "jsr"/*13*/, "rts"/*14*/, "stop"/*15*/,
@@ -88,8 +90,6 @@ int operandLengthCounter(const char *str) {
     for (counter = 0; *(str + counter) && !isspace(*(str + counter)) && (strncmp(&str[counter], ",", 1) != 0); counter
          ++) {
     };
-    /*if(strncmp(&str[counter], ",", 1) == 0)
-        counter++;*/
     return counter;
 }
 
@@ -256,7 +256,7 @@ int parseString(const char *input, int **array, int *size, int *DC, const char *
         return 1;
     }
     ptr = (char *) stringStart;
-    while (*stringStart && *stringStart != '"' && *stringStart != '“') {
+    while (*stringStart && *stringStart != '"') {
         if(isalpha(*stringStart) || isdigit(*stringStart)){ /* if a character is found outside of quotation marks*/
             error_handler("ERROR_INVALID_CHARATER_FOUND_OUTSIDE_OF_QUOTATION_MARK", file_name, line_counter);
             *array = NULL;
@@ -273,18 +273,19 @@ int parseString(const char *input, int **array, int *size, int *DC, const char *
         stringStart++;
     }
 
-    if (*stringStart != '"' && *stringStart != '“') { /* if the closing quotation mark is missing. */
+    if (*stringStart != '"') { /* if the closing quotation mark is missing. */
         error_handler("ERROR_MISSING_OPENING_QUOTATION_MARK", file_name, line_counter);
         *array = NULL;
         *size = 0;
         return 1;
     }
     ptr = (char *) (stringStart + 1);
-    while (*ptr && *ptr != '"' && *ptr != '”') {
+    while (*ptr && *ptr != '"') {
         count++;
         ptr++;
     }
     ptr++; /* skip the closing quotation mark */
+
     while(*ptr != '\n') {
         if(*ptr != ' ' && *ptr != '\t') { /* if a character is found outside of quotation marks. */
             error_handler("ERROR_INVALID_CHARATER_FOUND_OUTSIDE_OF_QUOTATION_MARK", file_name, line_counter);
@@ -348,21 +349,18 @@ int parseCommandString(char *input_ptr, const int command, char **source, char *
         }
         return 0;
     }
-
-    first_operand_length = operandLengthCounter(input_ptr);
-    first_operand = (char *) malloc(first_operand_length + 1);
-    if (first_operand == NULL) {
-        error_handler( "Failed to allocate memory", file_name, line_counter);
-        return 1;
-    }
-    if (strncmp(input_ptr, ",", 1) == 0) { /* lacks the first operand */
+    if (strncmp(input_ptr, ",", 1) == 0 || *input_ptr == '\n') { /* lacks the first operand */
         error_handler("ERROR_MISSING_FIRST_OPERAND", file_name, line_counter);
-        free(first_operand);
         return 1;
     }
     if(!isalpha(*input_ptr) && !isdigit(*input_ptr) && *input_ptr != '#' && *input_ptr != '*') { /* invalid first operand */
         error_handler("ERROR_INVALID_FIRST_OPERAND", file_name, line_counter);
-        free(first_operand);
+        return 1;
+    }
+    first_operand_length = operandLengthCounter(input_ptr);
+    first_operand = (char *) malloc(first_operand_length + 1);
+    if (first_operand == NULL) {
+        error_handler( "Failed to allocate memory", file_name, line_counter);
         return 1;
     }
     strncpy(first_operand, input_ptr, first_operand_length);
@@ -453,6 +451,79 @@ int parseCommandString(char *input_ptr, const int command, char **source, char *
     }
     return 0;
 }
+
+int parseCommandString_stage_2(char *input_ptr, const int command, char **source, char **dest, const char *file_name, const int line_counter) {
+    int command_length, first_operand_length , second_operand_length;
+    char *first_operand = NULL, *second_operand = NULL;
+
+    if (command < 15)
+        command_length = 3;
+    else
+        command_length = 4;
+
+    *source = NULL;
+    *dest = NULL;
+
+    input_ptr += command_length;
+    input_ptr = firstWordInLine(input_ptr);
+    if (command == 14 || command == 15) {
+        return 0;
+    }
+    first_operand_length = operandLengthCounter(input_ptr);
+    first_operand = (char *) malloc(first_operand_length + 1);
+    if (first_operand == NULL) {
+        error_handler( "Failed to allocate memory", file_name, line_counter);
+        return 1;
+    }
+    strncpy(first_operand, input_ptr, first_operand_length);
+    first_operand[first_operand_length] = '\0';
+
+    if (command < 5 /*mov, cmp, add, sub, lea*/) {
+        input_ptr += first_operand_length;
+        input_ptr = firstWordInLine(input_ptr);
+        if (strncmp(input_ptr, ",", 1) == 0) {
+            input_ptr++;
+            input_ptr = firstWordInLine(input_ptr);
+        }
+        input_ptr = firstWordInLine(input_ptr);
+        second_operand_length = operandLengthCounter(input_ptr);
+        second_operand = (char *) malloc(second_operand_length + 1);
+        strncpy(second_operand, input_ptr, second_operand_length);
+        second_operand[second_operand_length] = '\0';
+        input_ptr += second_operand_length;
+        input_ptr = firstWordInLine(input_ptr);
+    }/*
+    if(command > 4 && command < 14) {
+        input_ptr += first_operand_length;
+        input_ptr = firstWordInLine(input_ptr);
+    }*/
+    *source = (char *) malloc(first_operand_length + 1);
+    if (*source == NULL) {
+        error_handler( "Failed to allocate memory", file_name, line_counter);
+        free(first_operand);
+        if (second_operand)
+            free(second_operand);
+        return 1;
+    }
+    strncpy(*source, first_operand, first_operand_length + 1);
+    free(first_operand);
+    first_operand = NULL;
+
+    if (command < 5) {
+        *dest = (char *) malloc(second_operand_length + 1);
+        if (*dest == NULL) {
+            error_handler( "Failed to allocate memory", file_name, line_counter);
+            free(*source);
+            free(second_operand);
+            return 1;
+        }
+        strncpy(*dest, second_operand, second_operand_length + 1);
+        free(second_operand);
+        second_operand = NULL;
+    }
+    return 0;
+}
+
 
 /**
  * Allocates memory for a label array and initializes its elements.
@@ -642,10 +713,172 @@ char *command_to_binary(const int command, const operand first_operand, const op
     return str;
 }
 
-/*
-char* operand_to_binary(operand operand) {
 
-}*/
+void convert_operands_to_binary(operand first_operand, operand second_operand, char **first_operand_in_binary, char **second_operand_in_binary, const label_array *label_table) {
+    *first_operand_in_binary = (char *)malloc(SIZE_OF_NUMBER_IN_BITS + LEANGTH_OF_ARE + 1);
+    if (!*first_operand_in_binary) {
+        // handle error
+        return;
+    }
+    memset(*first_operand_in_binary, 0, SIZE_OF_NUMBER_IN_BITS + LEANGTH_OF_ARE + 1);
+
+    *second_operand_in_binary = (char *)malloc(SIZE_OF_NUMBER_IN_BITS + LEANGTH_OF_ARE + 1);
+    if (!*second_operand_in_binary) {
+        // handle error
+        return;
+    }
+    memset(*second_operand_in_binary, 0, SIZE_OF_NUMBER_IN_BITS + LEANGTH_OF_ARE + 1);
+    switch(first_operand.type) {
+        case IMMEDIATE:
+            *first_operand_in_binary = immediate_operand_to_binary(first_operand);
+        break;
+        case LABEL_VALUE:
+            *first_operand_in_binary = label_operand_to_binary(first_operand, label_table);
+        break;
+        case REGISTER_PTR:
+            *first_operand_in_binary = register_operand_to_binary(first_operand, second_operand);
+        break;
+        case REGISTER:
+            *first_operand_in_binary = register_operand_to_binary(first_operand, second_operand);
+        break;
+        case UNKNOWN:
+            break;
+    }
+    switch(second_operand.type) {
+        case IMMEDIATE:
+            *second_operand_in_binary = immediate_operand_to_binary(second_operand);
+        break;
+        case LABEL_VALUE:
+            *second_operand_in_binary = label_operand_to_binary(second_operand, label_table);
+        break;
+        case REGISTER_PTR:
+            if(first_operand.type == REGISTER_PTR || first_operand.type == REGISTER)
+                break;
+            else {
+                *second_operand_in_binary = register_operand_to_binary(first_operand, second_operand);
+                break;
+            }
+        case REGISTER:
+            if(first_operand.type == REGISTER_PTR || first_operand.type == REGISTER)
+                break;
+            else {
+                *second_operand_in_binary = register_operand_to_binary(first_operand, second_operand);
+                break;
+            }
+        case UNKNOWN:
+            break;
+    }
+}
+
+char* label_operand_to_binary(operand operand, label_array *label_table) {
+    int i, operand_address = -2;
+    char* operand_address_in_binary = malloc(SIZE_OF_NUMBER_IN_BITS + LEANGTH_OF_ARE + 1);
+    for(i = 0; i < label_table->rep; i++) {
+        if(strcmp(operand.name, label_table->label_element[i].name) == 0) {
+            operand_address = label_table->label_element[i].address;
+            break;
+        }
+    }
+    if(operand_address == -1) {
+        /* speical case for external label */
+        operand_address = 0;
+        strcpy(operand_address_in_binary, decimalToBinary(operand_address));
+        strcat(operand_address_in_binary, "001");
+        return operand_address_in_binary;
+    }
+    if(operand_address == -2)//need to make error for this case
+        return NULL;
+
+    strcpy(operand_address_in_binary, decimalToBinary(operand_address));
+    strcat(operand_address_in_binary, "010");
+    return operand_address_in_binary;
+}
+
+char* immediate_operand_to_binary(operand operand) {
+    char* operand_number_in_binary = malloc(SIZE_OF_NUMBER_IN_BITS + LEANGTH_OF_ARE + 1);
+    if(!operand_number_in_binary) {// handle error
+        return NULL;
+    }
+    char* operand_name = malloc( strlen(operand.name) + 1);
+    if(!operand_name) {// handle error
+        return NULL;
+    }
+    strcpy(operand_name, operand.name);
+    operand_name++;
+    operand_name = firstWordInLine(operand_name);
+    if (isdigit(operand_name[0]) || ((*operand_name == '-' || *operand_name == '+') && isdigit(*(operand_name + 1)))) {
+        strcpy(operand_number_in_binary, decimalToBinary(atoi(operand_name)));
+        strcat(operand_number_in_binary, "100");
+        return operand_number_in_binary;
+    }
+    return NULL;
+}
+
+char* register_operand_to_binary(operand first_operand, operand second_operand) {
+    char* operand_number_in_binary = malloc(SIZE_OF_NUMBER_IN_BITS + LEANGTH_OF_ARE + 1);
+    if(!operand_number_in_binary) {// handle error
+        return NULL;
+    }
+    memset(operand_number_in_binary, 0, SIZE_OF_NUMBER_IN_BITS + LEANGTH_OF_ARE + 1);
+    strcat(operand_number_in_binary, "000000");
+    if(second_operand.type == UNKNOWN) {
+        strcat(operand_number_in_binary, "000");
+        strcat(operand_number_in_binary, register_name_to_binary(first_operand.name));
+    }
+    else if(first_operand.type == second_operand.type || (first_operand.type == REGISTER_PTR && second_operand.type == REGISTER) || (first_operand.type == REGISTER && second_operand.type == REGISTER_PTR)) {
+        strcat(operand_number_in_binary, register_name_to_binary(first_operand.name));
+        strcat(operand_number_in_binary, register_name_to_binary(second_operand.name));
+    }
+    else if(first_operand.type == REGISTER_PTR || first_operand.type == REGISTER) {
+        strcat(operand_number_in_binary, register_name_to_binary(first_operand.name));
+        strcat(operand_number_in_binary, "000");
+    }
+    else if(second_operand.type == REGISTER_PTR || second_operand.type == REGISTER) {
+        strcat(operand_number_in_binary, "000");
+        strcat(operand_number_in_binary, register_name_to_binary(second_operand.name));
+    }
+    strcat(operand_number_in_binary, "100");
+    return operand_number_in_binary;
+    return NULL;
+}
+
+char* register_name_to_binary(const char* register_name) {
+    char* register_number_in_binary = malloc(SIZE_OF_NUMBER_IN_BITS + LEANGTH_OF_ARE + 1);
+    if(!register_number_in_binary) {// handle error
+        return NULL;
+    }
+    if(strncmp(register_name, "*", 1) == 0)
+        register_name++;
+    if(strcmp(register_name, "r0") == 0) {
+        strcpy(register_number_in_binary, "000");
+    }
+    else if(strcmp(register_name, "r1") == 0) {
+        strcpy(register_number_in_binary, "001");
+    }
+    else if( strcmp(register_name, "r2") == 0) {
+        strcpy(register_number_in_binary, "010");
+    }
+    else if(strcmp(register_name, "r3") == 0) {
+        strcpy(register_number_in_binary, "011");
+    }
+    else if(strcmp(register_name, "r4") == 0) {
+        strcpy(register_number_in_binary, "100");
+    }
+    else if(strcmp(register_name, "r5") == 0) {
+        strcpy(register_number_in_binary, "101");
+    }
+    else if(strcmp(register_name, "r6") == 0) {
+        strcpy(register_number_in_binary, "110");
+    }
+    else if(strcmp(register_name, "r7") == 0) {
+        strcpy(register_number_in_binary, "111");
+    }
+    else {
+        free(register_number_in_binary);
+        return NULL;
+    }
+    return register_number_in_binary;
+}
 
 /**
  * Handles errors by printing an error message along with the file name and line number where the error occurred.
@@ -658,4 +891,28 @@ char* operand_to_binary(operand operand) {
 void error_handler(const char *error_message, const char *file_name, const int line_counter) {
     printf("Error: %s in file %s at line %d\n", error_message, file_name, line_counter);
     exit(1);
+}
+
+char* decimalToBinary(int integer) {
+    int i,  number_in_bits = SIZE_OF_NUMBER_IN_BITS;
+    unsigned int mask;
+    char* binary_string = (char*)malloc(number_in_bits + 1);
+    if(!binary_string) {
+        return NULL;
+    }
+    binary_string[number_in_bits] = '\0';
+    mask = 1 << (number_in_bits - 1);
+    for(i = 0; i < number_in_bits; i++) {
+        if(integer & mask)
+            binary_string[i] = '1';
+        else
+            binary_string[i] = '0';
+        mask >>= 1;
+    }
+    return binary_string;
+}
+
+void ob_file_usher( FILE* ob_file, const char* file_name, const int IC, const int DC) {
+    fprintf(ob_file, "%d %d\n", IC, DC);
+    fclose(ob_file);
 }

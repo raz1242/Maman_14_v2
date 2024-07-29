@@ -33,10 +33,10 @@ typedef struct {
     code_node *first;
     code_node *last;
 } code_image;
-
+/*
 typedef struct extern_node {
-    char *symbol_name;
-    int symbol_address;
+    char *label_name;
+    int label_address;
 
     struct extern_node *next;
 } extern_node;
@@ -45,7 +45,7 @@ typedef struct extern_table {
     extern_node *first;
     extern_node *last;
 } extern_table;
-
+*/
 
 /*declarations*/
 code_image *codeImageAllocator();
