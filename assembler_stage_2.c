@@ -19,7 +19,7 @@ void printLabels(const label_array *label_table) {
     }
 }
 
-int stage_2_process_file(const char *file_name, label_array *label_table, code_image *code_image) {
+int stage_2_process_file(const char *file_name, label_array *label_table, code_image *code_image, data_image *data_image) {
     int i, IC = 0, DC = 0, L = 0, location, firstWordInLineLength, error_found = 0, command_in_line, array_size, line_counter = 0, is_vaild, extern_flag = 0, entry_flag = 0;
     char line[MAX_LENGTH_OF_LINE], label_header[MAX_LENGTH_OF_LABEL_HEADER + 1], word_in_binary[LENGTH_OF_BINARY_WORD];
     char *am_version = NULL, *ptr = NULL, *non_space_ptr = NULL, *file_EXT = NULL, *file_ENT = NULL;

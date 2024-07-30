@@ -15,7 +15,7 @@
 #define LENGTH_OF_BINARY_WORD 16
 #define LENGTH_OF_COLON 1
 
-int stage_1_process_file(const char* file_name, label_array* label_table, data_image* data_image, code_image* code_image);
+int stage_1_process_file(const char* file_name, label_array* label_table, code_image* code_image, data_image* data_image);
 int lineLocation(char *str);
 int whichCommand(const char* command);
 char* firstWordInLine(char* str);

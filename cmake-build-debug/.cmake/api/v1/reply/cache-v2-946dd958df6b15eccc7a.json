@@ -515,7 +515,7 @@
 				}
 			],
 			"type" : "PATH",
-			"value" : "C:/Program Files (x86)/Maman_14v2"
+			"value" : "C:/Program Files (x86)/Maman_14v3"
 		},
 		{
 			"name" : "CMAKE_LINKER",
@@ -1126,42 +1126,6 @@
 			"value" : "FALSE"
 		},
 		{
-			"name" : "Maman_14_BINARY_DIR",
-			"properties" : 
-			[
-				{
-					"name" : "HELPSTRING",
-					"value" : "Value Computed by CMake"
-				}
-			],
-			"type" : "STATIC",
-			"value" : "C:/Users/raz12/CLionProjects/Maman_14v2/cmake-build-debug"
-		},
-		{
-			"name" : "Maman_14_IS_TOP_LEVEL",
-			"properties" : 
-			[
-				{
-					"name" : "HELPSTRING",
-					"value" : "Value Computed by CMake"
-				}
-			],
-			"type" : "STATIC",
-			"value" : "ON"
-		},
-		{
-			"name" : "Maman_14_SOURCE_DIR",
-			"properties" : 
-			[
-				{
-					"name" : "HELPSTRING",
-					"value" : "Value Computed by CMake"
-				}
-			],
-			"type" : "STATIC",
-			"value" : "C:/Users/raz12/CLionProjects/Maman_14v2"
-		},
-		{
 			"name" : "Maman_14v2_BINARY_DIR",
 			"properties" : 
 			[
@@ -1187,6 +1151,42 @@
 		},
 		{
 			"name" : "Maman_14v2_SOURCE_DIR",
+			"properties" : 
+			[
+				{
+					"name" : "HELPSTRING",
+					"value" : "Value Computed by CMake"
+				}
+			],
+			"type" : "STATIC",
+			"value" : "C:/Users/raz12/CLionProjects/Maman_14v2"
+		},
+		{
+			"name" : "Maman_14v3_BINARY_DIR",
+			"properties" : 
+			[
+				{
+					"name" : "HELPSTRING",
+					"value" : "Value Computed by CMake"
+				}
+			],
+			"type" : "STATIC",
+			"value" : "C:/Users/raz12/CLionProjects/Maman_14v2/cmake-build-debug"
+		},
+		{
+			"name" : "Maman_14v3_IS_TOP_LEVEL",
+			"properties" : 
+			[
+				{
+					"name" : "HELPSTRING",
+					"value" : "Value Computed by CMake"
+				}
+			],
+			"type" : "STATIC",
+			"value" : "ON"
+		},
+		{
+			"name" : "Maman_14v3_SOURCE_DIR",
 			"properties" : 
 			[
 				{

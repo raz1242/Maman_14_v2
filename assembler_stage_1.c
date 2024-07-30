@@ -54,7 +54,7 @@ void printExternLabels(const label_array *array) { //- testing
     }
 }
 
-int stage_1_process_file(const char *file_name, label_array *label_table, data_image *data_image, code_image *code_image) {
+int stage_1_process_file(const char *file_name, label_array *label_table, code_image *code_image, data_image *data_image) {
 
     int i, IC = 0, DC = 0, L = 0, location, firstWordInLineLength, labelFlag, error_found = 0, command_in_line, array_size, line_counter = 0;
     int *parced_array = NULL;
