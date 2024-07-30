@@ -37,7 +37,7 @@ void printCodeImage(const code_image *image) {  //- testing
     code_node *current = image->first;
     while (current != NULL) {
         printf("Original line: %s", current->original_line);
-        printf("Binary representation: %s\n\n", current->word);
+        printf("Binary representation: %s\n\n", current->word_in_binary);
         // Add more printf statements here if you need to print more fields
         current = current->next_node;
 
@@ -110,7 +110,7 @@ int stage_1_process_file(const char *file_name, label_array *label_table, data_i
                 parseData(non_space_ptr, &parced_array, &array_size, &DC, am_version, line_counter);
             else
                 parseString(non_space_ptr, &parced_array, &array_size, &DC, am_version, line_counter);
-            data_node = newDataNode(non_space_ptr, parced_array, array_size);
+            data_node = newDataNode(non_space_ptr, array_size, parced_array);
             dataNodeAdd(data_image, data_node);
             free(parced_array);
             parced_array = NULL;

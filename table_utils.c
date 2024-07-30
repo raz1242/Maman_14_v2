@@ -33,24 +33,24 @@ code_node *newCodeNode(const char *line, const int L, const char* word_in_binary
         printf("Failed to allocate memory\n");
         exit(1);
     }
-    new_node->word = (char*)malloc(L * 16);
-    if (new_node->word == NULL) {
+    new_node->word_in_binary = (char*)malloc(L * 16);
+    if (new_node->word_in_binary == NULL) {
         printf("Failed to allocate memory\n");
         free(new_node);
         exit(1);
     }
-    strncpy(new_node->word, word_in_binary,16);
-    new_node->word[16] = '\0';
+    strncpy(new_node->word_in_binary, word_in_binary,16);
+    new_node->word_in_binary[16] = '\0';
     new_node->original_line = (char *) malloc(strlen(line) + 1);
     if (new_node->original_line == NULL) {
         printf("Failed to allocate memory\n");
-        free(new_node->word);
+        free(new_node->word_in_binary);
         free(new_node);
         return NULL;
     }
     strcpy(new_node->original_line, line);
 
-    new_node->length = L;
+    //new_node->length = L;
     new_node->next_node = NULL;
     return new_node;
 }
@@ -93,12 +93,12 @@ data_image *dataImageAllocator() {
  * Creates a new data node with the given line, command type, data array, and array size.
  *
  * @param line The original line of code.
- * @param data The array of data.
  * @param array_size The size of the data array.
+ * @param data The array of data.
  * @return A pointer to the newly created data node.
  *         Exits the program if memory allocation fails.
  */
-data_node *newDataNode(const char *line, const int* data, const int array_size) {
+data_node *newDataNode(const char *line, const int array_size, const int* data) {
     int i;
     data_node *new_node = (data_node *) malloc(sizeof(data_node));
     if (new_node == NULL) {
@@ -126,8 +126,8 @@ data_node *newDataNode(const char *line, const int* data, const int array_size) 
     new_node->next_node = NULL;
     return new_node;
 }
+
 /**
- *
  * Adds a new data node to the data image.
  *
  * @param data_image A pointer to the data image where the node will be added.

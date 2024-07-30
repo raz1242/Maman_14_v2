@@ -9,16 +9,6 @@
 #define EXTERN_ADDRESS -1
 #define SIZE_OF_NUMBER_IN_BITS 12
 
-typedef enum code_structure{
-    LABEL,  /*0*/
-    DATA,   /*1*/
-    STRING, /*2*/
-    ENTRY,  /*3*/
-    EXTERN, /*4*/
-    CODE,   /*5*/
-    IRRLEVANT /*6*/
-} line_type;
-
 typedef enum addressing_method{
     IMMEDIATE,
     LABEL_VALUE,
@@ -31,6 +21,16 @@ typedef struct oprator_structure{
     char* name;
     enum addressing_method type;
 } operand;
+
+typedef enum code_structure{
+    LABEL,  /*0*/
+    DATA,   /*1*/
+    STRING, /*2*/
+    ENTRY,  /*3*/
+    EXTERN, /*4*/
+    CODE,   /*5*/
+    IRRLEVANT /*6*/
+} line_type;
 
 typedef struct label{
     char *name;
