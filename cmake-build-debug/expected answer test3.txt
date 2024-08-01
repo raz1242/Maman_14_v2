@@ -67,61 +67,49 @@ Extern Labels:
 Label: fn1, Address: -1
 Label: L3, Address: -1
 
-command_line: add r3, LIST
-first operand: 000000011000100
-second operand: 000010001001010
+100 001010000010100
+101 000000011000100
+102 000010001001010
 
-command_line: jsr fn1
-first operand: 000000000000001
-second operand: 
+103 110100000010100
+104 000000000000001
 
-command_line: prn #48
-first operand: 000000110000100
-second operand: 
+105 110000000001100
+106 000000110000100
 
-command_line: lea STR, r6
-first operand: 000010000100010
-second operand: 000000000110100
+107 010000101000100
+108 000010000100010
+109 000000000110100
 
-command_line: inc r6
-first operand: 000000000110100
-second operand: 
+110 011100001000100
+111 000000000110100
 
-command_line: mov *r6, L3
-first operand: 000000110000100
-second operand: 000000000000001
+112 000001000010100
+113 000000110000100
+114 000000000000001
 
-command_line: sub r1, r4
-first operand: 000000001100100
-second operand: 
+115 001110001000100
+116 000000001100100
 
-command_line: cmp r3, #-6
-first operand: 000000011000100
-second operand: 111111111010100
+117 000110000001100
+118 000000011000100
+119 111111111010100
 
-command_line: bne END
-first operand: 000010000011010
-second operand: 
+120 101000000010100
+121 000010000011010
 
-command_line: add r7, *r6
-first operand: 000000111110100
-second operand: 
+122 001010000100100
+123 000000111110100
 
-command_line: clr K
-first operand: 000010001100010
-second operand: 
+124 010100000010100
+125 000010001100010
 
-command_line: sub L3, L3
-first operand: 000000000000001
-second operand: 000000000000001
+126 001100100010100
+127 000000000000001
+128 000000000000001
 
-command_line: jmp LOOP
-first operand: 000001101001010
-second operand: 
-
-command_line: stop
-first operand: 
-second operand: 
+129 100100000010100
+130 000001101001010
 
 Label: fn1, Characteristic: EXTERN
 Label: MAIN, Characteristic: ENTRY

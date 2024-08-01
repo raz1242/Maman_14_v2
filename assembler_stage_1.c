@@ -26,7 +26,7 @@ void printDataImage(const data_image *image) { //-  testing
         printf("Data: ");
         for (i = 0; i < current->length; i++) {
             //if(current->word[i] != 0)
-            printf("%d ", current->word[i]);
+            printf("%d ", current->char_in_ASCII[i]);
         }
         printf("\n\n");
         current = current->next_node;
@@ -37,7 +37,7 @@ void printCodeImage(const code_image *image) {  //- testing
     code_node *current = image->first;
     while (current != NULL) {
         printf("Original line: %s", current->original_line);
-        printf("Binary representation: %s\n\n", current->word_in_binary);
+        printf("Binary representation: %s\n\n", current->word_command_in_binary);
         // Add more printf statements here if you need to print more fields
         current = current->next_node;
 
@@ -303,7 +303,10 @@ int analyze_command(char *ptr, const int command, int *L, char *word_in_binary, 
             (*L)++;
             if (command <= 4) {
                 analyze_operand(&second_operand);
-                if (first_operand.type != second_operand.type)
+                if (!(first_operand.type == REGISTER_PTR && second_operand.type == REGISTER) &&
+                    !(first_operand.type == REGISTER && second_operand.type == REGISTER_PTR) &&
+                    !(first_operand.type == REGISTER && second_operand.type == REGISTER) &&
+                    !(first_operand.type == REGISTER_PTR && second_operand.type == REGISTER_PTR))
                     (*L)++;
             }
         }
@@ -419,4 +422,5 @@ int analyze_operand(operand *operand) {
         }
     }
     return 0;
+
 }

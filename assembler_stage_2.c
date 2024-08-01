@@ -20,16 +20,19 @@ void printLabels(const label_array *label_table) {
 }
 
 int stage_2_process_file(const char *file_name, label_array *label_table, code_image *code_image, data_image *data_image) {
-    int i, IC = 0, DC = 0, L = 0, location, firstWordInLineLength, error_found = 0, command_in_line, array_size, line_counter = 0, is_vaild, extern_flag = 0, entry_flag = 0;
-    char line[MAX_LENGTH_OF_LINE], label_header[MAX_LENGTH_OF_LABEL_HEADER + 1], word_in_binary[LENGTH_OF_BINARY_WORD];
+    int i, IC = 0, DC = 0, L = 0, location, firstWordInLineLength, error_found = 0, command_in_line, line_counter = 0, is_vaild, extern_flag = 0, entry_flag = 0;
+    char line[MAX_LENGTH_OF_LINE], label_header[MAX_LENGTH_OF_LABEL_HEADER + 1];
     char *am_version = NULL, *ptr = NULL, *non_space_ptr = NULL, *file_EXT = NULL, *file_ENT = NULL;
     char *first_operand_in_binary = NULL, *second_operand_in_binary = NULL; // for testing
     FILE *am_extension = NULL, *ext_extension = NULL, *ent_extension = NULL;
     operand first_operand, second_operand;
-
+    int j = 100;// take care about it later, it's the starting point of the loop at the end
+    char* binary_str;
     am_version = fileTypeCreator(file_name, ".am");
     am_extension = fopen(am_version, "r");
     // fix naming of the files in all stages
+    code_node *code_node = code_image ->first;
+    data_node *data_node = data_image ->first;
 
     if (am_extension == NULL) {
         printf("Error opening file\n");
@@ -72,7 +75,10 @@ int stage_2_process_file(const char *file_name, label_array *label_table, code_i
             extern_flag = 1;
         }
         if(location == DATA || location == STRING) {
-            continue;
+
+            convert_ASCII_to_binary(data_node);
+            DC += data_node->length;
+            data_node = data_node->next_node;
         }
         if(location == CODE) {
             command_in_line = whichCommand(non_space_ptr);
@@ -81,61 +87,71 @@ int stage_2_process_file(const char *file_name, label_array *label_table, code_i
                 analyze_operand(&first_operand);
             if(second_operand.name)
                 analyze_operand(&second_operand);
-            /*
-            switch(first_operand.type) {
-                case IMMEDIATE:
-                    first_operand_in_binary = immediate_operand_to_binary(first_operand);
-                    break;
-                case LABEL_VALUE:
-                    first_operand_in_binary = label_operand_to_binary(first_operand, label_table);
-                    break;
-                case REGISTER_PTR:
-                    first_operand_in_binary = register_operand_to_binary(first_operand, second_operand);
-                    break;
-                case REGISTER:
-                    first_operand_in_binary = register_operand_to_binary(first_operand, second_operand);
-                    break;
-                case UNKNOWN:
-                    break;
-            }
-            switch(second_operand.type) {
-                case IMMEDIATE:
-                    second_operand_in_binary = immediate_operand_to_binary(second_operand);
-                    break;
-                case LABEL_VALUE:
-                    second_operand_in_binary = label_operand_to_binary(second_operand, label_table);
-                    break;
-                case REGISTER_PTR:
-                    if(first_operand.type == REGISTER_PTR | first_operand.type == REGISTER)
-                        break;
-                    else {
-                        second_operand_in_binary = register_operand_to_binary(second_operand, first_operand);
-                        break;
-                    }
-                case REGISTER:
-                    if(first_operand.type == REGISTER_PTR | first_operand.type == REGISTER)
-                        break;
-                    else {
-                        second_operand_in_binary = register_operand_to_binary(second_operand, first_operand);
-                        break;
-                    }
-                    break;
-                case UNKNOWN:
-                    break;
-            }*/
             convert_operands_to_binary(first_operand, second_operand, &first_operand_in_binary, &second_operand_in_binary,  label_table);
-            printf("\ncommand_line: %sfirst operand: %s\nsecond operand: %s\n",non_space_ptr, first_operand_in_binary, second_operand_in_binary); // for testing
+            if(code_node->length >= 2) {
 
+                code_node->word_operand1_in_binary = (char *) malloc(LENGTH_OF_BINARY_WORD);
+                if( code_node->word_operand1_in_binary == NULL) {
+                    printf("Failed to allocate memory\n");
+                    exit(1);
+                }
+                strcpy(code_node->word_operand1_in_binary, first_operand_in_binary);
+            } else {
+                code_node->word_operand1_in_binary = NULL;
+            }
 
-            first_operand.type = UNKNOWN;
-            second_operand.type = UNKNOWN;
+            if(code_node->length == 3) {
+                code_node->word_operand2_in_binary = (char *) malloc(LENGTH_OF_BINARY_WORD);
+                if( code_node->word_operand2_in_binary == NULL) {
+                    printf("Failed to allocate memory\n");
+                    exit(1);
+                }
+                strcpy(code_node->word_operand2_in_binary, second_operand_in_binary);
+            } else {
+                code_node->word_operand2_in_binary = NULL;
+
+            }
+            //printf("\ncommand_line: %sfirst operand: %s\nsecond operand: %s\n",non_space_ptr, first_operand_in_binary, second_operand_in_binary); // for testing
+            //printf("\ncommand_line: %sfirst operand: %s\nsecond operand: %s\n",non_space_ptr, code_node->word_operand1_in_binary, code_node->word_operand2_in_binary); // for testing
+            IC += code_node->length;
+            if(code_node != code_image->last && code_node->next_node != NULL)
+                code_node = code_node->next_node;
+
         }
+
+
+        first_operand.type = UNKNOWN;
+        second_operand.type = UNKNOWN;
     }
+    /*code_node = code_image ->first;
+    data_node = data_image ->first;
+    while(1) { // for testing - print the binary code of the commands and operands
+        printf("\n%d %s", j++, code_node->word_command_in_binary);
+        if(code_node->length >= 2)
+            printf("\n%d %s", j++, code_node->word_operand1_in_binary);
+        if(code_node->length == 3)
+            printf("\n%d %s", j++, code_node->word_operand2_in_binary);
+        printf("\n");
+        if(code_node->next_node == NULL)
+            break;
+        *code_node = *code_node->next_node;
+    }
+
+    while(1) { // for testing - print the binary code of the data
+        for(i = 0; i < data_node->length; i++) {
+            printf("\n%d %s", j++, data_node->word_in_binary[i]);
+        }
+        printf("\n");
+        if(data_node->next_node == NULL)
+            break;
+        *data_node = *data_node->next_node;
+    }*/
     /*if(!entry_flag){
         file_ENT = fileTypeCreator(file_name, ".ent");
         ent_extension = fopen(file_ENT, "w");
     }*/ // make another one for extern
     printLabels(label_table);
+    ob_file_usher(file_name, data_image, code_image , IC, DC);
     return 0;
 }
 

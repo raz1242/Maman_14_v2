@@ -8,7 +8,7 @@
 
 #define EXTERN_ADDRESS -1
 #define SIZE_OF_NUMBER_IN_BITS 12
-
+#define LEANGTH_OF_ARE 3
 typedef enum addressing_method{
     IMMEDIATE,
     LABEL_VALUE,
@@ -65,6 +65,7 @@ char* immediate_operand_to_binary(operand operand);
 char* register_name_to_binary(const char* register_name);
 char* label_operand_to_binary(operand operand, label_array *label_table);
 char* register_operand_to_binary(operand first_operand, operand second_operand);
-void convert_operands_to_binary(operand first_operand, operand second_operand, char **first_operand_in_binary, char **second_operand_in_binary, const label_array *label_table);
+void convert_operands_to_binary(operand first_operand, operand second_operand, char **first_operand_in_binary, char **second_operand_in_binary, label_array *label_table);
+char* binary_to_octal(const char *binary_str);
 
 #endif //UTILS_H

@@ -8,7 +8,7 @@
 #include "utils.h"
 
 #define MIN_LENGTH_OF_MACRO_BODY 1
-#define MAX_LENGTH_OF_MACRO_BODY 100
+#define MAX_LENGTH_OF_MACRO_BODY 80
 #define MAX_LENGTH_OF_MACRO_HEADER 50
 #define AS_FILE_EXTENTION as
 #define AM_FILE_EXTENTION am

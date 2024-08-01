@@ -524,7 +524,6 @@ int parseCommandString_stage_2(char *input_ptr, const int command, char **source
     return 0;
 }
 
-
 /**
  * Allocates memory for a label array and initializes its elements.
  *
@@ -713,21 +712,21 @@ char *command_to_binary(const int command, const operand first_operand, const op
     return str;
 }
 
-
-void convert_operands_to_binary(operand first_operand, operand second_operand, char **first_operand_in_binary, char **second_operand_in_binary, const label_array *label_table) {
-    *first_operand_in_binary = (char *)malloc(SIZE_OF_NUMBER_IN_BITS + LEANGTH_OF_ARE + 1);
+void convert_operands_to_binary(operand first_operand, operand second_operand, char **first_operand_in_binary, char **second_operand_in_binary, label_array *label_table) {
+    *first_operand_in_binary = (char*)malloc(SIZE_OF_NUMBER_IN_BITS + LEANGTH_OF_ARE + 1);
     if (!*first_operand_in_binary) {
         // handle error
         return;
     }
-    memset(*first_operand_in_binary, 0, SIZE_OF_NUMBER_IN_BITS + LEANGTH_OF_ARE + 1);
+    memset(first_operand_in_binary, 0, SIZE_OF_NUMBER_IN_BITS + LEANGTH_OF_ARE + 1);
 
-    *second_operand_in_binary = (char *)malloc(SIZE_OF_NUMBER_IN_BITS + LEANGTH_OF_ARE + 1);
+    *second_operand_in_binary = (char*)malloc(SIZE_OF_NUMBER_IN_BITS + LEANGTH_OF_ARE + 1);
     if (!*second_operand_in_binary) {
+        free(first_operand_in_binary);
         // handle error
         return;
     }
-    memset(*second_operand_in_binary, 0, SIZE_OF_NUMBER_IN_BITS + LEANGTH_OF_ARE + 1);
+    memset(second_operand_in_binary, 0, SIZE_OF_NUMBER_IN_BITS + LEANGTH_OF_ARE + 1);
     switch(first_operand.type) {
         case IMMEDIATE:
             *first_operand_in_binary = immediate_operand_to_binary(first_operand);
@@ -742,6 +741,7 @@ void convert_operands_to_binary(operand first_operand, operand second_operand, c
             *first_operand_in_binary = register_operand_to_binary(first_operand, second_operand);
         break;
         case UNKNOWN:
+            free(*first_operand_in_binary);
             break;
     }
     switch(second_operand.type) {
@@ -766,6 +766,7 @@ void convert_operands_to_binary(operand first_operand, operand second_operand, c
                 break;
             }
         case UNKNOWN:
+            free(*second_operand_in_binary);
             break;
     }
 }
@@ -880,6 +881,30 @@ char* register_name_to_binary(const char* register_name) {
     return register_number_in_binary;
 }
 
+void free_label_array(label_array *label_table) { // example how to free a label array, need to implement it in code
+    int i;
+    for(i = 0; i < label_table->rep; i++) {
+        free(label_table->label_element[i].name);
+    }
+    free(label_table->label_element);
+    free(label_table);
+}
+/*
+void free_command_array(command_array *command_table) { // example how to free a command array, need to implement it in code
+    int i;
+    for(i = 0; i < command_table->rep; i++) {
+        free(command_table->command_element[i].source);
+        free(command_table->command_element[i].dest);
+    }
+    free(command_table->command_element);
+    free(command_table);
+}
+
+void free_data_array(data_array *data_table) { // example how to free a data array, need to implement it in code
+    free(data_table->data_element);
+    free(data_table);
+}*/
+
 /**
  * Handles errors by printing an error message along with the file name and line number where the error occurred.
  * Exits the program after printing the error message.
@@ -892,6 +917,14 @@ void error_handler(const char *error_message, const char *file_name, const int l
     printf("Error: %s in file %s at line %d\n", error_message, file_name, line_counter);
     exit(1);
 }
+
+/**
+ * Converts a decimal number to a binary string representation.
+ *
+ * @param integer The decimal number to be converted.
+ * @return A string containing the binary representation of the decimal number.
+ *         Returns NULL if memory allocation fails.
+ */
 
 char* decimalToBinary(int integer) {
     int i,  number_in_bits = SIZE_OF_NUMBER_IN_BITS;
@@ -912,7 +945,26 @@ char* decimalToBinary(int integer) {
     return binary_string;
 }
 
-void ob_file_usher( FILE* ob_file, const char* file_name, const int IC, const int DC) {
-    fprintf(ob_file, "%d %d\n", IC, DC);
-    fclose(ob_file);
+char* binary_to_octal(const char *binary_str) {
+    int start_index, end_index, value, i, j;
+    if (strlen(binary_str) != 15) {// make #define
+        fprintf(stderr, "Error: binary_str must be 15 bits long.\n");
+        return NULL;
+    }
+    char *octal_str = (char*)malloc(6); // make #define
+    if (!octal_str) {
+        fprintf(stderr, "Memory allocation failed.\n");
+        return NULL;
+    }
+    octal_str[5] = '\0';
+    for (i = 0; i < 5; i++) {
+        start_index = 15 - (3 * (i + 1));
+        end_index = 15 - (3 * i);
+        value = 0;
+        for (j = start_index; j < end_index; j++) {
+            value = (value << 1) | (binary_str[j] - '0');
+        }
+        octal_str[4 - i] = value + '0';
+    }
+    return octal_str;
 }

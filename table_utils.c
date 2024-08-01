@@ -33,24 +33,39 @@ code_node *newCodeNode(const char *line, const int L, const char* word_in_binary
         printf("Failed to allocate memory\n");
         exit(1);
     }
-    new_node->word_in_binary = (char*)malloc(L * 16);
-    if (new_node->word_in_binary == NULL) {
+    new_node->word_command_in_binary = (char*)malloc(16); // change to #define from a constant
+    if (new_node->word_command_in_binary == NULL) {
         printf("Failed to allocate memory\n");
         free(new_node);
         exit(1);
     }
-    strncpy(new_node->word_in_binary, word_in_binary,16);
-    new_node->word_in_binary[16] = '\0';
+    new_node->word_operand1_in_binary = (char*)malloc(16);// change to #define from a constant
+    if(new_node->word_operand1_in_binary == NULL) {
+        printf("Failed to allocate memory\n");
+        free(new_node->word_command_in_binary);
+        free(new_node);
+        exit(1);
+    }
+    new_node->word_operand2_in_binary = (char*)malloc(16);// change to #define from a constant
+    if(new_node->word_operand2_in_binary == NULL) {
+        printf("Failed to allocate memory\n");
+        free(new_node->word_command_in_binary);
+        free(new_node->word_operand1_in_binary);
+        free(new_node);
+        exit(1);
+    }
+    strncpy(new_node->word_command_in_binary, word_in_binary,16);// change to #define from a constant
+    new_node->word_command_in_binary[16] = '\0';
     new_node->original_line = (char *) malloc(strlen(line) + 1);
     if (new_node->original_line == NULL) {
         printf("Failed to allocate memory\n");
-        free(new_node->word_in_binary);
+        free(new_node->word_command_in_binary);
         free(new_node);
         return NULL;
     }
     strcpy(new_node->original_line, line);
 
-    //new_node->length = L;
+    new_node->length = L;
     new_node->next_node = NULL;
     return new_node;
 }
@@ -105,18 +120,18 @@ data_node *newDataNode(const char *line, const int array_size, const int* data) 
         printf("Failed to allocate memory\n");
         exit(1);
     }
-    new_node->word = (int *) malloc(array_size * sizeof(int));
-    if (new_node->word == NULL) {
+    new_node->char_in_ASCII = (int *) malloc(array_size * sizeof(int));
+    if (new_node->char_in_ASCII == NULL) {
         printf("Failed to allocate memory\n");
         exit(1);
     }
     for (i = 0; i < array_size; i++)
-        new_node->word[i] = data[i];
+        new_node->char_in_ASCII[i] = data[i];
 
     new_node->original_line = (char *) malloc(strlen(line) + 1); // mainly for testing purposes
     if (new_node->original_line == NULL) { // mainly for testing purposes
         printf("Failed to allocate memory\n");
-        free(new_node->word);  // mainly for testing purposes
+        free(new_node->char_in_ASCII);  // mainly for testing purposes
         free(new_node); // mainly for testing purposes
         return NULL; // mainly for testing purposes
     } // mainly for testing purposes
@@ -141,4 +156,58 @@ void dataNodeAdd(data_image *data_image, data_node *new_node) {
         data_image->last->next_node = new_node;
         data_image->last = new_node;
     }
+}
+
+void convert_ASCII_to_binary(data_node *data_node) {
+    int i;
+    char str[16]; // Buffer to hold the 15-bit binary string + null-terminator
+    data_node->word_in_binary = malloc(data_node->length * sizeof(char *));
+    if (data_node->word_in_binary == NULL) {
+        printf("Failed to allocate memory\n");
+        exit(1);
+    }
+    for (i = 0; i < data_node->length; i++) {
+        memset(str, 0, 16);
+        if(data_node->char_in_ASCII[i] >= 0)
+            strcpy(str, "000");
+        else
+            strcpy(str, "111");
+        strcat(str, decimalToBinary(data_node->char_in_ASCII[i])); // retruns 12 bit binary number
+        data_node->word_in_binary[i] = (char *)malloc(16);
+        strcpy(data_node->word_in_binary[i], str);
+    }
+}
+
+void ob_file_usher(const char* file_name, data_image *data_image, code_image *code_image, int IC, int DC) {
+    int i, j = 100;
+    code_node* code_node = code_image->first;
+    data_node* data_node = data_image->first;
+    char *file_OB = fileTypeCreator(file_name, ".ob");
+    FILE *ob_extension  = fopen(file_OB, "w");
+    if (!ob_extension) {
+        // handle error
+        return;
+    }
+    fprintf(ob_extension, "%d %d\n", IC, DC);
+
+    while(1) { // for testing - maybe think on a smarter way instead of while(1)
+        fprintf(ob_extension, "%04d %s\n", j++, binary_to_octal(code_node->word_command_in_binary));
+        if (code_node->length >= 2)
+            fprintf(ob_extension, "%04d %s\n", j++, binary_to_octal(code_node->word_operand1_in_binary));
+        if (code_node->length == 3)
+            fprintf(ob_extension, "%04d %s\n", j++, binary_to_octal(code_node->word_operand2_in_binary));
+        if(code_node->next_node == NULL)
+            break;
+        *code_node = *code_node->next_node;
+    }
+    while (1) {
+
+        for (i = 0; i < data_node->length; i++) {
+            fprintf(ob_extension, "%04d %s\n", j++, binary_to_octal(data_node->word_in_binary[i]));
+        }
+        if (data_node->next_node == NULL)
+            break;
+        data_node = data_node->next_node;
+    }
+    fclose(ob_extension);
 }
