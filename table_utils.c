@@ -6,7 +6,7 @@
  * @return A pointer to the allocated code image.
  *         Exits the program if memory allocation fails.
  */
-code_image *codeImageAllocator() {
+code_image *code_image_allocator() {
     code_image *new_code_image = (code_image*)malloc(sizeof(code_image));
     if (new_code_image == NULL) {
         printf("Failed to allocate memory\n");
@@ -27,7 +27,7 @@ code_image *codeImageAllocator() {
  * @return A pointer to the newly created code node.
  *         Exits the program if memory allocation fails.
  */
-code_node *newCodeNode(const char *line, const int L, const char* word_in_binary) {
+code_node *new_code_node(const char *line, const int L, const char* word_in_binary) {
     code_node *new_node = (code_node*) malloc(sizeof(code_node));
     if (new_node == NULL) {
         printf("Failed to allocate memory\n");
@@ -76,7 +76,7 @@ code_node *newCodeNode(const char *line, const int L, const char* word_in_binary
  * @param code_image A pointer to the code image where the node will be added.
  * @param new_node A pointer to the new code node to be added.
  */
-void codeNodeAdd(code_image* code_image, code_node *new_node) {
+void code_node_add(code_image* code_image, code_node *new_node) {
     if (code_image->first == NULL) {
         code_image->first = new_node;
         code_image->last = new_node;
@@ -92,7 +92,7 @@ void codeNodeAdd(code_image* code_image, code_node *new_node) {
  * @return A pointer to the allocated data image.
  *         Exits the program if memory allocation fails.
  */
-data_image *dataImageAllocator() {
+data_image *data_image_allocator() {
     data_image *new_data_image = malloc(sizeof(data_image));
     if (new_data_image == NULL) {
         printf("Failed to allocate memory\n");
@@ -113,7 +113,7 @@ data_image *dataImageAllocator() {
  * @return A pointer to the newly created data node.
  *         Exits the program if memory allocation fails.
  */
-data_node *newDataNode(const char *line, const int array_size, const int* data) {
+data_node *new_data_node(const char *line, const int array_size, const int* data) {
     int i;
     data_node *new_node = (data_node *) malloc(sizeof(data_node));
     if (new_node == NULL) {
@@ -148,7 +148,7 @@ data_node *newDataNode(const char *line, const int array_size, const int* data) 
  * @param data_image A pointer to the data image where the node will be added.
  * @param new_node A pointer to the new data node to be added.
  */
-void dataNodeAdd(data_image *data_image, data_node *new_node) {
+void data_node_add(data_image *data_image, data_node *new_node) {
     if (data_image->first == NULL) {
         data_image->first = new_node;
         data_image->last = new_node;
@@ -158,7 +158,12 @@ void dataNodeAdd(data_image *data_image, data_node *new_node) {
     }
 }
 
-void convert_ASCII_to_binary(data_node *data_node) {
+/**
+ * Converts ASCII values in a data node to their binary representation.
+ *
+ * @param data_node A pointer to the data node containing ASCII values to be converted.
+ */
+void convert_ascii_to_binary(data_node *data_node) {
     int i;
     char str[16]; // Buffer to hold the 15-bit binary string + null-terminator
     data_node->word_in_binary = malloc(data_node->length * sizeof(char *));
@@ -178,7 +183,16 @@ void convert_ASCII_to_binary(data_node *data_node) {
     }
 }
 
-void ob_file_usher(const char* file_name, data_image *data_image, code_image *code_image, int IC, int DC) {
+/**
+ * Writes the object file with the code and data images in octal format.
+ *
+ * @param file_name The name of the file to write the object code to.
+ * @param data_image A pointer to the data image containing the data nodes.
+ * @param code_image A pointer to the code image containing the code nodes.
+ * @param IC The instruction counter.
+ * @param DC The data counter.
+ */
+void ob_file_usher(const char* file_name, const data_image *data_image, const code_image *code_image, const int IC, const int DC) {
     int i, j = STARTING_POINT_OF_MEMORY;
     code_node* code_node = code_image->first;
     data_node* data_node = data_image->first;
@@ -213,14 +227,13 @@ void ob_file_usher(const char* file_name, data_image *data_image, code_image *co
  * Writes the external labels to a file.
  *
  * @param file_name The name of the file to write the external labels to.
- * @param label_table A pointer to the label array containing the labels and their characteristics.
+ * @param code_image A pointer to the code image containing the code and its characteristics.
  */
-void  ext_file_usher(const char *file_name, const code_image *code_image, const label_array *label_table) {
-    int i, j = 0;
+void  ext_file_usher(const char *file_name, const code_image *code_image) {
     char *file_EXT = file_name_extender(file_name, ".ext");
     FILE *ext_extension = fopen(file_EXT, "w");
     file_inspector(ext_extension, file_EXT);
-    code_node *code_node = code_image->first;
+    const code_node *code_node = code_image->first;
     while(code_node != NULL) {
         if(code_node->word_operand1_in_binary) {
             if(strcmp(code_node->word_operand1_in_binary, "000000000000001") == 0) {
@@ -234,22 +247,6 @@ void  ext_file_usher(const char *file_name, const code_image *code_image, const 
         }
         code_node = code_node->next_node;
     }
-
-    /*for (i = 0; i < label_table->rep; i++) {
-        if (label_table->label_element[i].characteristic == EXTERN) {
-            fprintf(ext_extension, "%s %04d\n", label_table->label_element[i].name);
-        }
-    }/*
-    while(code_node != NULL) {
-        if (code_node->) {
-            fprintf(ext_extension, "%s %04d\n", code_node->word_operand1_in_binary, code_node->length);
-        }
-        if (code_node->word_operand2_in_binary[0] == '1') {
-            fprintf(ext_extension, "%s %04d\n", code_node->word_operand2_in_binary, code_node->length);
-        }
-        code_node = code_node->next_node;
-
-    }*/
     fclose(ext_extension);
     free(file_EXT);
 }

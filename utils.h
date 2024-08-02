@@ -58,14 +58,14 @@ int parse_instruction(char *input_ptr, int command, char **source, char **dest, 
 label_array *label_array_allocator(int size);
 int add_label_to_array(label_array* array, const char* name, int address, line_type label_characteristic, const char* file_name, int line_counter);
 int is_label(const label_array* label_table, const char* name);
-char* command_to_binary(int command, operand first_operand, operand second_operand, int L);
+char* command_to_binary(int command, operand first_operand, operand second_operand);
 void error_handler(const char* error_message, const char* file_name, int line_counter);
 char* decimal_to_binary(int integer);
 int parse_instruction_stage_2(char *input_ptr, int command, char **source, char **dest, const char *file_name, int line_counter);
 char* immediate_operand_to_binary(operand operand);
 char* register_name_to_binary(const char* register_name);
-char* label_operand_to_binary(operand operand, label_array *label_table);
+char* label_operand_to_binary(operand operand, const label_array *label_table);
 char* register_operand_to_binary(operand first_operand, operand second_operand);
-void convert_operands_to_binary(operand first_operand, operand second_operand, char **first_operand_in_binary, char **second_operand_in_binary, label_array *label_table);
+void convert_operands_to_binary(operand first_operand, operand second_operand, char **first_operand_in_binary, char **second_operand_in_binary, const label_array *label_table);
 char* binary_to_octal(const char *binary_str);
 #endif //UTILS_H

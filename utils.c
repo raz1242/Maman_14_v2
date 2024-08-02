@@ -246,8 +246,9 @@ int parse_dot_data(const char *input, int **array, int *size, int *DC, const cha
 int parse_dot_string(const char *input, int **array, int *size, int *DC, const char *file_name, const int line_counter) {
     const int STRING_COMMAND_LENGTH = strlen(".string ");
     const char *stringStart;
+    int count = 0, index;
     char *ptr;
-    int count = 0, index = 0;
+
     *size = 0;
 
     stringStart = strstr(input, ".string ");
@@ -258,7 +259,6 @@ int parse_dot_string(const char *input, int **array, int *size, int *DC, const c
         *size = 0;
         return 1;
     }
-    ptr = (char *) stringStart;
     while (*stringStart && *stringStart != '"') {
         if(isalpha(*stringStart) || isdigit(*stringStart)){ /* if a character is found outside of quotation marks*/
             error_handler("ERROR_INVALID_CHARATER_FOUND_OUTSIDE_OF_QUOTATION_MARK", file_name, line_counter);
@@ -331,8 +331,8 @@ int parse_dot_string(const char *input, int **array, int *size, int *DC, const c
  * @return  Returns 0 on success, otherwise returns 1 if memory allocation fails.
  */
 int parse_instruction(char *input_ptr, const int command, char **source, char **dest, const char *file_name,
-                       const int line_counter) {
-    int command_length, first_operand_length , second_operand_length;
+                       const int line_counter) {// make sure the function stop after command 14 and 15
+    int command_length, first_operand_length, second_operand_length = 0;
     char *first_operand = NULL, *second_operand = NULL;
 
     if (command < 15)
@@ -469,7 +469,7 @@ int parse_instruction(char *input_ptr, const int command, char **source, char **
  * @return Returns 0 on success, otherwise returns 1 if memory allocation fails.
  */
 int parse_instruction_stage_2(char *input_ptr, const int command, char **source, char **dest, const char *file_name, const int line_counter) {
-    int command_length, first_operand_length , second_operand_length;
+    int command_length, first_operand_length , second_operand_length ;
     char *first_operand = NULL, *second_operand = NULL;
 
     if (command < 15)
@@ -506,13 +506,7 @@ int parse_instruction_stage_2(char *input_ptr, const int command, char **source,
         second_operand = (char *) malloc(second_operand_length + 1);
         strncpy(second_operand, input_ptr, second_operand_length);
         second_operand[second_operand_length] = '\0';
-        input_ptr += second_operand_length;
-        input_ptr = first_char_in_line(input_ptr);
-    }/*
-    if(command > 4 && command < 14) {
-        input_ptr += first_operand_length;
-        input_ptr = firstWordInLine(input_ptr);
-    }*/
+    }
     *source = (char *) malloc(first_operand_length + 1);
     if (*source == NULL) {
         error_handler( "Failed to allocate memory", file_name, line_counter);
@@ -548,7 +542,7 @@ int parse_instruction_stage_2(char *input_ptr, const int command, char **source,
  *         Exits the program if memory allocation fails.
  */
 label_array *label_array_allocator(const int size) {
-    label_array *array = (label_array *) malloc(sizeof(label_array));
+    label_array *array = malloc(sizeof(label_array));
     array->label_element = (label *) malloc(size * sizeof(label));
     if (array->label_element == NULL) {
         printf( "Failed to reallocate memory");
@@ -571,7 +565,7 @@ label_array *label_array_allocator(const int size) {
  * @return Returns 0 on success, otherwise returns 1 if memory allocation fails.
  */
 int add_label_to_array(label_array *array, const char *name, const int address, const line_type label_characteristic, const char* file_name,
-                  int line_counter) {
+                       const int line_counter) {
     label *new_label;
     const int number_of_reps = (array->rep);
     int length_of_array = (array->length);
@@ -625,11 +619,10 @@ int is_label(const label_array *label_table, const char *name) {
  * @param command The command value indicating the type of command.
  * @param first_operand The first operand of the command.
  * @param second_operand The second operand of the command.
- * @param L The length of the command.
  * @return A string containing the binary representation of the command and its operands.
  *         Returns NULL if memory allocation fails.
  */
-char *command_to_binary(const int command, const operand first_operand, const operand second_operand, const int L) {
+char *command_to_binary(const int command, const operand first_operand, const operand second_operand) {
     char *str;
     str = (char *) malloc(15 * sizeof(char) + 1);
     if (str == NULL) {
@@ -728,7 +721,16 @@ char *command_to_binary(const int command, const operand first_operand, const op
     return str;
 }
 
-void convert_operands_to_binary(operand first_operand, operand second_operand, char **first_operand_in_binary, char **second_operand_in_binary, label_array *label_table) {
+/**
+ * Converts the given operands to their binary representation.
+ *
+ * @param first_operand The first operand to be converted.
+ * @param second_operand The second operand to be converted.
+ * @param first_operand_in_binary A pointer to a string where the binary representation of the first operand will be stored.
+ * @param second_operand_in_binary A pointer to a string where the binary representation of the second operand will be stored.
+ * @param label_table A pointer to the label array containing the labels and their characteristics.
+ */
+void convert_operands_to_binary(const operand first_operand, const operand second_operand, char **first_operand_in_binary, char **second_operand_in_binary, const label_array *label_table) {
     *first_operand_in_binary = (char*)malloc(SIZE_OF_NUMBER_IN_BITS + LEANGTH_OF_ARE + 1);
     if (!*first_operand_in_binary) {
         // handle error
@@ -787,8 +789,16 @@ void convert_operands_to_binary(operand first_operand, operand second_operand, c
     }
 }
 
-char* label_operand_to_binary(operand operand, label_array *label_table) {
-    int i, operand_address = -2;
+/**
+ * Converts a label operand to its binary representation.
+ *
+ * @param operand The operand containing the label to be converted.
+ * @param label_table A pointer to the label array containing the labels and their characteristics.
+ * @return A string containing the binary representation of the label operand.
+ *         Returns NULL if the label is not found or if memory allocation fails.
+ */
+char* label_operand_to_binary(const operand operand, const label_array *label_table) {
+    int i, operand_address = -2; // instead of -2 make #define for it
     char* operand_address_in_binary = malloc(SIZE_OF_NUMBER_IN_BITS + LEANGTH_OF_ARE + 1); //make fail allocation case and make sure to free it
     for(i = 0; i < label_table->rep; i++) {
         if(strcmp(operand.name, label_table->label_element[i].name) == 0) {
@@ -811,7 +821,14 @@ char* label_operand_to_binary(operand operand, label_array *label_table) {
     return operand_address_in_binary;
 }
 
-char* immediate_operand_to_binary(operand operand) {
+/**
+ * Converts an immediate operand to its binary representation.
+ *
+ * @param operand The operand containing the immediate value to be converted.
+ * @return A string containing the binary representation of the immediate operand.
+ *         Returns NULL if memory allocation fails or if the operand is not a valid immediate value.
+ */
+char* immediate_operand_to_binary(const operand operand) {
     char* operand_number_in_binary = malloc(SIZE_OF_NUMBER_IN_BITS + LEANGTH_OF_ARE + 1);
     if(!operand_number_in_binary) {// handle error
         return NULL;
@@ -831,9 +848,18 @@ char* immediate_operand_to_binary(operand operand) {
     return NULL;
 }
 
-char* register_operand_to_binary(operand first_operand, operand second_operand) {
+/**
+ * Converts register operands to their binary representation.
+ *
+ * @param first_operand The first operand to be converted.
+ * @param second_operand The second operand to be converted.
+ * @return A string containing the binary representation of the register operands.
+ *         Returns NULL if memory allocation fails.
+ */
+char* register_operand_to_binary(const operand first_operand, const operand second_operand) {
     char* operand_number_in_binary = malloc(SIZE_OF_NUMBER_IN_BITS + LEANGTH_OF_ARE + 1);
-    if(!operand_number_in_binary) {// handle error
+    if(!operand_number_in_binary) {// handle allocation error
+
         return NULL;
     }
     memset(operand_number_in_binary, 0, SIZE_OF_NUMBER_IN_BITS + LEANGTH_OF_ARE + 1);
@@ -842,7 +868,9 @@ char* register_operand_to_binary(operand first_operand, operand second_operand) 
         strcat(operand_number_in_binary, "000");
         strcat(operand_number_in_binary, register_name_to_binary(first_operand.name));
     }
-    else if(first_operand.type == second_operand.type || (first_operand.type == REGISTER_PTR && second_operand.type == REGISTER) || (first_operand.type == REGISTER && second_operand.type == REGISTER_PTR)) {
+    else if(first_operand.type == second_operand.type ||
+        (first_operand.type == REGISTER_PTR && second_operand.type == REGISTER) ||
+        (first_operand.type == REGISTER && second_operand.type == REGISTER_PTR)) {
         strcat(operand_number_in_binary, register_name_to_binary(first_operand.name));
         strcat(operand_number_in_binary, register_name_to_binary(second_operand.name));
     }
@@ -856,9 +884,15 @@ char* register_operand_to_binary(operand first_operand, operand second_operand) 
     }
     strcat(operand_number_in_binary, "100");
     return operand_number_in_binary;
-    return NULL;
 }
 
+/**
+ * Converts a register name to its binary representation.
+ *
+ * @param register_name The name of the register to be converted.
+ * @return A string containing the binary representation of the register name.
+ *         Returns NULL if memory allocation fails or if the register name is invalid.
+ */
 char* register_name_to_binary(const char* register_name) {
     char* register_number_in_binary = malloc(SIZE_OF_NUMBER_IN_BITS + LEANGTH_OF_ARE + 1);
     if(!register_number_in_binary) {// handle error
@@ -890,13 +924,14 @@ char* register_name_to_binary(const char* register_name) {
     else if(strcmp(register_name, "r7") == 0) {
         strcpy(register_number_in_binary, "111");
     }
-    else {
+    else {// handle error
         free(register_number_in_binary);
         return NULL;
     }
     return register_number_in_binary;
 }
 
+/*
 void free_label_array(label_array *label_table) { // example how to free a label array, need to implement it in code
     int i;
     for(i = 0; i < label_table->rep; i++) {
@@ -905,7 +940,7 @@ void free_label_array(label_array *label_table) { // example how to free a label
     free(label_table->label_element);
     free(label_table);
 }
-/*
+
 void free_command_array(command_array *command_table) { // example how to free a command array, need to implement it in code
     int i;
     for(i = 0; i < command_table->rep; i++) {
@@ -942,10 +977,18 @@ void error_handler(const char *error_message, const char *file_name, const int l
  *         Returns NULL if memory allocation fails.
  */
 
-char* decimal_to_binary(int integer) {
-    int i,  number_in_bits = SIZE_OF_NUMBER_IN_BITS;
+/**
+ * Converts a decimal number to a binary string representation.
+ *
+ * @param integer The decimal number to be converted.
+ * @return A string containing the binary representation of the decimal number.
+ *         Returns NULL if memory allocation fails.
+ */
+char* decimal_to_binary(const int integer) {
+    int i;
+    const int number_in_bits = SIZE_OF_NUMBER_IN_BITS;
     unsigned int mask;
-    char* binary_string = (char*)malloc(number_in_bits + 1);
+    char* binary_string = malloc(number_in_bits + 1);
     if(!binary_string) {
         return NULL;
     }
@@ -961,26 +1004,30 @@ char* decimal_to_binary(int integer) {
     return binary_string;
 }
 
+/**
+ * Converts a binary string to its octal representation.
+ *
+ * @param binary_str The binary string to be converted. Must be 15 bits long.
+ * @return A string containing the octal representation of the binary string.
+ *         Returns NULL if memory allocation fails or if the binary string is not 15 bits long.
+ */
 char* binary_to_octal(const char *binary_str) {
-    int start_index, end_index, value, i, j;
+    int  i, j, value;
     if (strlen(binary_str) != 15) {// make #define
-        fprintf(stderr, "Error: binary_str must be 15 bits long.\n");
+        fprintf(stdout, "Error: binary_str must be 15 bits long.\n"); // make real error sign
         return NULL;
     }
-    char *octal_str = (char*)malloc(6); // make #define
+    char *octal_str = malloc(6); // make #define for 6
     if (!octal_str) {
-        fprintf(stderr, "Memory allocation failed.\n");
+        fprintf(stdout, "Memory allocation failed.\n");
         return NULL;
     }
     octal_str[5] = '\0';
     for (i = 0; i < 5; i++) {
-        start_index = 15 - (3 * (i + 1));
-        end_index = 15 - (3 * i);
         value = 0;
-        for (j = start_index; j < end_index; j++) {
-            value = (value << 1) | (binary_str[j] - '0');
-        }
-        octal_str[4 - i] = value + '0';
+        for (j = 0; j < 3; j++)
+            value = (value << 1) | (binary_str[3 * i + j] - '0');
+        octal_str[i] = value + '0';
     }
     return octal_str;
 }

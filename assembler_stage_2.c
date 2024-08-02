@@ -19,26 +19,27 @@ void printLabels(const label_array *label_table) {
     }
 }
 
-int stage_2_process_file(const char *file_name, label_array *label_table, code_image *code_image, data_image *data_image) {
-    int i, IC = 0, DC = 0, location, firstWordInLineLength, command_in_line, line_counter = 0, is_vaild, extern_flag = 0, entry_flag = 0, error_found = 0;
+int stage_2_process_file(const char *file_name, const label_array *label_table, const code_image *code_image, const data_image *data_image) {
+    int i, IC = 0, DC = 0, location, firstWordInLineLength, command_in_line, is_vaild, line_counter = 0, extern_flag = 0, entry_flag = 0, error_found = 0;
     int j = STARTING_POINT_OF_MEMORY;// for testing
     char line[MAX_LENGTH_OF_LINE], label_header[MAX_LENGTH_OF_LABEL_HEADER + 1];
     char *am_version = NULL, *ptr = NULL, *non_space_ptr = NULL, *first_operand_in_binary = NULL, *second_operand_in_binary = NULL;
-    FILE *am_extension = NULL;
+    FILE *am_extension_file = NULL;
     operand first_operand, second_operand;
-    am_version = file_name_extender(file_name, ".am");
-    am_extension = fopen(am_version, "r");
-    // fix naming of the files in all stages
+
     code_node *code_node = code_image ->first;
     data_node *data_node = data_image ->first;
-    if (am_extension == NULL) {
+    am_version = file_name_extender(file_name, ".am");
+    am_extension_file = fopen(am_version, "r");
+    // fix naming of the files in all stages for consistency, also in at the function at the end
+    if (am_extension_file == NULL) {
         printf("Error opening file\n");
         free(am_version);
         am_version = NULL;
         return 1;
     }
 
-    while (fgets(line, MAX_LENGTH_OF_LINE, am_extension)) {
+    while (fgets(line, MAX_LENGTH_OF_LINE, am_extension_file)) {
         line_counter++;
         is_vaild = 0;
         non_space_ptr = first_char_in_line(line);
@@ -61,7 +62,7 @@ int stage_2_process_file(const char *file_name, label_array *label_table, code_i
                     is_vaild = 1;
                     label_table->label_element[i].characteristic = ENTRY;
                     break;
-                }
+                }//maybe put the if(is_vailid) in the if else statement
             }
             if(!is_vaild) {
                 error_handler("ERROR_LABEL_NOT_FOUND", file_name, line_counter);
@@ -72,8 +73,7 @@ int stage_2_process_file(const char *file_name, label_array *label_table, code_i
             extern_flag = 1;
         }
         if(location == DATA || location == STRING) {
-
-            convert_ASCII_to_binary(data_node);
+            convert_ascii_to_binary(data_node);
             DC += data_node->length;
             data_node = data_node->next_node;
         }
@@ -84,7 +84,7 @@ int stage_2_process_file(const char *file_name, label_array *label_table, code_i
                 analyze_operand(&first_operand);
             if(second_operand.name)
                 analyze_operand(&second_operand);
-            convert_operands_to_binary(first_operand, second_operand, &first_operand_in_binary, &second_operand_in_binary,  label_table);
+            convert_operands_to_binary(first_operand, second_operand, &first_operand_in_binary, &second_operand_in_binary, label_table);
             if(code_node->length >= 2) {
                 code_node->operand1_name = (char *) malloc(strlen(first_operand.name) + 1);
                 if( code_node->operand1_name == NULL) {
@@ -120,14 +120,19 @@ int stage_2_process_file(const char *file_name, label_array *label_table, code_i
                 code_node->address_in_machine = IC + STARTING_POINT_OF_MEMORY;
             } else
                 code_node->word_operand2_in_binary = NULL;
-            //printf("\ncommand_line: %sfirst operand: %s\nsecond operand: %s\n",non_space_ptr, first_operand_in_binary, second_operand_in_binary); // for testing
-            //printf("\ncommand_line: %sfirst operand: %s\nsecond operand: %s\n",non_space_ptr, code_node->word_operand1_in_binary, code_node->word_operand2_in_binary); // for testing
+            /*printf("\ncommand_line: %sfirst operand: %s\nsecond operand: %s\n",non_space_ptr, first_operand_in_binary, second_operand_in_binary); // for testing
+            printf("\ncommand_line: %sfirst operand: %s\nsecond operand: %s\n",non_space_ptr, code_node->word_operand1_in_binary, code_node->word_operand2_in_binary); // for testing*/
             IC += code_node->length;
             if(code_node != code_image->last && code_node->next_node != NULL)
                 code_node = code_node->next_node;
         }
         first_operand.type = UNKNOWN;
         second_operand.type = UNKNOWN;
+    }
+    if(error_found) {
+        free(am_version);
+        am_version = NULL;
+        return 1;
     }
    /* while(1) { // for testing - print the binary code of the commands and operands
         printf("\n%d %s", j++, code_node->word_command_in_binary);
@@ -162,7 +167,7 @@ int stage_2_process_file(const char *file_name, label_array *label_table, code_i
     if(entry_flag)
         ent_file_usher(file_name, label_table);
     if(extern_flag)
-       ext_file_usher(file_name, code_image, label_table);
+       ext_file_usher(file_name, code_image);
     printLabels(label_table); // for testing
     ob_file_usher(file_name, data_image, code_image , IC, DC);
     return 0;

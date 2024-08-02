@@ -31,15 +31,21 @@ int main(const int argc, char *argv[]) {
             return 1 ;
         }
 
-        my_data_image = dataImageAllocator();
-        my_code_image = codeImageAllocator();
+        my_data_image = data_image_allocator();
+        my_code_image = code_image_allocator();
         label_table = label_array_allocator(MIN_LENGTH_OF_LABEL_BODY);
 
-        stage_1_process_file(argv[i], label_table, my_code_image, my_data_image);
-        stage_2_process_file(argv[i], label_table, my_code_image, my_data_image);
+        if(stage_1_process_file(argv[i], label_table, my_code_image, my_data_image)) {
+            printf(" stage 1 failed\n");
+            return 1;
+        }
+        if(stage_2_process_file(argv[i], label_table, my_code_image, my_data_image)) {
+            printf(" stage 2 failed\n");
+            return 1;
+        }
+
     }
     printf("\n");
-    //PRINT_MESSAGE(INFO_MSG_TYPE, INFO_ALL_FILES_HAVE_BEEN_PROCESSED);
     return 0;
 }
 // reminder to free all the memory like label_table, my_data_image, my_code_image

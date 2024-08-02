@@ -110,8 +110,8 @@ int stage_1_process_file(const char *file_name, label_array *label_table, code_i
                 parse_dot_data(non_space_ptr, &parced_array, &array_size, &DC, am_version, line_counter);
             else
                 parse_dot_string(non_space_ptr, &parced_array, &array_size, &DC, am_version, line_counter);
-            data_node = newDataNode(non_space_ptr, array_size, parced_array);
-            dataNodeAdd(data_image, data_node);
+            data_node = new_data_node(non_space_ptr, array_size, parced_array);
+            data_node_add(data_image, data_node);
             free(parced_array);
             parced_array = NULL;
         } else if (location == EXTERN) {
@@ -140,8 +140,8 @@ int stage_1_process_file(const char *file_name, label_array *label_table, code_i
                 error_found = 1;
             }
             analyze_command(non_space_ptr, command_in_line, &L, word_in_binary, am_version, line_counter);
-            code_node = newCodeNode(non_space_ptr, L, word_in_binary);
-            codeNodeAdd(code_image, code_node);
+            code_node = new_code_node(non_space_ptr, L, word_in_binary);
+            code_node_add(code_image, code_node);
             IC += L;
             L = 0;
         }
@@ -368,7 +368,7 @@ int analyze_command(char *ptr, const int command, int *L, char *word_in_binary, 
         return 1;
     }
 
-    strcpy(word_in_binary, command_to_binary(command, first_operand, second_operand, *L));
+    strcpy(word_in_binary, command_to_binary(command, first_operand, second_operand));
     if (word_in_binary == NULL) {
         error_handler("ERROR_BINARY_VERSION_CLOUD_NOT_BE_CREATED", file_name, line_counter);
         return 1;
@@ -387,6 +387,7 @@ int analyze_command(char *ptr, const int command, int *L, char *word_in_binary, 
  * a register, a register pointer, or a label address(label value).
  *
  * @param operand Pointer to the operand structure to analyze.
+ * @return 0 if the operand was successfully analyzed, 1 otherwise.
  */
 int analyze_operand(operand *operand) {
     int i;
@@ -422,5 +423,4 @@ int analyze_operand(operand *operand) {
         }
     }
     return 0;
-
 }

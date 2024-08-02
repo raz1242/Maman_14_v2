@@ -29,10 +29,10 @@ enum precode_structure{
     REGULAR
 };
 
-int stage_0_process_file(const char* fileName);
-void macroArrayAllocator(macro_array *array, int size);
-int macroLocation(const char *str, int flag, int length);
-int macroArrayAdd(macro_array *array, const char* name, const char* body);
-
+int stage_0_process_file(const char* file_name);
+void macro_array_allocator(macro_array *array, int size);
+int macro_location(const char *str, int flag, int length);
+int macro_array_add(macro_array *array, const char* name, const char* body);
+void macro_array_free(const macro_array *array);
 
 #endif //ASSEMBLER_STAGE_0_H
