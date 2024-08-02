@@ -56,7 +56,7 @@ void printExternLabels(const label_array *array) { //- testing
 
 int stage_1_process_file(const char *file_name, label_array *label_table, code_image *code_image, data_image *data_image) {
 
-    int i, IC = 0, DC = 0, L = 0, location, firstWordInLineLength, labelFlag, error_found = 0, command_in_line, array_size, line_counter = 0;
+    int i, IC = 0, DC = 0, L = 0, location, first_word_in_line_length, labelFlag, error_found = 0, command_in_line, array_size, line_counter = 0;
     int *parced_array = NULL;
     char line[MAX_LENGTH_OF_LINE], label_header[MAX_LENGTH_OF_LABEL_HEADER + 1], word_in_binary[LENGTH_OF_BINARY_WORD];
     char *am_version = NULL, *ptr = NULL, *non_space_ptr = NULL;
@@ -65,7 +65,7 @@ int stage_1_process_file(const char *file_name, label_array *label_table, code_i
     FILE *am_extension = NULL;
 
     label_header[0] = '\0';
-    am_version = fileTypeCreator(file_name, ".am");
+    am_version = file_name_extender(file_name, ".am");
     am_extension = fopen(am_version, "r");
 
     if (am_extension == NULL) {
@@ -79,8 +79,8 @@ int stage_1_process_file(const char *file_name, label_array *label_table, code_i
         line_counter++;
         labelFlag = 0;
         memset(label_header, '\0', sizeof(label_header));
-        non_space_ptr = firstWordInLine(line);
-        firstWordInLineLength = firstWordLengthCounter(non_space_ptr);
+        non_space_ptr = first_char_in_line(line);
+        first_word_in_line_length = first_word_length_counter(non_space_ptr);
         location = lineLocation(non_space_ptr);
         if(location == -1) {
             error_handler("ERROR_UNKNOWN_LINE_TYPE", am_version, line_counter);
@@ -89,51 +89,51 @@ int stage_1_process_file(const char *file_name, label_array *label_table, code_i
 
         if (location == LABEL) {
             labelFlag = 1;
-            strncpy(label_header, non_space_ptr, firstWordInLineLength);
-            if (isReservedWord(label_header, strlen(label_header))) {
+            strncpy(label_header, non_space_ptr, first_word_in_line_length);
+            if (is_reserved_word(label_header, strlen(label_header))) {
                 error_handler("ERROR_LABEL_NAME_IS_A_RESERVED_WORD", am_version, line_counter);
                 error_found = 1;
                 //free label_table here as it might cause double-free issues outside this function
                 //might be a better idea to free it ouside this function. not sure why I wrote the comment above...
             }
-            ptr = non_space_ptr + firstWordInLineLength + LENGTH_OF_COLON;
-            non_space_ptr = firstWordInLine(ptr);
-            firstWordInLineLength = firstWordLengthCounter(non_space_ptr);
+            ptr = non_space_ptr + first_word_in_line_length + LENGTH_OF_COLON;
+            non_space_ptr = first_char_in_line(ptr);
+            first_word_in_line_length = first_word_length_counter(non_space_ptr);
             location = lineLocation(non_space_ptr);
         }
         if (location == DATA || location == STRING) {
             if (labelFlag == 1) {
-                if(labelArrayAdd(label_table, label_header, DC, location, am_version, line_counter) == 1)
+                if(add_label_to_array(label_table, label_header, DC, location, am_version, line_counter))
                     error_found = 1;
             }
             if (location == DATA)
-                parseData(non_space_ptr, &parced_array, &array_size, &DC, am_version, line_counter);
+                parse_dot_data(non_space_ptr, &parced_array, &array_size, &DC, am_version, line_counter);
             else
-                parseString(non_space_ptr, &parced_array, &array_size, &DC, am_version, line_counter);
+                parse_dot_string(non_space_ptr, &parced_array, &array_size, &DC, am_version, line_counter);
             data_node = newDataNode(non_space_ptr, array_size, parced_array);
             dataNodeAdd(data_image, data_node);
             free(parced_array);
             parced_array = NULL;
         } else if (location == EXTERN) {
-            ptr = non_space_ptr + firstWordInLineLength;
-            non_space_ptr = firstWordInLine(ptr);
-            firstWordInLineLength = firstWordLengthCounter(non_space_ptr);
-            strncpy(label_header, non_space_ptr, firstWordInLineLength);
-            if (isReservedWord(label_header, strlen(label_header))) {
+            ptr = non_space_ptr + first_word_in_line_length;
+            non_space_ptr = first_char_in_line(ptr);
+            first_word_in_line_length = first_word_length_counter(non_space_ptr);
+            strncpy(label_header, non_space_ptr, first_word_in_line_length);
+            if (is_reserved_word(label_header, strlen(label_header))) {
                 error_handler("ERROR_LABEL_NAME_IS_A_RESERVED_WORD", am_version, line_counter);
                 error_found = 1;
                 //free label_table here as it might cause double-free issues outside this function
                 //might be a better idea to free it ouside this function. not sure why I wrote the comment above...
             }
-            if(labelArrayAdd(label_table, label_header, EXTERN_ADDRESS, EXTERN, am_version, line_counter) == 1)
+            if(add_label_to_array(label_table, label_header, EXTERN_ADDRESS, EXTERN, am_version, line_counter))
                 error_found = 1;
         } else if (location == ENTRY) {
-        } else {
+        } else { /*CODE*/
             if (labelFlag == 1)
-                if(labelArrayAdd(label_table, label_header, IC + 100, IRRLEVANT, am_version, line_counter) == 1)
+                if(add_label_to_array(label_table, label_header, IC + STARTING_POINT_OF_MEMORY, IRRLEVANT, am_version, line_counter))
                     error_found = 1;
             ptr = non_space_ptr;
-            non_space_ptr = firstWordInLine(ptr);
+            non_space_ptr = first_char_in_line(ptr);
             command_in_line = whichCommand(non_space_ptr);
             if(command_in_line == -1) {
                 error_handler("ERROR_COMMAND_NOT_FOUND", am_version, line_counter);
@@ -157,7 +157,7 @@ int stage_1_process_file(const char *file_name, label_array *label_table, code_i
     for (i = 0; i < label_table->rep; i++) {
         if (label_table->label_element[i].characteristic == DATA || label_table->label_element[i].characteristic ==
             STRING) {
-            label_table->label_element[i].address += (IC + 100);
+            label_table->label_element[i].address += (IC + STARTING_POINT_OF_MEMORY);
             }
     }
 
@@ -178,7 +178,7 @@ int stage_1_process_file(const char *file_name, label_array *label_table, code_i
  */
 int lineLocation(char *str) {
     int i = 0;
-    const char *ptr_to_firstWord = firstWordInLine(str);
+    const char *ptr_to_firstWord = first_char_in_line(str);
 
     if (isalpha(ptr_to_firstWord[0])) {
         while (ptr_to_firstWord[i] && ptr_to_firstWord[i] != ':') {
@@ -261,7 +261,7 @@ int analyze_command(char *ptr, const int command, int *L, char *word_in_binary, 
     char *first_operand_name = NULL, *second_operand_name = NULL;
     operand first_operand, second_operand;
 
-    parseCommandString(ptr, command, &first_operand_name, &second_operand_name, file_name, line_counter);
+    parse_instruction(ptr, command, &first_operand_name, &second_operand_name, file_name, line_counter);
 
     if (first_operand_name) {
         first_operand.name = malloc(strlen(first_operand_name) + 1);

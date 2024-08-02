@@ -1,9 +1,6 @@
 #ifndef TABLE_UTILS_H
 #define TABLE_UTILS_H
 
-#include <stdlib.h>
-#include <stdio.h>
-#include <string.h>
 #include "utils.h"
 
 #define EXTERN_ADDRESS -1
@@ -25,8 +22,11 @@ typedef struct {
 typedef struct code_node{
     char* original_line; // need to remove, only for debugging
     char* word_command_in_binary;
+    char* operand1_name;
     char* word_operand1_in_binary;
+    char* operand2_name;
     char* word_operand2_in_binary;
+    int address_in_machine;
     int length;
 
     struct code_node *next_node;
@@ -59,5 +59,6 @@ data_node *newDataNode(const char *line, int array_size, const int *data);
 void dataNodeAdd(data_image *data_image, data_node *new_node);
 void convert_ASCII_to_binary(data_node *data_node);
 void ob_file_usher(const char* file_name, data_image *data_image, code_image *code_image, int IC, int DC);
-
+void ext_file_usher(const char *file_name, const code_image *code_image, const label_array *label_table);
+void ent_file_usher(const char *file_name, const label_array *label_table);
 #endif //TABLE_UTILS_H

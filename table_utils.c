@@ -172,22 +172,19 @@ void convert_ASCII_to_binary(data_node *data_node) {
             strcpy(str, "000");
         else
             strcpy(str, "111");
-        strcat(str, decimalToBinary(data_node->char_in_ASCII[i])); // retruns 12 bit binary number
+        strcat(str, decimal_to_binary(data_node->char_in_ASCII[i])); // retruns 12 bit binary number
         data_node->word_in_binary[i] = (char *)malloc(16);
         strcpy(data_node->word_in_binary[i], str);
     }
 }
 
 void ob_file_usher(const char* file_name, data_image *data_image, code_image *code_image, int IC, int DC) {
-    int i, j = 100;
+    int i, j = STARTING_POINT_OF_MEMORY;
     code_node* code_node = code_image->first;
     data_node* data_node = data_image->first;
-    char *file_OB = fileTypeCreator(file_name, ".ob");
+    char *file_OB = file_name_extender(file_name, ".ob");
     FILE *ob_extension  = fopen(file_OB, "w");
-    if (!ob_extension) {
-        // handle error
-        return;
-    }
+    file_inspector(ob_extension, file_OB);
     fprintf(ob_extension, "%d %d\n", IC, DC);
 
     while(1) { // for testing - maybe think on a smarter way instead of while(1)
@@ -210,4 +207,73 @@ void ob_file_usher(const char* file_name, data_image *data_image, code_image *co
         data_node = data_node->next_node;
     }
     fclose(ob_extension);
+}
+
+/**
+ * Writes the external labels to a file.
+ *
+ * @param file_name The name of the file to write the external labels to.
+ * @param label_table A pointer to the label array containing the labels and their characteristics.
+ */
+void  ext_file_usher(const char *file_name, const code_image *code_image, const label_array *label_table) {
+    int i, j = 0;
+    char *file_EXT = file_name_extender(file_name, ".ext");
+    FILE *ext_extension = fopen(file_EXT, "w");
+    file_inspector(ext_extension, file_EXT);
+    code_node *code_node = code_image->first;
+    while(code_node != NULL) {
+        if(code_node->word_operand1_in_binary) {
+            if(strcmp(code_node->word_operand1_in_binary, "000000000000001") == 0) {
+                fprintf(ext_extension, "%s %04d\n", code_node->operand1_name, code_node->address_in_machine + 1);
+            }
+        }
+        if(code_node->word_operand2_in_binary) {
+            if(strcmp(code_node->word_operand2_in_binary, "000000000000001") == 0) {
+                fprintf(ext_extension, "%s %04d\n", code_node->operand2_name, code_node->address_in_machine + 2);
+            }
+        }
+        code_node = code_node->next_node;
+    }
+
+    /*for (i = 0; i < label_table->rep; i++) {
+        if (label_table->label_element[i].characteristic == EXTERN) {
+            fprintf(ext_extension, "%s %04d\n", label_table->label_element[i].name);
+        }
+    }/*
+    while(code_node != NULL) {
+        if (code_node->) {
+            fprintf(ext_extension, "%s %04d\n", code_node->word_operand1_in_binary, code_node->length);
+        }
+        if (code_node->word_operand2_in_binary[0] == '1') {
+            fprintf(ext_extension, "%s %04d\n", code_node->word_operand2_in_binary, code_node->length);
+        }
+        code_node = code_node->next_node;
+
+    }*/
+    fclose(ext_extension);
+    free(file_EXT);
+}
+
+/**
+ * Writes the entry labels to a file.
+ *
+ * @param file_name The name of the file to write the entry labels to.
+ * @param label_table A pointer to the label array containing the labels and their characteristics.
+ */
+void ent_file_usher(const char *file_name, const label_array *label_table) {
+    int entry_index = 0;
+    char *file_ENT = file_name_extender(file_name, ".ent");
+    FILE *ent_extension = fopen(file_ENT, "w");
+    if (ent_extension == NULL) {
+        printf("Error opening file\n");
+        free(file_ENT);
+        return;
+    }
+    while (entry_index < label_table->rep) {
+        if (label_table->label_element[entry_index].characteristic == ENTRY)
+            fprintf(ent_extension, "%s %d\n", label_table->label_element[entry_index].name, label_table->label_element[entry_index].address);
+        entry_index++;
+    }
+    fclose(ent_extension);
+    free(file_ENT);
 }

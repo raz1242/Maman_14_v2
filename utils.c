@@ -16,7 +16,7 @@ const char *reserved_words[] = {
  * @return A new string containing the original file name with the appended file type extension.
  *         Returns NULL if memory allocation fails.
  */
-char *fileTypeCreator(const char *str, const char *type) {
+char *file_name_extender(const char *str, const char *type) {
     char *file_type = malloc(strlen(str) + strlen(type) + 1);
     if (!file_type) {
         // Handle memory allocation failure
@@ -31,14 +31,15 @@ char *fileTypeCreator(const char *str, const char *type) {
  * Inspects the given file pointer to check if the file is readable.
  *
  * @param file A pointer to the file to be inspected.
- * @return Returns 1 if the file is readable, otherwise returns 0.
+ * @param fileName The name of the file being inspected.
+ * @return Returns 0 if the file is readable, otherwise returns 1.
  */
-int fileInspection(const FILE *file) {
+int file_inspector(const FILE *file, const char *fileName) {
     if (file == NULL) {
-        printf("Failed to read file");
-        return 0;
+        printf("Failed to read file: %s\n", fileName);
+        return 1;
     }
-    return 1;
+    return 0;
 }
 
 /**
@@ -47,7 +48,7 @@ int fileInspection(const FILE *file) {
  * @param str The input string to be processed.
  * @return A pointer to the first non-whitespace character in the string.
  */
-char *firstWordInLine(char *str) {
+char *first_char_in_line(char *str) {
     if (str == NULL) {
         return NULL;
     }
@@ -69,7 +70,7 @@ char *firstWordInLine(char *str) {
  * @param str The input string to be processed.
  * @return The length of the first word in the string.
  */
-int firstWordLengthCounter(const char *str) {
+int first_word_length_counter(const char *str) {
     int counter;
 
     for (counter = 0; *(str + counter) && !isspace(*(str + counter)) && *(str + counter) != ':'; counter++) {
@@ -84,7 +85,7 @@ int firstWordLengthCounter(const char *str) {
  * @param str The input string to be processed.
  * @return The length of the operand in the string.
  */
-int operandLengthCounter(const char *str) {
+int operand_length_counter(const char *str) {
     int counter;
 
     for (counter = 0; *(str + counter) && !isspace(*(str + counter)) && (strncmp(&str[counter], ",", 1) != 0); counter
@@ -100,12 +101,12 @@ int operandLengthCounter(const char *str) {
  * @param length The length of the word.
  * @return Returns 1 if the word is a reserved word, otherwise returns 0.
  */
-int isReservedWord(char *word, const int length) {
+int is_reserved_word(char *word, const int length) {
     int i, size;
 
     size = sizeof(reserved_words) / sizeof(reserved_words[0]);
     for (i = 0; i < size; i++) {
-        if (strncmp(word, reserved_words[i], length) == 0 && isEndOfLine(word + length)) {
+        if (strncmp(word, reserved_words[i], length) == 0 && is_end_of_line(word + length)) {
             return 1;
         }
     }
@@ -118,8 +119,8 @@ int isReservedWord(char *word, const int length) {
  * @param str The input string to be checked.
  * @return Returns 1 if the string is at the end of a line otherwise returns 0.
  */
-int isEndOfLine(char *str) {
-    const char *new_str = firstWordInLine(str);
+int is_end_of_line(char *str) {
+    const char *new_str = first_char_in_line(str);
 
     if (new_str == NULL)
         return 1;
@@ -135,8 +136,9 @@ int isEndOfLine(char *str) {
  * @param DC A pointer to an integer that will be incremented by the number of data values extracted.
  * @param file_name The name of the file where the data is being parsed.
  * @param line_counter The line number in the file where the data is being parsed.
+ * @return  Returns 0 on success, otherwise returns 1 if memory allocation fails.
  */
-int parseData(const char *input, int **array, int *size, int *DC, const char *file_name, const int line_counter) {
+int parse_dot_data(const char *input, int **array, int *size, int *DC, const char *file_name, const int line_counter) {
     const int DATA_COMMAND_LENGTH = strlen(".data ");
     const char *dataStart = NULL;
     int count = 0, index = 0, commaFlag = 0, numberFlag = 0;
@@ -239,8 +241,9 @@ int parseData(const char *input, int **array, int *size, int *DC, const char *fi
  * @param DC A pointer to an integer that will be incremented by the number of characters extracted.
  * @param file_name The name of the file where the characters are being parsed.
  * @param line_counter The line number in the file where the characters are being parsed.
+*  @return  Returns 0 on success, otherwise returns 1 if memory allocation fails.
  */
-int parseString(const char *input, int **array, int *size, int *DC, const char *file_name, const int line_counter) {
+int parse_dot_string(const char *input, int **array, int *size, int *DC, const char *file_name, const int line_counter) {
     const int STRING_COMMAND_LENGTH = strlen(".string ");
     const char *stringStart;
     char *ptr;
@@ -325,8 +328,9 @@ int parseString(const char *input, int **array, int *size, int *DC, const char *
  * @param dest A pointer to a string where the destination operand will be stored.
  * @param file_name The name of the file where the command is being parsed.
  * @param line_counter The line number in the file where the command is being parsed.
+ * @return  Returns 0 on success, otherwise returns 1 if memory allocation fails.
  */
-int parseCommandString(char *input_ptr, const int command, char **source, char **dest, const char *file_name,
+int parse_instruction(char *input_ptr, const int command, char **source, char **dest, const char *file_name,
                        const int line_counter) {
     int command_length, first_operand_length , second_operand_length;
     char *first_operand = NULL, *second_operand = NULL;
@@ -340,7 +344,7 @@ int parseCommandString(char *input_ptr, const int command, char **source, char *
     *dest = NULL;
 
     input_ptr += command_length;
-    input_ptr = firstWordInLine(input_ptr);
+    input_ptr = first_char_in_line(input_ptr);
 
     if (command == 14 || command == 15) {
         if(*input_ptr != '\n') { /* redundent characters after stop or rts command */
@@ -357,7 +361,7 @@ int parseCommandString(char *input_ptr, const int command, char **source, char *
         error_handler("ERROR_INVALID_FIRST_OPERAND", file_name, line_counter);
         return 1;
     }
-    first_operand_length = operandLengthCounter(input_ptr);
+    first_operand_length = operand_length_counter(input_ptr);
     first_operand = (char *) malloc(first_operand_length + 1);
     if (first_operand == NULL) {
         error_handler( "Failed to allocate memory", file_name, line_counter);
@@ -368,16 +372,16 @@ int parseCommandString(char *input_ptr, const int command, char **source, char *
 
     if (command < 5 /*mov, cmp, add, sub, lea*/) {
         input_ptr += first_operand_length;
-        input_ptr = firstWordInLine(input_ptr);
+        input_ptr = first_char_in_line(input_ptr);
         if (strncmp(input_ptr, ",", 1) == 0) {
             input_ptr++;
-            input_ptr = firstWordInLine(input_ptr);
+            input_ptr = first_char_in_line(input_ptr);
         }
         else { /* missing a comma between the two operands */
             error_handler("ERRROR_MISSING_A_COMMA", file_name, line_counter);
             return 1;
         }
-        input_ptr = firstWordInLine(input_ptr);
+        input_ptr = first_char_in_line(input_ptr);
         if (strncmp(input_ptr, ",", 1) == 0) { /* too many commas */
             error_handler("ERROR_TOO_MANY_COMMAS", file_name, line_counter);
             free(first_operand);
@@ -394,7 +398,7 @@ int parseCommandString(char *input_ptr, const int command, char **source, char *
             return 1;
         }
 
-        second_operand_length = operandLengthCounter(input_ptr);
+        second_operand_length = operand_length_counter(input_ptr);
         second_operand = (char *) malloc(second_operand_length + 1);
         if (second_operand == NULL) {
             error_handler( "Failed to allocate memory", file_name, line_counter);
@@ -405,7 +409,7 @@ int parseCommandString(char *input_ptr, const int command, char **source, char *
         second_operand[second_operand_length] = '\0';
 
         input_ptr += second_operand_length;
-        input_ptr = firstWordInLine(input_ptr);
+        input_ptr = first_char_in_line(input_ptr);
         if(*input_ptr != '\n') { /* redundent chraters after seond operand*/
             error_handler("ERROR_REDUNDENT_CHARACTERS_AFTER_SECOND_OPERAND", file_name, line_counter);
             free(first_operand);
@@ -415,7 +419,7 @@ int parseCommandString(char *input_ptr, const int command, char **source, char *
     }
     if(command > 4 && command < 14) {
         input_ptr += first_operand_length;
-        input_ptr = firstWordInLine(input_ptr);
+        input_ptr = first_char_in_line(input_ptr);
         if(*input_ptr != '\n') { /* redundent charaters after first operand*/
             error_handler("ERROR_REDUNDENT_CHARACTERS_AFTER_FIRST_OPERAND", file_name, line_counter);
             free(first_operand);
@@ -452,7 +456,19 @@ int parseCommandString(char *input_ptr, const int command, char **source, char *
     return 0;
 }
 
-int parseCommandString_stage_2(char *input_ptr, const int command, char **source, char **dest, const char *file_name, const int line_counter) {
+/**
+ * Parses the input string to extract the source and destination operands based on the given command.
+ * like parse_instruction but without error handling
+ *
+ * @param input_ptr A pointer to the input string containing the command and operands.
+ * @param command The command value indicating the type of command to be parsed.
+ * @param source A pointer to a string where the source operand will be stored.
+ * @param dest A pointer to a string where the destination operand will be stored.
+ * @param file_name The name of the file where the command is being parsed.
+ * @param line_counter The line number in the file where the command is being parsed.
+ * @return Returns 0 on success, otherwise returns 1 if memory allocation fails.
+ */
+int parse_instruction_stage_2(char *input_ptr, const int command, char **source, char **dest, const char *file_name, const int line_counter) {
     int command_length, first_operand_length , second_operand_length;
     char *first_operand = NULL, *second_operand = NULL;
 
@@ -465,11 +481,11 @@ int parseCommandString_stage_2(char *input_ptr, const int command, char **source
     *dest = NULL;
 
     input_ptr += command_length;
-    input_ptr = firstWordInLine(input_ptr);
+    input_ptr = first_char_in_line(input_ptr);
     if (command == 14 || command == 15) {
         return 0;
     }
-    first_operand_length = operandLengthCounter(input_ptr);
+    first_operand_length = operand_length_counter(input_ptr);
     first_operand = (char *) malloc(first_operand_length + 1);
     if (first_operand == NULL) {
         error_handler( "Failed to allocate memory", file_name, line_counter);
@@ -480,18 +496,18 @@ int parseCommandString_stage_2(char *input_ptr, const int command, char **source
 
     if (command < 5 /*mov, cmp, add, sub, lea*/) {
         input_ptr += first_operand_length;
-        input_ptr = firstWordInLine(input_ptr);
+        input_ptr = first_char_in_line(input_ptr);
         if (strncmp(input_ptr, ",", 1) == 0) {
             input_ptr++;
-            input_ptr = firstWordInLine(input_ptr);
+            input_ptr = first_char_in_line(input_ptr);
         }
-        input_ptr = firstWordInLine(input_ptr);
-        second_operand_length = operandLengthCounter(input_ptr);
+        input_ptr = first_char_in_line(input_ptr);
+        second_operand_length = operand_length_counter(input_ptr);
         second_operand = (char *) malloc(second_operand_length + 1);
         strncpy(second_operand, input_ptr, second_operand_length);
         second_operand[second_operand_length] = '\0';
         input_ptr += second_operand_length;
-        input_ptr = firstWordInLine(input_ptr);
+        input_ptr = first_char_in_line(input_ptr);
     }/*
     if(command > 4 && command < 14) {
         input_ptr += first_operand_length;
@@ -531,7 +547,7 @@ int parseCommandString_stage_2(char *input_ptr, const int command, char **source
  * @return A pointer to the allocated label array.
  *         Exits the program if memory allocation fails.
  */
-label_array *labelArrayAllocator(const int size) {
+label_array *label_array_allocator(const int size) {
     label_array *array = (label_array *) malloc(sizeof(label_array));
     array->label_element = (label *) malloc(size * sizeof(label));
     if (array->label_element == NULL) {
@@ -554,7 +570,7 @@ label_array *labelArrayAllocator(const int size) {
  * @param line_counter The line number in the file where the label is being added.
  * @return Returns 0 on success, otherwise returns 1 if memory allocation fails.
  */
-int labelArrayAdd(label_array *array, const char *name, const int address, const line_type label_characteristic, const char* file_name,
+int add_label_to_array(label_array *array, const char *name, const int address, const line_type label_characteristic, const char* file_name,
                   int line_counter) {
     label *new_label;
     const int number_of_reps = (array->rep);
@@ -593,7 +609,7 @@ int labelArrayAdd(label_array *array, const char *name, const int address, const
  * @param name The name to be checked.
  * @return Returns 1 if the name exists in the label array, otherwise returns 0.
  */
-int isLabel(const label_array *label_table, const char *name) {
+int is_label(const label_array *label_table, const char *name) {
     int i;
     for (i = 0; i < label_table->rep; i++) {
         if (strcmp(name, label_table->label_element[i].name) == 0) {
@@ -773,7 +789,7 @@ void convert_operands_to_binary(operand first_operand, operand second_operand, c
 
 char* label_operand_to_binary(operand operand, label_array *label_table) {
     int i, operand_address = -2;
-    char* operand_address_in_binary = malloc(SIZE_OF_NUMBER_IN_BITS + LEANGTH_OF_ARE + 1);
+    char* operand_address_in_binary = malloc(SIZE_OF_NUMBER_IN_BITS + LEANGTH_OF_ARE + 1); //make fail allocation case and make sure to free it
     for(i = 0; i < label_table->rep; i++) {
         if(strcmp(operand.name, label_table->label_element[i].name) == 0) {
             operand_address = label_table->label_element[i].address;
@@ -783,14 +799,14 @@ char* label_operand_to_binary(operand operand, label_array *label_table) {
     if(operand_address == -1) {
         /* speical case for external label */
         operand_address = 0;
-        strcpy(operand_address_in_binary, decimalToBinary(operand_address));
+        strcpy(operand_address_in_binary, decimal_to_binary(operand_address));
         strcat(operand_address_in_binary, "001");
         return operand_address_in_binary;
     }
-    if(operand_address == -2)//need to make error for this case
+    if(operand_address == -2)//need to make error for this case, label not found
         return NULL;
 
-    strcpy(operand_address_in_binary, decimalToBinary(operand_address));
+    strcpy(operand_address_in_binary, decimal_to_binary(operand_address));
     strcat(operand_address_in_binary, "010");
     return operand_address_in_binary;
 }
@@ -806,9 +822,9 @@ char* immediate_operand_to_binary(operand operand) {
     }
     strcpy(operand_name, operand.name);
     operand_name++;
-    operand_name = firstWordInLine(operand_name);
+    operand_name = first_char_in_line(operand_name);
     if (isdigit(operand_name[0]) || ((*operand_name == '-' || *operand_name == '+') && isdigit(*(operand_name + 1)))) {
-        strcpy(operand_number_in_binary, decimalToBinary(atoi(operand_name)));
+        strcpy(operand_number_in_binary, decimal_to_binary(atoi(operand_name)));
         strcat(operand_number_in_binary, "100");
         return operand_number_in_binary;
     }
@@ -926,7 +942,7 @@ void error_handler(const char *error_message, const char *file_name, const int l
  *         Returns NULL if memory allocation fails.
  */
 
-char* decimalToBinary(int integer) {
+char* decimal_to_binary(int integer) {
     int i,  number_in_bits = SIZE_OF_NUMBER_IN_BITS;
     unsigned int mask;
     char* binary_string = (char*)malloc(number_in_bits + 1);
@@ -968,3 +984,4 @@ char* binary_to_octal(const char *binary_str) {
     }
     return octal_str;
 }
+

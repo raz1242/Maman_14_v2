@@ -1,11 +1,9 @@
 #ifndef ASSEMBLER_STAGE_2_H
 #define ASSEMBLER_STAGE_2_H
 
-#include <ctype.h>
-#include <stdio.h>
-#include <string.h>
-#include "utils.h"
+
 #include "table_utils.h"
+#include "assembler_stage_1.h"
 
 #define LEANGTH_OF_ARE 3
 

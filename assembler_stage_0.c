@@ -11,14 +11,14 @@ int stage_0_process_file(const char *fileName) {
     char macro_header[MAX_LENGTH_OF_MACRO_HEADER], macro_body[MAX_LENGTH_OF_MACRO_BODY], line[
         MAX_LENGTH_OF_MACRO_HEADER];
     char *non_space_line, *ptr_line;
-    const char* file_AS = fileTypeCreator(fileName, ".as"), *file_AM = fileTypeCreator(fileName, ".am");
+    const char* file_AS = file_name_extender(fileName, ".as"), *file_AM = file_name_extender(fileName, ".am");
     FILE *as_extension = fopen(file_AS, "r");
     FILE *am_extension = fopen(file_AM, "w");
 
     macro_header[0] = '\0', macro_body[0] = '\0';
     macroArrayAllocator(&array, MIN_LENGTH_OF_MACRO_BODY);
 
-    if (!fileInspection(as_extension)) {
+    if (file_inspector(as_extension, file_AM)) {
         fclose(as_extension);
         fclose(am_extension);
         return 0;
@@ -26,20 +26,20 @@ int stage_0_process_file(const char *fileName) {
 
     while (fgets(line, MAX_LENGTH_OF_MACRO_BODY, as_extension)) {
         line_counter++;
-        non_space_line = firstWordInLine(line);
+        non_space_line = first_char_in_line(line);
         ptr_line = non_space_line;
-        firstWordOfLineLength = firstWordLengthCounter(non_space_line);
+        firstWordOfLineLength = first_word_length_counter(non_space_line);
         lineLocation = macroLocation(non_space_line, insideMacroFlag, firstWordOfLineLength);
 
         if (lineLocation == HEADER) {
             insideMacroFlag = 1;
             ptr_line += firstWordOfLineLength;
-            non_space_line = firstWordInLine(ptr_line);
+            non_space_line = first_char_in_line(ptr_line);
             ptr_line = non_space_line;
-            firstWordOfLineLength = firstWordLengthCounter(non_space_line);
+            firstWordOfLineLength = first_word_length_counter(non_space_line);
             strncpy(macro_header, non_space_line, firstWordOfLineLength);
             ptr_line += firstWordOfLineLength;
-            non_space_line = firstWordInLine(ptr_line);
+            non_space_line = first_char_in_line(ptr_line);
             if(*non_space_line != '\n') { /* check if there are redundant characters after setting up the macro name */
                 error_handler(" ERROR_REDUNDANT_CHARACTERS_AFTER_MACRO_NAME", file_AS, line_counter);
                 free(&array);
@@ -48,7 +48,7 @@ int stage_0_process_file(const char *fileName) {
                 return 1;
             }
             *(macro_header + firstWordOfLineLength) = '\0';
-            if (isReservedWord(macro_header, firstWordOfLineLength)) {
+            if (is_reserved_word(macro_header, firstWordOfLineLength)) {
                 error_handler(" ERROR_MACRO_NAME_IS_RESERVED_WORD", 0, 0);
                 free(&array);
                 fclose(as_extension);
@@ -59,9 +59,9 @@ int stage_0_process_file(const char *fileName) {
             strncat(macro_body, line, strlen(line) + 1);
         } else if (lineLocation == END) {
             ptr_line += firstWordOfLineLength;
-            non_space_line = firstWordInLine(ptr_line);
+            non_space_line = first_char_in_line(ptr_line);
             if(*non_space_line != '\n') { /* check if there are redundant characters after macro end command */
-                error_handler(" ERROR_REDUNDANT_CHARACTERS_AFTER_ENDMACRO", fileTypeCreator(file_AS, ".as"), line_counter);
+                error_handler(" ERROR_REDUNDANT_CHARACTERS_AFTER_ENDMACRO", file_name_extender(file_AS, ".as"), line_counter);
                 free(&array);
                 fclose(as_extension);
                 fclose(am_extension);
@@ -79,7 +79,7 @@ int stage_0_process_file(const char *fileName) {
         } else  { /* REGULAR */
             for (i = 0; i < array.rep; i++) {
                 if (strncmp(non_space_line, array.macro_element[i].name, firstWordOfLineLength) == 0) {
-                     if (isEndOfLine(non_space_line + firstWordOfLineLength + 1)) {
+                     if (is_end_of_line(non_space_line + firstWordOfLineLength + 1)) {
                         matchFound = 1;
                         fputs(array.macro_element[i].body, am_extension);
                         break;

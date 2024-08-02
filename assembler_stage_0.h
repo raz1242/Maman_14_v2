@@ -1,10 +1,7 @@
 #ifndef ASSEMBLER_STAGE_0_H
 #define ASSEMBLER_STAGE_0_H
 
-#include <stdio.h>
-#include <string.h>
-#include <stdlib.h>
-#include <ctype.h>
+
 #include "utils.h"
 
 #define MIN_LENGTH_OF_MACRO_BODY 1

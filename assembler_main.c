@@ -33,7 +33,7 @@ int main(const int argc, char *argv[]) {
 
         my_data_image = dataImageAllocator();
         my_code_image = codeImageAllocator();
-        label_table = labelArrayAllocator(MIN_LENGTH_OF_LABEL_BODY);
+        label_table = label_array_allocator(MIN_LENGTH_OF_LABEL_BODY);
 
         stage_1_process_file(argv[i], label_table, my_code_image, my_data_image);
         stage_2_process_file(argv[i], label_table, my_code_image, my_data_image);
