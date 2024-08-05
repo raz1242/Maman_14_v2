@@ -25,27 +25,29 @@ int main(const int argc, char *argv[]) {
             printf("ERROR_FILE_NAME_IS_TOO_LONG");
             return 1;
         }
-        //PRINT_MESSAGE(INFO_MSG_TYPE, argv[i]);
         if(stage_0_process_file(argv[i])) {
-            printf(" pre stage failed\n");
+            printf("pre stage failed\n"); // for testing
             return 1 ;
         }
+            printf("pre stage success\n"); // for testing
 
+        label_table = label_array_allocator(MIN_LENGTH_OF_LABEL_BODY);
         my_data_image = data_image_allocator();
         my_code_image = code_image_allocator();
-        label_table = label_array_allocator(MIN_LENGTH_OF_LABEL_BODY);
 
-        if(stage_1_process_file(argv[i], label_table, my_code_image, my_data_image)) {
-            printf(" stage 1 failed\n");
-            return 1;
-        }
-        if(stage_2_process_file(argv[i], label_table, my_code_image, my_data_image)) {
-            printf(" stage 2 failed\n");
-            return 1;
-        }
+        if(stage_1_process_file(argv[i], label_table, my_code_image, my_data_image))
+            printf("stage 1 failed\n"); // for testing
+        else
+            printf("stage 1 success\n"); // for testing
+        if(stage_2_process_file(argv[i], label_table, my_code_image, my_data_image))
+            printf("stage 2 failed\n"); // for testing
+        else
+            printf("stage 2 success\n"); // for testing
 
+        free_label_array(label_table);
+        free_code_image(my_code_image);
+        free_data_image(my_data_image);
     }
-    printf("\n");
+    printf("\n"); // for testing
     return 0;
 }
-// reminder to free all the memory like label_table, my_data_image, my_code_image

@@ -18,7 +18,7 @@ const char *reserved_words[] = {
  */
 char *file_name_extender(const char *str, const char *type) {
     char *file_type = malloc(strlen(str) + strlen(type) + 1);
-    if (!file_type) {
+    if (file_type == NULL) {
         // Handle memory allocation failure
         return NULL;
     }
@@ -48,7 +48,7 @@ int file_inspector(const FILE *file, const char *fileName) {
  * @param str The input string to be processed.
  * @return A pointer to the first non-whitespace character in the string.
  */
-char *first_char_in_line(char *str) {
+char *skip_whitespace(char *str) {
     if (str == NULL) {
         return NULL;
     }
@@ -72,9 +72,10 @@ char *first_char_in_line(char *str) {
  */
 int first_word_length_counter(const char *str) {
     int counter;
-
-    for (counter = 0; *(str + counter) && !isspace(*(str + counter)) && *(str + counter) != ':'; counter++) {
-    };
+    if (str == NULL) {
+        return 0;
+    }
+    for (counter = 0; *(str + counter) && !isspace(*(str + counter)) && *(str + counter) != ':'; counter++) {};
     return counter;
 }
 
@@ -120,7 +121,7 @@ int is_reserved_word(char *word, const int length) {
  * @return Returns 1 if the string is at the end of a line otherwise returns 0.
  */
 int is_end_of_line(char *str) {
-    const char *new_str = first_char_in_line(str);
+    const char *new_str = skip_whitespace(str);
 
     if (new_str == NULL)
         return 1;
@@ -165,7 +166,7 @@ int parse_dot_data(const char *input, int **array, int *size, int *DC, const cha
             error_handler("INVALID_DATA_VALUE", file_name, line_counter);
             return 1;
         }
-        if (*ptr == '\n') {
+        if (*ptr == '\n' || *ptr == '\0') {
             if(commaFlag == 1) { // if a comma is found at the end of the line
                 error_handler("ERROR_MISSING_DATA_VALUE", file_name, line_counter);
                 return 1;
@@ -261,7 +262,7 @@ int parse_dot_string(const char *input, int **array, int *size, int *DC, const c
     }
     while (*stringStart && *stringStart != '"') {
         if(isalpha(*stringStart) || isdigit(*stringStart)){ /* if a character is found outside of quotation marks*/
-            error_handler("ERROR_INVALID_CHARATER_FOUND_OUTSIDE_OF_QUOTATION_MARK", file_name, line_counter);
+            error_handler("ERROR_INVALID_CHARATER_FOUND_OUTSIDE_OF_QUOTATION_MARKS", file_name, line_counter);
             *array = NULL;
             *size = 0;
             return 1;
@@ -291,7 +292,7 @@ int parse_dot_string(const char *input, int **array, int *size, int *DC, const c
 
     while(*ptr != '\n') {
         if(*ptr != ' ' && *ptr != '\t') { /* if a character is found outside of quotation marks. */
-            error_handler("ERROR_INVALID_CHARATER_FOUND_OUTSIDE_OF_QUOTATION_MARK", file_name, line_counter);
+            error_handler("ERROR_INVALID_CHARATER_FOUND_OUTSIDE_OF_QUOTATION_MARKS", file_name, line_counter);
             *array = NULL;
             *size = 0;
             return 1;
@@ -333,7 +334,7 @@ int parse_dot_string(const char *input, int **array, int *size, int *DC, const c
 int parse_instruction(char *input_ptr, const int command, char **source, char **dest, const char *file_name,
                        const int line_counter) {// make sure the function stop after command 14 and 15
     int command_length, first_operand_length, second_operand_length = 0;
-    char *first_operand = NULL, *second_operand = NULL;
+    char *first_operand_name = NULL, *second_operand_name = NULL;
 
     if (command < 15)
         command_length = 3;
@@ -344,17 +345,21 @@ int parse_instruction(char *input_ptr, const int command, char **source, char **
     *dest = NULL;
 
     input_ptr += command_length;
-    input_ptr = first_char_in_line(input_ptr);
+    input_ptr = skip_whitespace(input_ptr);
 
     if (command == 14 || command == 15) {
         if(*input_ptr != '\n') { /* redundent characters after stop or rts command */
-            error_handler("REDUNDENT_CHARACTERS_AFTER_COMMAND", file_name, line_counter);
+            error_handler("ERROR_REDUNDENT_CHARACTERS_AFTER_COMMAND", file_name, line_counter);
             return 1;
         }
         return 0;
     }
-    if (strncmp(input_ptr, ",", 1) == 0 || *input_ptr == '\n') { /* lacks the first operand */
+    if(*input_ptr == '\n') { /* lacks the first operand */
         error_handler("ERROR_MISSING_FIRST_OPERAND", file_name, line_counter);
+        return 1;
+    }
+    if (strncmp(input_ptr, ",", 1) == 0) { /* lacks the first operand */
+        error_handler("ERROR_REDUNDENT_COMMA_AFTER_COMMAND", file_name, line_counter);
         return 1;
     }
     if(!isalpha(*input_ptr) && !isdigit(*input_ptr) && *input_ptr != '#' && *input_ptr != '*') { /* invalid first operand */
@@ -362,68 +367,68 @@ int parse_instruction(char *input_ptr, const int command, char **source, char **
         return 1;
     }
     first_operand_length = operand_length_counter(input_ptr);
-    first_operand = (char *) malloc(first_operand_length + 1);
-    if (first_operand == NULL) {
+    first_operand_name = (char *) malloc(first_operand_length + 1);
+    if (first_operand_name == NULL) {
         error_handler( "Failed to allocate memory", file_name, line_counter);
         return 1;
     }
-    strncpy(first_operand, input_ptr, first_operand_length);
-    first_operand[first_operand_length] = '\0';
+    strncpy(first_operand_name, input_ptr, first_operand_length);
+    first_operand_name[first_operand_length] = '\0';
 
     if (command < 5 /*mov, cmp, add, sub, lea*/) {
         input_ptr += first_operand_length;
-        input_ptr = first_char_in_line(input_ptr);
+        input_ptr = skip_whitespace(input_ptr);
         if (strncmp(input_ptr, ",", 1) == 0) {
             input_ptr++;
-            input_ptr = first_char_in_line(input_ptr);
+            input_ptr = skip_whitespace(input_ptr);
         }
         else { /* missing a comma between the two operands */
-            error_handler("ERRROR_MISSING_A_COMMA", file_name, line_counter);
+            error_handler("ERROR_MISSING_A_COMMA", file_name, line_counter);
             return 1;
         }
-        input_ptr = first_char_in_line(input_ptr);
+        input_ptr = skip_whitespace(input_ptr);
         if (strncmp(input_ptr, ",", 1) == 0) { /* too many commas */
             error_handler("ERROR_TOO_MANY_COMMAS", file_name, line_counter);
-            free(first_operand);
+            free(first_operand_name);
             return 1;
         }
         if(*input_ptr == '\n') { /* lacks the second operand */
             error_handler("ERROR_MISSING_SECOND_OPERAND", file_name, line_counter);
-            free(first_operand);
+            free(first_operand_name);
             return 1;
         }
         if(isalpha(*input_ptr) == 0 && !isdigit(*input_ptr) && *input_ptr != '#' && *input_ptr != '*') { /* invalid second operand */
             error_handler("ERROR_INVALID_SECOND_OPERAND", file_name, line_counter);
-            free(first_operand);
+            free(first_operand_name);
             return 1;
         }
 
         second_operand_length = operand_length_counter(input_ptr);
-        second_operand = (char *) malloc(second_operand_length + 1);
-        if (second_operand == NULL) {
+        second_operand_name = (char *) malloc(second_operand_length + 1);
+        if (second_operand_name == NULL) {
             error_handler( "Failed to allocate memory", file_name, line_counter);
-            free(first_operand);
+            free(first_operand_name);
             return 1;
         }
-        strncpy(second_operand, input_ptr, second_operand_length);
-        second_operand[second_operand_length] = '\0';
+        strncpy(second_operand_name, input_ptr, second_operand_length);
+        second_operand_name[second_operand_length] = '\0';
 
         input_ptr += second_operand_length;
-        input_ptr = first_char_in_line(input_ptr);
-        if(*input_ptr != '\n') { /* redundent chraters after seond operand*/
+        input_ptr = skip_whitespace(input_ptr);
+        if(input_ptr && *input_ptr != '\n') { /* redundent chraters after seond operand*/
             error_handler("ERROR_REDUNDENT_CHARACTERS_AFTER_SECOND_OPERAND", file_name, line_counter);
-            free(first_operand);
-            free(second_operand);
+            free(first_operand_name);
+            free(second_operand_name);
             return 1;
         }
     }
     if(command > 4 && command < 14) {
         input_ptr += first_operand_length;
-        input_ptr = first_char_in_line(input_ptr);
-        if(*input_ptr != '\n') { /* redundent charaters after first operand*/
+        input_ptr = skip_whitespace(input_ptr);
+        if(input_ptr &&*input_ptr != '\n' && *input_ptr != '\0') { /* redundent charaters after first operand*/
             error_handler("ERROR_REDUNDENT_CHARACTERS_AFTER_FIRST_OPERAND", file_name, line_counter);
-            free(first_operand);
-            free(second_operand);
+            free(first_operand_name);
+            free(second_operand_name);
             return 1;
         }
     }
@@ -431,26 +436,26 @@ int parse_instruction(char *input_ptr, const int command, char **source, char **
     *source = (char *) malloc(first_operand_length + 1);
     if (*source == NULL) {
         error_handler( "Failed to allocate memory", file_name, line_counter);
-        free(first_operand);
-        if (second_operand)
-            free(second_operand);
+        free(first_operand_name);
+        if (second_operand_name)
+            free(second_operand_name);
         return 1;
     }
-    strncpy(*source, first_operand, first_operand_length + 1);
-    free(first_operand);
-    first_operand = NULL;
+    strncpy(*source, first_operand_name, first_operand_length + 1);
+    free(first_operand_name);
+    first_operand_name = NULL;
 
     if (command < 5) {
         *dest = (char *) malloc(second_operand_length + 1);
         if (*dest == NULL) {
             error_handler( "Failed to allocate memory", file_name, line_counter);
             free(*source);
-            free(second_operand);
+            free(second_operand_name);
             return 1;
         }
-        strncpy(*dest, second_operand, second_operand_length + 1);
-        free(second_operand);
-        second_operand = NULL;
+        strncpy(*dest, second_operand_name, second_operand_length + 1);
+        free(second_operand_name);
+        second_operand_name = NULL;
 
     }
     return 0;
@@ -469,8 +474,8 @@ int parse_instruction(char *input_ptr, const int command, char **source, char **
  * @return Returns 0 on success, otherwise returns 1 if memory allocation fails.
  */
 int parse_instruction_stage_2(char *input_ptr, const int command, char **source, char **dest, const char *file_name, const int line_counter) {
-    int command_length, first_operand_length , second_operand_length ;
-    char *first_operand = NULL, *second_operand = NULL;
+    int command_length, first_operand_length = 0 , second_operand_length = 0 ;
+    char *first_operand_name = NULL, *second_operand_name = NULL;
 
     if (command < 15)
         command_length = 3;
@@ -481,55 +486,64 @@ int parse_instruction_stage_2(char *input_ptr, const int command, char **source,
     *dest = NULL;
 
     input_ptr += command_length;
-    input_ptr = first_char_in_line(input_ptr);
+    input_ptr = skip_whitespace(input_ptr);
     if (command == 14 || command == 15) {
         return 0;
     }
+    if(input_ptr == NULL) {
+        return 1;
+    }
     first_operand_length = operand_length_counter(input_ptr);
-    first_operand = (char *) malloc(first_operand_length + 1);
-    if (first_operand == NULL) {
+    first_operand_name = (char *) malloc(first_operand_length + 1);
+    if (first_operand_name == NULL) {
         error_handler( "Failed to allocate memory", file_name, line_counter);
         return 1;
     }
-    strncpy(first_operand, input_ptr, first_operand_length);
-    first_operand[first_operand_length] = '\0';
-
+    strncpy(first_operand_name, input_ptr, first_operand_length);
+    first_operand_name[first_operand_length] = '\0';
+    fflush(stdout);
     if (command < 5 /*mov, cmp, add, sub, lea*/) {
         input_ptr += first_operand_length;
-        input_ptr = first_char_in_line(input_ptr);
-        if (strncmp(input_ptr, ",", 1) == 0) {
-            input_ptr++;
-            input_ptr = first_char_in_line(input_ptr);
+        input_ptr = skip_whitespace(input_ptr);
+        if(input_ptr != NULL) {
+            if (strncmp(input_ptr, ",", 1) == 0) {
+                input_ptr++;
+                input_ptr = skip_whitespace(input_ptr);
+            }
         }
-        input_ptr = first_char_in_line(input_ptr);
+        input_ptr = skip_whitespace(input_ptr);
+        if(input_ptr == NULL) {
+            free(first_operand_name);
+            return 1;
+        }
         second_operand_length = operand_length_counter(input_ptr);
-        second_operand = (char *) malloc(second_operand_length + 1);
-        strncpy(second_operand, input_ptr, second_operand_length);
-        second_operand[second_operand_length] = '\0';
+        second_operand_name = (char *) malloc(second_operand_length + 1);
+        strncpy(second_operand_name, input_ptr, second_operand_length);
+        second_operand_name[second_operand_length] = '\0';
     }
     *source = (char *) malloc(first_operand_length + 1);
     if (*source == NULL) {
         error_handler( "Failed to allocate memory", file_name, line_counter);
-        free(first_operand);
-        if (second_operand)
-            free(second_operand);
+        free(first_operand_name);
+        if (second_operand_name)
+            free(second_operand_name);
         return 1;
     }
-    strncpy(*source, first_operand, first_operand_length + 1);
-    free(first_operand);
-    first_operand = NULL;
+    strncpy(*source, first_operand_name, first_operand_length + 1);
+    free(first_operand_name);
+    first_operand_name = NULL;
 
     if (command < 5) {
         *dest = (char *) malloc(second_operand_length + 1);
         if (*dest == NULL) {
             error_handler( "Failed to allocate memory", file_name, line_counter);
             free(*source);
-            free(second_operand);
+            free(second_operand_name);
             return 1;
         }
-        strncpy(*dest, second_operand, second_operand_length + 1);
-        free(second_operand);
-        second_operand = NULL;
+        strncpy(*dest, second_operand_name, second_operand_length + 1);
+        free(second_operand_name);
+        second_operand_name = NULL;
     }
     return 0;
 }
@@ -576,7 +590,7 @@ int add_label_to_array(label_array *array, const char *name, const int address, 
         else
             length_of_array = (length_of_array) * 2;
         new_label = realloc(array->label_element, length_of_array * sizeof(label));
-        if (!new_label) {
+        if (new_label == NULL) {
             error_handler( "Failed to reallocate memory", file_name, line_counter);
             return 1;
         }
@@ -588,8 +602,8 @@ int add_label_to_array(label_array *array, const char *name, const int address, 
         error_handler( "Failed to reallocate memory", file_name, line_counter);
         return 1;
     }
-    array->label_element[number_of_reps].address = address;
     strcpy(array->label_element[number_of_reps].name, name);
+    array->label_element[number_of_reps].address = address;
     array->label_element[number_of_reps].characteristic = label_characteristic;
 
     array->rep++;
@@ -731,20 +745,25 @@ char *command_to_binary(const int command, const operand first_operand, const op
  * @param label_table A pointer to the label array containing the labels and their characteristics.
  */
 void convert_operands_to_binary(const operand first_operand, const operand second_operand, char **first_operand_in_binary, char **second_operand_in_binary, const label_array *label_table) {
-    *first_operand_in_binary = (char*)malloc(SIZE_OF_NUMBER_IN_BITS + LEANGTH_OF_ARE + 1);
-    if (!*first_operand_in_binary) {
-        // handle error
-        return;
+    if(first_operand.type != UNKNOWN) {
+        *first_operand_in_binary = (char*)malloc(SIZE_OF_NUMBER_IN_BITS + LEANGTH_OF_ARE + 1);
+        if (*first_operand_in_binary == NULL) {
+            // handle error
+            return;
+        }
+        memset(first_operand_in_binary, 0, SIZE_OF_NUMBER_IN_BITS + LEANGTH_OF_ARE + 1);
     }
-    memset(first_operand_in_binary, 0, SIZE_OF_NUMBER_IN_BITS + LEANGTH_OF_ARE + 1);
-
-    *second_operand_in_binary = (char*)malloc(SIZE_OF_NUMBER_IN_BITS + LEANGTH_OF_ARE + 1);
-    if (!*second_operand_in_binary) {
-        free(first_operand_in_binary);
-        // handle error
-        return;
+    //printf("\nsub_checkpoint1"); fflush(stdout); // for testing
+    if(second_operand.type != UNKNOWN) {
+        *second_operand_in_binary = (char*)malloc(SIZE_OF_NUMBER_IN_BITS + LEANGTH_OF_ARE + 1);
+        if (*second_operand_in_binary == NULL) {
+            free(first_operand_in_binary);
+            // handle error
+            return;
+        }
+        memset(second_operand_in_binary, 0, SIZE_OF_NUMBER_IN_BITS + LEANGTH_OF_ARE + 1);
     }
-    memset(second_operand_in_binary, 0, SIZE_OF_NUMBER_IN_BITS + LEANGTH_OF_ARE + 1);
+    //printf("\nsub_checkpoint2"); fflush(stdout); // for tesing
     switch(first_operand.type) {
         case IMMEDIATE:
             *first_operand_in_binary = immediate_operand_to_binary(first_operand);
@@ -753,15 +772,13 @@ void convert_operands_to_binary(const operand first_operand, const operand secon
             *first_operand_in_binary = label_operand_to_binary(first_operand, label_table);
         break;
         case REGISTER_PTR:
-            *first_operand_in_binary = register_operand_to_binary(first_operand, second_operand);
-        break;
         case REGISTER:
             *first_operand_in_binary = register_operand_to_binary(first_operand, second_operand);
         break;
         case UNKNOWN:
-            free(*first_operand_in_binary);
             break;
     }
+    //printf("\nsub_checkpoint3"); fflush(stdout); // for tesing
     switch(second_operand.type) {
         case IMMEDIATE:
             *second_operand_in_binary = immediate_operand_to_binary(second_operand);
@@ -770,21 +787,12 @@ void convert_operands_to_binary(const operand first_operand, const operand secon
             *second_operand_in_binary = label_operand_to_binary(second_operand, label_table);
         break;
         case REGISTER_PTR:
-            if(first_operand.type == REGISTER_PTR || first_operand.type == REGISTER)
-                break;
-            else {
-                *second_operand_in_binary = register_operand_to_binary(first_operand, second_operand);
-                break;
-            }
         case REGISTER:
             if(first_operand.type == REGISTER_PTR || first_operand.type == REGISTER)
                 break;
-            else {
-                *second_operand_in_binary = register_operand_to_binary(first_operand, second_operand);
-                break;
-            }
+            *second_operand_in_binary = register_operand_to_binary(first_operand, second_operand);
+            break;
         case UNKNOWN:
-            free(*second_operand_in_binary);
             break;
     }
 }
@@ -830,16 +838,16 @@ char* label_operand_to_binary(const operand operand, const label_array *label_ta
  */
 char* immediate_operand_to_binary(const operand operand) {
     char* operand_number_in_binary = malloc(SIZE_OF_NUMBER_IN_BITS + LEANGTH_OF_ARE + 1);
-    if(!operand_number_in_binary) {// handle error
+    if(operand_number_in_binary == NULL) {// handle error
         return NULL;
     }
     char* operand_name = malloc( strlen(operand.name) + 1);
-    if(!operand_name) {// handle error
+    if(operand_name == NULL) {// handle error
         return NULL;
     }
     strcpy(operand_name, operand.name);
     operand_name++;
-    operand_name = first_char_in_line(operand_name);
+    operand_name = skip_whitespace(operand_name);
     if (isdigit(operand_name[0]) || ((*operand_name == '-' || *operand_name == '+') && isdigit(*(operand_name + 1)))) {
         strcpy(operand_number_in_binary, decimal_to_binary(atoi(operand_name)));
         strcat(operand_number_in_binary, "100");
@@ -858,7 +866,7 @@ char* immediate_operand_to_binary(const operand operand) {
  */
 char* register_operand_to_binary(const operand first_operand, const operand second_operand) {
     char* operand_number_in_binary = malloc(SIZE_OF_NUMBER_IN_BITS + LEANGTH_OF_ARE + 1);
-    if(!operand_number_in_binary) {// handle allocation error
+    if(operand_number_in_binary == NULL) {// handle allocation error
 
         return NULL;
     }
@@ -895,7 +903,7 @@ char* register_operand_to_binary(const operand first_operand, const operand seco
  */
 char* register_name_to_binary(const char* register_name) {
     char* register_number_in_binary = malloc(SIZE_OF_NUMBER_IN_BITS + LEANGTH_OF_ARE + 1);
-    if(!register_number_in_binary) {// handle error
+    if(register_number_in_binary == NULL) {// handle error
         return NULL;
     }
     if(strncmp(register_name, "*", 1) == 0)
@@ -931,30 +939,7 @@ char* register_name_to_binary(const char* register_name) {
     return register_number_in_binary;
 }
 
-/*
-void free_label_array(label_array *label_table) { // example how to free a label array, need to implement it in code
-    int i;
-    for(i = 0; i < label_table->rep; i++) {
-        free(label_table->label_element[i].name);
-    }
-    free(label_table->label_element);
-    free(label_table);
-}
 
-void free_command_array(command_array *command_table) { // example how to free a command array, need to implement it in code
-    int i;
-    for(i = 0; i < command_table->rep; i++) {
-        free(command_table->command_element[i].source);
-        free(command_table->command_element[i].dest);
-    }
-    free(command_table->command_element);
-    free(command_table);
-}
-
-void free_data_array(data_array *data_table) { // example how to free a data array, need to implement it in code
-    free(data_table->data_element);
-    free(data_table);
-}*/
 
 /**
  * Handles errors by printing an error message along with the file name and line number where the error occurred.
@@ -966,7 +951,6 @@ void free_data_array(data_array *data_table) { // example how to free a data arr
  */
 void error_handler(const char *error_message, const char *file_name, const int line_counter) {
     printf("Error: %s in file %s at line %d\n", error_message, file_name, line_counter);
-    exit(1);
 }
 
 /**
@@ -989,7 +973,7 @@ char* decimal_to_binary(const int integer) {
     const int number_in_bits = SIZE_OF_NUMBER_IN_BITS;
     unsigned int mask;
     char* binary_string = malloc(number_in_bits + 1);
-    if(!binary_string) {
+    if(binary_string == NULL) {
         return NULL;
     }
     binary_string[number_in_bits] = '\0';
@@ -1014,11 +998,11 @@ char* decimal_to_binary(const int integer) {
 char* binary_to_octal(const char *binary_str) {
     int  i, j, value;
     if (strlen(binary_str) != 15) {// make #define
-        fprintf(stdout, "Error: binary_str must be 15 bits long.\n"); // make real error sign
+        fprintf(stdout, "Error: binary_str must be 15 bits long.\n"); // for testing  might make real error sign
         return NULL;
     }
     char *octal_str = malloc(6); // make #define for 6
-    if (!octal_str) {
+    if (octal_str == NULL) {
         fprintf(stdout, "Memory allocation failed.\n");
         return NULL;
     }
@@ -1030,5 +1014,38 @@ char* binary_to_octal(const char *binary_str) {
         octal_str[i] = value + '0';
     }
     return octal_str;
+}
+/* remove later
+void copy_operand(operand *operand_dest, const operand *operand_src, const char *binary_str) {
+    operand_dest->name = (char *)malloc(strlen(operand_src->name) + 1);
+    if (operand_dest->name == NULL) {
+        printf("Failed to allocate memory\n");
+        exit(1);
+    }
+    strcpy(operand_dest->name, operand_src->name);
+
+    operand_dest->word_in_binary = (char *)malloc(LENGTH_OF_BINARY_WORD);
+    if (operand_dest->word_in_binary == NULL) {// handle error
+        printf("Failed to allocate memory\n");
+        free(operand_dest->name);
+        exit(1);
+    }
+    strcpy(operand_dest->word_in_binary, binary_str);
+}*/
+
+void free_label_array(label_array *array) {
+    int i;
+    if (array != NULL) {
+        for (i = 0; i < array->rep; i++) {
+            free(array->label_element[i].name);
+        }
+        free(array->label_element);
+        free(array);
+    }
+}
+
+void reset_opernads_type( operand *first_operand, operand *second_operand) {
+    first_operand->type = UNKNOWN;
+    second_operand->type = UNKNOWN;
 }
 

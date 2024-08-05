@@ -1,0 +1,30 @@
+onaoifnoawijdioawjdiojawiodjawijdioawjdiojawoidjioawjdiojawidjioawjdiojawidjawiojdioawjdijawidjiawojdioawjdijawijdioawjdoijawidjawiojdioawjdiojawd
+dpawjoidjawiojdiawjdijiadio
+.entry L1
+.entry K
+L1: sub r1,r1
+move r1,r2
+mov R1,R2
+mov r1,r78
+lea #1, r1
+add
+cmp r1,
+jmp
+not r1,r2
+dec #-5
+mov K[],K[2]
+K: .data 1,2,3,4,5,6,7
+hlt diawdioawjid
+.Define k=3
+.data odija,2,3,4
+.define =6
+.define f=
+.string "ddd 
+.string ddd
+.extern 4j
+4j:mov r1,r2
+lp :mov r1,r2
+.entry HOME
+.define kl = 565665
+.data 2,3,45434,4,5
+ThisLabelIsTooLongForTheFileAndWillGetAnErrorForThat: hlt

@@ -39,24 +39,24 @@ code_node *new_code_node(const char *line, const int L, const char* word_in_bina
         free(new_node);
         exit(1);
     }
-    new_node->word_operand1_in_binary = (char*)malloc(16);// change to #define from a constant
-    if(new_node->word_operand1_in_binary == NULL) {
+    new_node->first_operand.word_in_binary = (char*)malloc(16);// change to #define from a constant
+    if(new_node->first_operand.word_in_binary == NULL) {
         printf("Failed to allocate memory\n");
         free(new_node->word_command_in_binary);
         free(new_node);
         exit(1);
     }
-    new_node->word_operand2_in_binary = (char*)malloc(16);// change to #define from a constant
-    if(new_node->word_operand2_in_binary == NULL) {
+    new_node->second_operand.word_in_binary = (char*)malloc(16);// change to #define from a constant
+    if(new_node->second_operand.word_in_binary == NULL) {
         printf("Failed to allocate memory\n");
         free(new_node->word_command_in_binary);
-        free(new_node->word_operand1_in_binary);
+        free(new_node->first_operand.word_in_binary);
         free(new_node);
         exit(1);
     }
     strncpy(new_node->word_command_in_binary, word_in_binary,16);// change to #define from a constant
-    new_node->word_command_in_binary[16] = '\0';
-    new_node->original_line = (char *) malloc(strlen(line) + 1);
+    new_node->word_command_in_binary[15] = '\0';
+    new_node->original_line = (char *) malloc(strlen(line) + 1); // for testing
     if (new_node->original_line == NULL) {
         printf("Failed to allocate memory\n");
         free(new_node->word_command_in_binary);
@@ -194,30 +194,25 @@ void convert_ascii_to_binary(data_node *data_node) {
  */
 void ob_file_usher(const char* file_name, const data_image *data_image, const code_image *code_image, const int IC, const int DC) {
     int i, j = STARTING_POINT_OF_MEMORY;
-    code_node* code_node = code_image->first;
-    data_node* data_node = data_image->first;
-    char *file_OB = file_name_extender(file_name, ".ob");
+    const code_node *code_node = code_image->first;
+    const data_node *data_node = data_image->first;
+    const char *file_OB = file_name_extender(file_name, ".ob");
     FILE *ob_extension  = fopen(file_OB, "w");
     file_inspector(ob_extension, file_OB);
     fprintf(ob_extension, "%d %d\n", IC, DC);
 
-    while(1) { // for testing - maybe think on a smarter way instead of while(1)
+    while(code_node != NULL) { // for testing - maybe think on a smarter way instead of while(1)
         fprintf(ob_extension, "%04d %s\n", j++, binary_to_octal(code_node->word_command_in_binary));
         if (code_node->length >= 2)
-            fprintf(ob_extension, "%04d %s\n", j++, binary_to_octal(code_node->word_operand1_in_binary));
+            fprintf(ob_extension, "%04d %s\n", j++, binary_to_octal(code_node->first_operand.word_in_binary));
         if (code_node->length == 3)
-            fprintf(ob_extension, "%04d %s\n", j++, binary_to_octal(code_node->word_operand2_in_binary));
-        if(code_node->next_node == NULL)
-            break;
-        *code_node = *code_node->next_node;
+            fprintf(ob_extension, "%04d %s\n", j++, binary_to_octal(code_node->second_operand.word_in_binary));
+        code_node = code_node->next_node;
     }
-    while (1) {
-
+    while (data_node != NULL) {// for testing - maybe think on a smarter way instead of while(1)
         for (i = 0; i < data_node->length; i++) {
             fprintf(ob_extension, "%04d %s\n", j++, binary_to_octal(data_node->word_in_binary[i]));
         }
-        if (data_node->next_node == NULL)
-            break;
         data_node = data_node->next_node;
     }
     fclose(ob_extension);
@@ -235,14 +230,14 @@ void  ext_file_usher(const char *file_name, const code_image *code_image) {
     file_inspector(ext_extension, file_EXT);
     const code_node *code_node = code_image->first;
     while(code_node != NULL) {
-        if(code_node->word_operand1_in_binary) {
-            if(strcmp(code_node->word_operand1_in_binary, "000000000000001") == 0) {
-                fprintf(ext_extension, "%s %04d\n", code_node->operand1_name, code_node->address_in_machine + 1);
+        if(code_node->first_operand.word_in_binary) {
+            if(strcmp(code_node->first_operand.word_in_binary, "000000000000001") == 0) {
+                fprintf(ext_extension, "%s %04d\n", code_node->first_operand.name, code_node->decimal_address_in_machine + 1);
             }
         }
-        if(code_node->word_operand2_in_binary) {
-            if(strcmp(code_node->word_operand2_in_binary, "000000000000001") == 0) {
-                fprintf(ext_extension, "%s %04d\n", code_node->operand2_name, code_node->address_in_machine + 2);
+        if(code_node->second_operand.word_in_binary) {
+            if(strcmp(code_node->second_operand.word_in_binary, "000000000000001") == 0) {
+                fprintf(ext_extension, "%s %04d\n", code_node->second_operand.name, code_node->decimal_address_in_machine + 2);
             }
         }
         code_node = code_node->next_node;
@@ -273,4 +268,74 @@ void ent_file_usher(const char *file_name, const label_array *label_table) {
     }
     fclose(ent_extension);
     free(file_ENT);
+}
+
+
+void free_data_node(data_node *node) {
+    int i;
+    if (node != NULL) {
+        if (node->original_line != NULL) {
+            free(node->original_line);
+        }
+        if (node->char_in_ASCII != NULL) {
+            free(node->char_in_ASCII);
+        }
+        if (node->word_in_binary != NULL) {
+            for (i = 0; i < node->length; i++) {
+                if (node->word_in_binary[i] != NULL) {
+                    free(node->word_in_binary[i]);
+                }
+            }
+            free(node->word_in_binary);
+        }
+        free(node);
+    }
+}
+
+void free_data_image(data_image *image) {
+    data_node *current = image->first;
+    data_node *next;
+    while (current != NULL) {
+        next = current->next_node;
+        free_data_node(current);
+        current = next;
+    }
+    free(image);
+}
+
+void free_operand(const operand *operand) {
+    if (operand != NULL) {
+        if (operand->name != NULL) {
+            free(operand->name);
+        }
+        if (operand->word_in_binary != NULL) {
+            free(operand->word_in_binary);
+        }
+        //free(operand);
+    }
+}
+
+void free_code_node(code_node *node) {
+    if (node != NULL) {
+        if (node->original_line != NULL) {
+            free(node->original_line);
+        }
+        if (node->word_command_in_binary != NULL) {
+            free(node->word_command_in_binary);
+        }
+        free_operand(&node->first_operand);
+        free_operand(&node->second_operand);
+        free(node);
+    }
+}
+
+void free_code_image(code_image *code_image) {
+    code_node *current_node = code_image->first;
+    code_node *next;
+    while (current_node != NULL) {
+        next = current_node->next_node;
+        free_code_node(current_node);
+        current_node = next;
+    }
+    free(code_image);
 }
