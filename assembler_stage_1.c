@@ -105,10 +105,8 @@ int stage_1_process_file(const char *file_name, label_array *label_table, code_i
             location = line_location(ptr);
         }
         if (location == DATA || location == STRING) {
-            if (labelFlag == 1) {
-                if(add_label_to_array(label_table, label_header, DC, location, am_version, line_counter))
-                    error_found = 1;
-            }
+            if (labelFlag == 1)
+                add_label_to_array(label_table, label_header, DC, location, am_version, line_counter);
             if (location == DATA)
                 parse_dot_data(ptr, &parced_array, &array_size, &DC, am_version, line_counter);
             else
@@ -126,13 +124,11 @@ int stage_1_process_file(const char *file_name, label_array *label_table, code_i
                 error_handler("ERROR_LABEL_NAME_IS_A_RESERVED_WORD", am_version, line_counter);
                 error_found = 1;
             }
-            if(add_label_to_array(label_table, label_header, EXTERN_ADDRESS, EXTERN, am_version, line_counter))
-                error_found = 1;
+            add_label_to_array(label_table, label_header, EXTERN_ADDRESS, EXTERN, am_version, line_counter);
         } else if (location == ENTRY) {
-        } else { /*CODE*/
+        } else if (location == CODE) {
             if (labelFlag == 1)
-                if(add_label_to_array(label_table, label_header, IC + STARTING_POINT_OF_MEMORY, IRRLEVANT, am_version, line_counter))
-                    error_found = 1;
+                add_label_to_array(label_table, label_header, IC + STARTING_POINT_OF_MEMORY, IRRLEVANT, am_version, line_counter);
             command_in_line = which_command(ptr);
             if(command_in_line == -1) {
                 error_handler("ERROR_COMMAND_NOT_FOUND", am_version, line_counter);
@@ -260,23 +256,22 @@ int which_command(const char *command) {
  * @param line_counter The current line number in the source code.
  * @return 0 if the command was successfully analyzed, 1 otherwise.
  */
-int analyze_command(char *ptr, const int command, int *L, char *word_in_binary, const char *file_name, const int line_counter) { // might make another part for stage 2, can't detect wrong type of operand if operand is a label
+int analyze_command(char *ptr, const int command, int *L, char *word_in_binary, const char *file_name, const int line_counter) {
     int is_error = 0;
     char *first_operand_name = NULL, *second_operand_name = NULL;
     operand first_operand, second_operand;
 
-    if(parse_instruction(ptr, command, &first_operand_name, &second_operand_name, file_name, line_counter))
+    if (parse_instruction(ptr, command, &first_operand_name, &second_operand_name, file_name, line_counter))
         return 1;
 
     if (first_operand_name) {
         first_operand.name = malloc(strlen(first_operand_name) + 1);
         if (first_operand.name) {
             strcpy(first_operand.name, first_operand_name);
-        }
-        else {
-            error_handler("Failed to allocate memory ", file_name, line_counter);
+        } else {
+            printf("\nERROR_FAILED_TO_ALLOCATE_MEM");
             free(first_operand_name);
-            return 1;
+            exit(1);
         }
     } else {
         first_operand.name = NULL;
@@ -287,12 +282,11 @@ int analyze_command(char *ptr, const int command, int *L, char *word_in_binary, 
         second_operand.name = malloc(strlen(second_operand_name) + 1);
         if (second_operand.name) {
             strcpy(second_operand.name, second_operand_name);
-        }
-        else {
-            error_handler("Failed to allocate memory", file_name, line_counter);
+        } else {
+            printf("\nERROR_FAILED_TO_ALLOCATE_MEM");
             free(first_operand_name);
             free(second_operand_name);
-            return 1;
+            exit(1);
         }
     } else {
         second_operand.name = NULL;
@@ -304,13 +298,13 @@ int analyze_command(char *ptr, const int command, int *L, char *word_in_binary, 
     if (command <= 15) {
         (*L)++;
         if (command <= 13) {
-            if(analyze_operand(&first_operand)) {
+            if (analyze_operand(&first_operand)) {
                 error_handler("ERROR_INVALID_FIRST_OPERAND", file_name, line_counter);
                 is_error = 1;
             }
             (*L)++;
             if (command <= 4) {
-                if(analyze_operand(&second_operand)) {
+                if (analyze_operand(&second_operand)) {
                     error_handler("ERROR_INVALID_SECOND_OPERAND", file_name, line_counter);
                     is_error = 1;
                 }
@@ -322,55 +316,7 @@ int analyze_command(char *ptr, const int command, int *L, char *word_in_binary, 
             }
         }
     }
-    if (command == 1){}
-    else if (command <= 3) {
-        if (second_operand.type == IMMEDIATE) {
-            error_handler("ERROR_INVALID_TYPE_IN_SECOND_OPERAND", file_name, line_counter);
-            is_error = 1;
-        }
-    }
-    if (command == 4) {
-        if (first_operand.type != LABEL_VALUE) {
-            error_handler("ERROR_INVALID_TYPE_IN_FIRST_OPERAND", file_name, line_counter);
-            is_error = 1;
-        }
-        if (second_operand.type == IMMEDIATE) {
-            error_handler("ERROR_INVALID_TYPE_IN_SECOND_OPERAND", file_name, line_counter);
-            is_error = 1;
-        }
-    }
-    if ((command >= 5 &&command <= 8) || command == 11) {
-        if (first_operand.type == IMMEDIATE) {
-            error_handler("ERROR_INVALID_TYPE_IN_FIRST_OPERAND", file_name, line_counter);
-            is_error = 1;
-        }
-        if (second_operand.type != UNKNOWN) {
-            error_handler("ERROR_REQUIERED_COMMAND_DOES_NOT_SUPPORT_A_SECOND_OPERAND", file_name, line_counter);
-            is_error = 1;
-        }
-    }
-    if (command == 9 || command == 10 || command == 13) {
-        if (first_operand.type == IMMEDIATE || first_operand.type == REGISTER) {
-            error_handler("ERROR_INVALID_TYPE_IN_FIRST_OPERAND", file_name, line_counter);
-            is_error = 1;
-        }
-        if (second_operand.type != UNKNOWN) {
-            error_handler("ERROR_REQUIERED_COMMAND_DOES_NOT_SUPPORT_A_SECOND_OPERAND", file_name, line_counter);
-            is_error = 1;
-        }
-    }
-    if (command == 12) {
-        if (second_operand.type != UNKNOWN) {
-            error_handler("ERROR_REQUIERED_COMMAND_DOES_NOT_SUPPORT_A_SECOND_OPERAND", file_name, line_counter);
-            is_error = 1;
-        }
-    }
-    if (command == 14 || command == 15) {
-        if (first_operand.type != UNKNOWN || second_operand.type != UNKNOWN) {
-            error_handler("ERROR_REQUIERED_COMMAND_DOES_NOT_SUPPORT_OPERANDS", file_name, line_counter);
-            is_error = 1;
-        }
-    }
+
     if (is_error) {
         if (first_operand.name)
             free(first_operand.name);

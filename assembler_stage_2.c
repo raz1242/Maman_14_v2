@@ -95,10 +95,10 @@ int stage_2_process_file(const char *file_name, const label_array *label_table, 
            //printf("\ncheckpoint2"); fflush(stdout);// for testing
             if (code_node->second_operand.name)
                 if(analyze_operand_stage_2(&code_node->second_operand, *label_table)){
-                //if(analyze_operand(&code_node->second_operand)) {
                     error_handler("ERROR_INVALID_SECOND_OPERAND", am_version, line_counter);
                     error_found = 1;
                 }
+            validate_operands(command_in_line, code_node->first_operand, code_node->second_operand, am_version, line_counter);
             //printf("\ncheckpoint3"); fflush(stdout); // for testing
             convert_operands_to_binary(code_node->first_operand, code_node->second_operand, &first_operand_in_binary, &second_operand_in_binary, label_table);
             //printf("\ncheckpoint4"); fflush(stdout); // for testing
@@ -160,4 +160,69 @@ int stage_2_process_file(const char *file_name, const label_array *label_table, 
         ext_file_usher(file_name, code_image);
     ob_file_usher(file_name, data_image, code_image, IC, DC);
     return 0;
+}
+
+/**
+ * Validates the operands for a given command.
+ *
+ * @param command The command index in the commands_list.
+ * @param first_operand The first operand to validate.
+ * @param second_operand The second operand to validate.
+ * @param file_name The name of the file being processed.
+ * @param line_counter The current line number in the source code.
+ * @return 0 if the operands are valid, 1 otherwise.
+ */
+int validate_operands(const int command, const operand first_operand, const operand second_operand, const char *file_name, const int line_counter) {
+    int is_error = 0;
+
+    if (command == 1) {}
+    else if (command <= 3) {
+        if (second_operand.type == IMMEDIATE) {
+            error_handler("ERROR_INVALID_TYPE_IN_SECOND_OPERAND", file_name, line_counter);
+            is_error = 1;
+        }
+    }
+    if (command == 4) {
+        if (first_operand.type != LABEL_VALUE) {
+            error_handler("ERROR_INVALID_TYPE_IN_FIRST_OPERAND", file_name, line_counter);
+            is_error = 1;
+        }
+        if (second_operand.type == IMMEDIATE) {
+            error_handler("ERROR_INVALID_TYPE_IN_SECOND_OPERAND", file_name, line_counter);
+            is_error = 1;
+        }
+    }
+    if ((command >= 5 && command <= 8) || command == 11) {
+        if (first_operand.type == IMMEDIATE) {
+            error_handler("ERROR_INVALID_TYPE_IN_FIRST_OPERAND", file_name, line_counter);
+            is_error = 1;
+        }
+        if (second_operand.type != UNKNOWN) {
+            error_handler("ERROR_REQUIERED_COMMAND_DOES_NOT_SUPPORT_A_SECOND_OPERAND", file_name, line_counter);
+            is_error = 1;
+        }
+    }
+    if (command == 9 || command == 10 || command == 13) {
+        if (first_operand.type == IMMEDIATE || first_operand.type == REGISTER) {
+            error_handler("ERROR_INVALID_TYPE_IN_FIRST_OPERAND", file_name, line_counter);
+            is_error = 1;
+        }
+        if (second_operand.type != UNKNOWN) {
+            error_handler("ERROR_REQUIERED_COMMAND_DOES_NOT_SUPPORT_A_SECOND_OPERAND", file_name, line_counter);
+            is_error = 1;
+        }
+    }
+    if (command == 12) {
+        if (second_operand.type != UNKNOWN) {
+            error_handler("ERROR_REQUIERED_COMMAND_DOES_NOT_SUPPORT_A_SECOND_OPERAND", file_name, line_counter);
+            is_error = 1;
+        }
+    }
+    if (command == 14 || command == 15) {
+        if (first_operand.type != UNKNOWN || second_operand.type != UNKNOWN) {
+            error_handler("ERROR_REQUIERED_COMMAND_DOES_NOT_SUPPORT_OPERANDS", file_name, line_counter);
+            is_error = 1;
+        }
+    }
+    return is_error;
 }

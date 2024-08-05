@@ -1,5 +1,5 @@
     cmp #5, r1
-    cmp #5
+    cmp #5,
     cmp
     add *r5, f
     add *r5, #-996

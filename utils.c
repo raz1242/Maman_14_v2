@@ -19,8 +19,8 @@ char *register_list[8] = {"r0", "r1", "r2", "r3", "r4", "r5", "r6", "r7"};
 char *file_name_extender(const char *str, const char *type) {
     char *file_type = malloc(strlen(str) + strlen(type) + 1);
     if (file_type == NULL) {
-        // Handle memory allocation failure
-        return NULL;
+        printf("\nERROR_FAILED_TO_ALLOCATE_MEM");
+        exit(1);
     }
     strcpy(file_type, str);
     strcat(file_type, type);
@@ -112,14 +112,17 @@ int operand_length_counter(const char *str) {
  *
  * @param word The word to be checked.
  * @param length The length of the word.
+ * @param file_name The name of the file where the word is being checked.
+ * @param line_counter The line number in the file where the word is being checked.
  * @return Returns 1 if the word is a reserved word, otherwise returns 0.
  */
-int is_reserved_word(char *word, const int length) {
+int is_reserved_word(char *word, const int length, const char  *file_name, const int line_counter) {
     int i, size;
 
     size = sizeof(reserved_words) / sizeof(reserved_words[0]);
     for (i = 0; i < size; i++) {
         if (strncmp(word, reserved_words[i], length) == 0 && is_end_of_line(word + length)) {
+            error_handler("ERROR_RESERVED_WORD_USED_AS_LABEL", file_name, line_counter);
             return 1;
         }
     }
@@ -219,9 +222,8 @@ int parse_dot_data(const char *input, int **array, int *size, int *DC, const cha
 
     *array = (int *) malloc(count * sizeof(int));
     if (*array == NULL) {
-        error_handler("Failed to allocate memory", file_name, line_counter);
-        *size = 0;
-        return 1;
+        printf("\nERROR_FAILED_TO_ALLOCATE_MEM");
+        exit(1);
     }
 
     ptr = (char *) dataStart;
@@ -314,9 +316,9 @@ int parse_dot_string(const char *input, int **array, int *size, int *DC, const c
 
     *array = (int *) malloc((count + 1) * sizeof(int));
     if (*array == NULL) {
-        error_handler("Failed to allocate memory", file_name, line_counter);
+        printf("\nERROR_FAILED_TO_ALLOCATE_MEM");
         *size = 0;
-        return 1;
+        exit(1);
     }
 
     ptr = (char *) (stringStart + 1);
@@ -380,8 +382,8 @@ int parse_instruction(char *input_ptr, const int command, char **source, char **
     first_operand_length = operand_length_counter(input_ptr);
     first_operand_name = (char *) malloc(first_operand_length + 1);
     if (first_operand_name == NULL) {
-        error_handler( "Failed to allocate memory", file_name, line_counter);
-        return 1;
+        printf("\nERROR_FAILED_TO_ALLOCATE_MEM");
+        exit(1);
     }
     strncpy(first_operand_name, input_ptr, first_operand_length);
     first_operand_name[first_operand_length] = '\0';
@@ -414,9 +416,9 @@ int parse_instruction(char *input_ptr, const int command, char **source, char **
         second_operand_length = operand_length_counter(input_ptr);
         second_operand_name = (char *) malloc(second_operand_length + 1);
         if (second_operand_name == NULL) {
-            error_handler( "Failed to allocate memory", file_name, line_counter);
+            printf("\nERROR_FAILED_TO_ALLOCATE_MEM");
             free(first_operand_name);
-            return 1;
+            exit(1);
         }
         strncpy(second_operand_name, input_ptr, second_operand_length);
         second_operand_name[second_operand_length] = '\0';
@@ -441,11 +443,11 @@ int parse_instruction(char *input_ptr, const int command, char **source, char **
 
     *source = (char *) malloc(first_operand_length + 1);
     if (*source == NULL) {
-        error_handler( "Failed to allocate memory", file_name, line_counter);
+        printf("\nERROR_FAILED_TO_ALLOCATE_MEM");
         free(first_operand_name);
         if (second_operand_name)
             free(second_operand_name);
-        return 1;
+        exit(1);
     }
     strncpy(*source, first_operand_name, first_operand_length + 1);
     free(first_operand_name);
@@ -454,10 +456,10 @@ int parse_instruction(char *input_ptr, const int command, char **source, char **
     if (command < 5) {
         *dest = (char *) malloc(second_operand_length + 1);
         if (*dest == NULL) {
-            error_handler( "Failed to allocate memory", file_name, line_counter);
+            printf("\nERROR_FAILED_TO_ALLOCATE_MEM");
             free(*source);
             free(second_operand_name);
-            return 1;
+            exit(1);
         }
         strncpy(*dest, second_operand_name, second_operand_length + 1);
         free(second_operand_name);
@@ -501,8 +503,8 @@ int parse_instruction_stage_2(char *input_ptr, const int command, char **source,
     first_operand_length = operand_length_counter(input_ptr);
     first_operand_name = (char *) malloc(first_operand_length + 1);
     if (first_operand_name == NULL) {
-        error_handler( "Failed to allocate memory", file_name, line_counter);
-        return 1;
+        printf("\nERROR_FAILED_TO_ALLOCATE_MEM");
+        exit(1);
     }
     strncpy(first_operand_name, input_ptr, first_operand_length);
     first_operand_name[first_operand_length] = '\0';
@@ -518,16 +520,21 @@ int parse_instruction_stage_2(char *input_ptr, const int command, char **source,
         }
         second_operand_length = operand_length_counter(input_ptr);
         second_operand_name = (char *) malloc(second_operand_length + 1);
+        if (second_operand_name == NULL) {
+            printf("\nERROR_FAILED_TO_ALLOCATE_MEM");
+            free(first_operand_name);
+            exit(1);
+        }
         strncpy(second_operand_name, input_ptr, second_operand_length);
         second_operand_name[second_operand_length] = '\0';
     }
     *source = (char *) malloc(first_operand_length + 1);
     if (*source == NULL) {
-        error_handler( "Failed to allocate memory", file_name, line_counter);
+        printf("\nERROR_FAILED_TO_ALLOCATE_MEM");
         free(first_operand_name);
         if (second_operand_name)
             free(second_operand_name);
-        return 1;
+        exit(1);
     }
     strncpy(*source, first_operand_name, first_operand_length + 1);
     free(first_operand_name);
@@ -536,10 +543,10 @@ int parse_instruction_stage_2(char *input_ptr, const int command, char **source,
     if (command < 5) {
         *dest = (char *) malloc(second_operand_length + 1);
         if (*dest == NULL) {
-            error_handler( "Failed to allocate memory", file_name, line_counter);
+            printf("\nERROR_FAILED_TO_ALLOCATE_MEM");
             free(*source);
             free(second_operand_name);
-            return 1;
+            exit(1);
         }
         strncpy(*dest, second_operand_name, second_operand_length + 1);
         free(second_operand_name);
@@ -559,7 +566,7 @@ label_array *label_array_allocator(const int size) {
     label_array *array = malloc(sizeof(label_array));
     array->label_element = (label *) malloc(size * sizeof(label));
     if (array->label_element == NULL) {
-        printf( "Failed to reallocate memory");
+        printf("\nERROR_FAILED_TO_ALLOCATE_MEM");
         exit(1);
     }
     array->rep = 0;
@@ -578,7 +585,7 @@ label_array *label_array_allocator(const int size) {
  * @param line_counter The line number in the file where the label is being added.
  * @return Returns 0 on success, otherwise returns 1 if memory allocation fails.
  */
-int add_label_to_array(label_array *array, const char *name, const int address, const line_type label_characteristic, const char* file_name,
+void add_label_to_array(label_array *array, const char *name, const int address, const line_type label_characteristic, const char* file_name,
                        const int line_counter) {
     label *new_label;
     const int number_of_reps = (array->rep);
@@ -591,23 +598,22 @@ int add_label_to_array(label_array *array, const char *name, const int address, 
             length_of_array = (length_of_array) * 2;
         new_label = realloc(array->label_element, length_of_array * sizeof(label));
         if (new_label == NULL) {
-            error_handler( "Failed to reallocate memory", file_name, line_counter);
-            return 1;
+            printf("\nERROR_FAILED_TO_ALLOCATE_MEM");
+            exit(1);
         }
         array->label_element = new_label;
         array->length = length_of_array; /* Update the length in the array structure*/
     }
     array->label_element[number_of_reps].name = malloc(strlen(name) + 1);
     if (array->label_element[number_of_reps].name == NULL) {
-        error_handler( "Failed to reallocate memory", file_name, line_counter);
-        return 1;
+        printf("\nERROR_FAILED_TO_ALLOCATE_MEM");
+        exit(1);
     }
     strcpy(array->label_element[number_of_reps].name, name);
     array->label_element[number_of_reps].address = address;
     array->label_element[number_of_reps].characteristic = label_characteristic;
 
     array->rep++;
-    return 0;
 }
 
 /**
@@ -627,7 +633,12 @@ int is_label(const label_array *label_table, const char *name) {
     return 0;
 }
 
-
+/**
+ * Determines the index of a register in the register list.
+ *
+ * @param operand_name The name of the operand to be checked.
+ * @return The index of the register in the register list if found, otherwise returns -1.
+ */
 int which_register(const char* operand_name) {
     int i;
     const int size_of_array = sizeof(register_list) / sizeof(register_list[0]);
@@ -653,9 +664,8 @@ char *command_to_binary(const int command, const operand first_operand, const op
     char *str;
     str = (char *) malloc(15 * sizeof(char) + 1);
     if (str == NULL) {
-        printf("Failed to allocate memory\n");
-
-        return NULL;
+        printf("\nERROR_FAILED_TO_ALLOCATE_MEM");
+        exit(1);
     }
     str[0] = '\0';
     switch (command) {
@@ -761,8 +771,8 @@ void convert_operands_to_binary(const operand first_operand, const operand secon
     if(first_operand.type != UNKNOWN) {
         *first_operand_in_binary = (char*)malloc(SIZE_OF_NUMBER_IN_BITS + LEANGTH_OF_ARE + 1);
         if (*first_operand_in_binary == NULL) {
-            // handle error
-            return;
+            printf("\nERROR_FAILED_TO_ALLOCATE_MEM");
+            exit(1);
         }
         memset(first_operand_in_binary, 0, SIZE_OF_NUMBER_IN_BITS + LEANGTH_OF_ARE + 1);
     }
@@ -770,9 +780,9 @@ void convert_operands_to_binary(const operand first_operand, const operand secon
     if(second_operand.type != UNKNOWN) {
         *second_operand_in_binary = (char*)malloc(SIZE_OF_NUMBER_IN_BITS + LEANGTH_OF_ARE + 1);
         if (*second_operand_in_binary == NULL) {
+            printf("\nERROR_FAILED_TO_ALLOCATE_MEM");
             free(first_operand_in_binary);
-            // handle error
-            return;
+            exit(1);
         }
         memset(second_operand_in_binary, 0, SIZE_OF_NUMBER_IN_BITS + LEANGTH_OF_ARE + 1);
     }
@@ -820,7 +830,11 @@ void convert_operands_to_binary(const operand first_operand, const operand secon
  */
 char* label_operand_to_binary(const operand operand, const label_array *label_table) {
     int i, operand_address = -2; // instead of -2 make #define for it
-    char* operand_address_in_binary = malloc(SIZE_OF_NUMBER_IN_BITS + LEANGTH_OF_ARE + 1); //make fail allocation case and make sure to free it
+    char* operand_address_in_binary = malloc(SIZE_OF_NUMBER_IN_BITS + LEANGTH_OF_ARE + 1);
+    if(operand_address_in_binary == NULL) {
+        printf("\nERROR_FAILED_TO_ALLOCATE_MEM");
+        exit(1);
+    }
     for(i = 0; i < label_table->rep; i++) {
         if(strcmp(operand.name, label_table->label_element[i].name) == 0) {
             operand_address = label_table->label_element[i].address;
@@ -852,12 +866,12 @@ char* label_operand_to_binary(const operand operand, const label_array *label_ta
 char* immediate_operand_to_binary(const operand operand) {
     char* operand_number_in_binary = malloc(SIZE_OF_NUMBER_IN_BITS + LEANGTH_OF_ARE + 1);
     if(operand_number_in_binary == NULL) {
-        printf("Failed to allocate memory");
+        printf("\nERROR_FAILED_TO_ALLOCATE_MEM");
         exit(1);
     }
     char* operand_name = malloc( strlen(operand.name) + 1);
     if(operand_name == NULL) {
-        printf("Failed to allocate memory");
+        printf("\nERROR_FAILED_TO_ALLOCATE_MEM");
         exit(1);
     }
     strcpy(operand_name, operand.name);
@@ -880,9 +894,9 @@ char* immediate_operand_to_binary(const operand operand) {
  */
 char* register_operand_to_binary(const operand first_operand, const operand second_operand) {
     char* operand_number_in_binary = malloc(SIZE_OF_NUMBER_IN_BITS + LEANGTH_OF_ARE + 1);
-    if(operand_number_in_binary == NULL) {// handle allocation error
-
-        return NULL;
+    if(operand_number_in_binary == NULL) {
+        printf("\nERROR_FAILED_TO_ALLOCATE_MEM");
+        exit(1);
     }
     memset(operand_number_in_binary, 0, SIZE_OF_NUMBER_IN_BITS + LEANGTH_OF_ARE + 1);
     strcat(operand_number_in_binary, "000000");
@@ -917,8 +931,9 @@ char* register_operand_to_binary(const operand first_operand, const operand seco
  */
 char* register_name_to_binary(const char* register_name) {
     char* register_number_in_binary = malloc(SIZE_OF_NUMBER_IN_BITS + LEANGTH_OF_ARE + 1);
-    if(register_number_in_binary == NULL) {// handle error
-        return NULL;
+    if(register_number_in_binary == NULL) {
+        printf("\nERROR_FAILED_TO_ALLOCATE_MEM");
+        exit(1);
     }
     if(strncmp(register_name, "*", 1) == 0)
         register_name++;
@@ -978,7 +993,8 @@ char* decimal_to_binary(const int integer) {
     unsigned int mask;
     char* binary_string = malloc(number_in_bits + 1);
     if(binary_string == NULL) {
-        return NULL;
+        printf("\nERROR_FAILED_TO_ALLOCATE_MEM");
+        exit(1);
     }
     binary_string[number_in_bits] = '\0';
     mask = 1 << (number_in_bits - 1);
@@ -1007,8 +1023,8 @@ char* binary_to_octal(const char *binary_str) {
     }
     char *octal_str = malloc(6); // make #define for 6
     if (octal_str == NULL) {
-        fprintf(stdout, "Memory allocation failed.\n");
-        return NULL;
+        printf("\nERROR_FAILED_TO_ALLOCATE_MEM");
+        exit(1);
     }
     octal_str[5] = '\0';
     for (i = 0; i < 5; i++) {
@@ -1020,6 +1036,11 @@ char* binary_to_octal(const char *binary_str) {
     return octal_str;
 }
 
+/**
+ * Frees the memory allocated for the label array.
+ *
+ * @param array A pointer to the label array to be freed.
+ */
 void free_label_array(label_array *array) {
     int i;
     if (array != NULL) {
@@ -1031,12 +1052,24 @@ void free_label_array(label_array *array) {
     }
 }
 
+/**
+ * Resets the types of the given operands to UNKNOWN.
+ *
+ * @param first_operand A pointer to the first operand whose type will be reset.
+ * @param second_operand A pointer to the second operand whose type will be reset.
+ */
 void reset_opernads_type( operand *first_operand, operand *second_operand) {
     first_operand->type = UNKNOWN;
     second_operand->type = UNKNOWN;
 }
 
-
+/**
+ * Analyzes the given operand and determines its type based on its name.
+ *
+ * @param operand A pointer to the operand to be analyzed.
+ * @param label_array The array of labels to check against for label type operands.
+ * @return Returns 0 if the operand type is successfully determined, otherwise returns 1.
+ */
 int analyze_operand_stage_2(operand *operand, const label_array label_array) {
     int i;
     const char *operand_name = operand->name;

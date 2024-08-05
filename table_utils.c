@@ -7,9 +7,9 @@
  *         Exits the program if memory allocation fails.
  */
 code_image *code_image_allocator() {
-    code_image *new_code_image = (code_image*)malloc(sizeof(code_image));
+    code_image *new_code_image = malloc(sizeof(code_image));
     if (new_code_image == NULL) {
-        printf("Failed to allocate memory\n");
+        printf("\nERROR_FAILED_TO_ALLOCATE_MEM");
         exit(1);
     }
     new_code_image->first = NULL;
@@ -28,27 +28,27 @@ code_image *code_image_allocator() {
  *         Exits the program if memory allocation fails.
  */
 code_node *new_code_node(const char *line, const int L, const char* word_in_binary) {
-    code_node *new_node = (code_node*) malloc(sizeof(code_node));
+    code_node *new_node = malloc(sizeof(code_node));
     if (new_node == NULL) {
-        printf("Failed to allocate memory\n");
+        printf("\nERROR_FAILED_TO_ALLOCATE_MEM");
         exit(1);
     }
     new_node->word_command_in_binary = (char*)malloc(16); // change to #define from a constant
     if (new_node->word_command_in_binary == NULL) {
-        printf("Failed to allocate memory\n");
+        printf("\nERROR_FAILED_TO_ALLOCATE_MEM");
         free(new_node);
         exit(1);
     }
     new_node->first_operand.word_in_binary = (char*)malloc(16);// change to #define from a constant
     if(new_node->first_operand.word_in_binary == NULL) {
-        printf("Failed to allocate memory\n");
+        printf("\nERROR_FAILED_TO_ALLOCATE_MEM");
         free(new_node->word_command_in_binary);
         free(new_node);
         exit(1);
     }
     new_node->second_operand.word_in_binary = (char*)malloc(16);// change to #define from a constant
     if(new_node->second_operand.word_in_binary == NULL) {
-        printf("Failed to allocate memory\n");
+        printf("\nERROR_FAILED_TO_ALLOCATE_MEM");
         free(new_node->word_command_in_binary);
         free(new_node->first_operand.word_in_binary);
         free(new_node);
@@ -58,10 +58,10 @@ code_node *new_code_node(const char *line, const int L, const char* word_in_bina
     new_node->word_command_in_binary[15] = '\0';
     new_node->original_line = (char *) malloc(strlen(line) + 1); // for testing
     if (new_node->original_line == NULL) {
-        printf("Failed to allocate memory\n");
+        printf("\nERROR_FAILED_TO_ALLOCATE_MEM");
         free(new_node->word_command_in_binary);
         free(new_node);
-        return NULL;
+        exit(1);
     }
     strcpy(new_node->original_line, line);
 
@@ -95,7 +95,7 @@ void code_node_add(code_image* code_image, code_node *new_node) {
 data_image *data_image_allocator() {
     data_image *new_data_image = malloc(sizeof(data_image));
     if (new_data_image == NULL) {
-        printf("Failed to allocate memory\n");
+        printf("\nERROR_FAILED_TO_ALLOCATE_MEM");
         exit(1);
     }
     new_data_image->first = NULL;
@@ -115,14 +115,14 @@ data_image *data_image_allocator() {
  */
 data_node *new_data_node(const char *line, const int array_size, const int* data) {
     int i;
-    data_node *new_node = (data_node *) malloc(sizeof(data_node));
+    data_node *new_node = malloc(sizeof(data_node));
     if (new_node == NULL) {
-        printf("Failed to allocate memory\n");
+        printf("\nERROR_FAILED_TO_ALLOCATE_MEM");
         exit(1);
     }
     new_node->char_in_ASCII = (int *) malloc(array_size * sizeof(int));
     if (new_node->char_in_ASCII == NULL) {
-        printf("Failed to allocate memory\n");
+        printf("\nERROR_FAILED_TO_ALLOCATE_MEM");
         exit(1);
     }
     for (i = 0; i < array_size; i++)
@@ -130,10 +130,10 @@ data_node *new_data_node(const char *line, const int array_size, const int* data
 
     new_node->original_line = (char *) malloc(strlen(line) + 1); // mainly for testing purposes
     if (new_node->original_line == NULL) { // mainly for testing purposes
-        printf("Failed to allocate memory\n");
+        printf("\nERROR_FAILED_TO_ALLOCATE_MEM");
         free(new_node->char_in_ASCII);  // mainly for testing purposes
         free(new_node); // mainly for testing purposes
-        return NULL; // mainly for testing purposes
+        exit(1); // mainly for testing purposes
     } // mainly for testing purposes
     strcpy(new_node->original_line, line); // mainly for testing purposes
 
@@ -168,7 +168,7 @@ void convert_ascii_to_binary(data_node *data_node) {
     char str[16]; // Buffer to hold the 15-bit binary string + null-terminator
     data_node->word_in_binary = malloc(data_node->length * sizeof(char *));
     if (data_node->word_in_binary == NULL) {
-        printf("Failed to allocate memory\n");
+        printf("\nERROR_FAILED_TO_ALLOCATE_MEM");
         exit(1);
     }
     for (i = 0; i < data_node->length; i++) {
@@ -179,6 +179,10 @@ void convert_ascii_to_binary(data_node *data_node) {
             strcpy(str, "111");
         strcat(str, decimal_to_binary(data_node->char_in_ASCII[i])); // retruns 12 bit binary number
         data_node->word_in_binary[i] = (char *)malloc(16);
+        if(data_node->word_in_binary[i] == NULL) {
+            printf("\nERROR_FAILED_TO_ALLOCATE_MEM");
+            exit(1);
+        }
         strcpy(data_node->word_in_binary[i], str);
     }
 }

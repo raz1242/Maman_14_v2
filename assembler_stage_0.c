@@ -23,7 +23,7 @@ int stage_0_process_file(const char *file_name) {
     macro_header[0] = '\0',
     macro_body = malloc(MIN_LENGTH_OF_MACRO_BODY);
     if (macro_body == NULL) {
-        printf("ERROR_FAILED_TO_ALLOCATE_MEM");
+        printf("\nERROR_FAILED_TO_ALLOCATE_MEM");
         exit(1);
     }
     macro_array_allocator(&macro_array, MIN_LENGTH_OF_MACRO_BODY);
@@ -125,7 +125,7 @@ int stage_0_process_file(const char *file_name) {
 void macro_array_allocator(macro_array *array, const int size) {
     array->macro_element = malloc(size * sizeof(macro));
     if (array->macro_element == NULL) {
-        printf("ERROR_FAILED_TO_ALLOCATE_MEM");
+        printf("\nERROR_FAILED_TO_ALLOCATE_MEM");
         exit(1);
     }
     array->rep = 0;
@@ -170,23 +170,23 @@ int macro_array_add(macro_array *array, const char *name, const char *body) {
         length_of_array = length_of_array * 2;
         new_array = realloc(array->macro_element, length_of_array * sizeof(macro));
         if (new_array == NULL) {
-            printf(" ERROR_FAILED_TO_ALLOCATE_MEM");
-            return 1;
+            printf("\nERROR_FAILED_TO_ALLOCATE_MEM");
+            exit(1);
         }
         array->macro_element = new_array;
         array->length = length_of_array;
     }
 
     array->macro_element[number_of_reps].name = malloc(strlen(name) + 1);
+    if (array->macro_element[number_of_reps].name == NULL) {
+        printf("\nERROR_FAILED_TO_ALLOCATE_MEM");
+        exit(1);
+    }
     array->macro_element[number_of_reps].body = malloc(strlen(body) + 1);
-
-    if (array->macro_element[number_of_reps].body == NULL || array->macro_element[number_of_reps].name == NULL) {
-        printf(" ERROR_FAILED_TO_ALLOCATE_MEM");
-        if (array->macro_element[number_of_reps].name)
-            free(array->macro_element[number_of_reps].name);
-        if (array->macro_element[number_of_reps].body)
-            free(array->macro_element[number_of_reps].body);
-        return 1;
+    if (array->macro_element[number_of_reps].body == NULL) {
+        printf("\nERROR_FAILED_TO_ALLOCATE_MEM");
+        free(array->macro_element[number_of_reps].name);
+        exit(1);
     }
 
     strcpy(array->macro_element[number_of_reps].name, name);
@@ -248,7 +248,7 @@ void append_to_buffer(char **buffer, const char *content) {
         new_size = strlen(content) + 1;
         *buffer = malloc(new_size);
         if (*buffer == NULL) {
-            printf("ERROR_FAILED_TO_ALLOCATE_MEM\n");
+            printf("\nERROR_FAILED_TO_ALLOCATE_MEM");
             exit(1);
         }
         strcpy(*buffer, content);
