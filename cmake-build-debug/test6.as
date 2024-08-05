@@ -5,7 +5,7 @@
     add *r5, #-996
     add *r5
     add
-    lea f, *f // לטפל בשגיאה
+    lea f, *f
     lea r3, #5
     lea r3
     lea

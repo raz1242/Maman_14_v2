@@ -7,7 +7,7 @@ const char *reserved_words[] = {
     "jmp"/*9*/, "bne"/*10*/, "red"/*11*/, "prn"/*12*/, "jsr"/*13*/, "rts"/*14*/, "stop"/*15*/,
     "r0", "r1", "r2", "r3", "r4", "r5", "r6", "r7"
 };
-
+char *register_list[8] = {"r0", "r1", "r2", "r3", "r4", "r5", "r6", "r7"};
 /**
  * Creates a new file name by appending a specified file type extension to the given file name.
  *
@@ -61,6 +61,18 @@ char *skip_whitespace(char *str) {
         return NULL;
     }
     return str;
+}
+
+char *skip_to_next_word(char *str, const int length) {
+    int i;
+    for(i = 0; i < length; i++ )
+        str++;
+
+    if (str == NULL) {
+        return NULL;
+    }
+
+    return skip_whitespace(str);
 }
 
 /**
@@ -344,8 +356,7 @@ int parse_instruction(char *input_ptr, const int command, char **source, char **
     *source = NULL;
     *dest = NULL;
 
-    input_ptr += command_length;
-    input_ptr = skip_whitespace(input_ptr);
+    input_ptr = skip_to_next_word(input_ptr, command_length);
 
     if (command == 14 || command == 15) {
         if(*input_ptr != '\n') { /* redundent characters after stop or rts command */
@@ -376,17 +387,14 @@ int parse_instruction(char *input_ptr, const int command, char **source, char **
     first_operand_name[first_operand_length] = '\0';
 
     if (command < 5 /*mov, cmp, add, sub, lea*/) {
-        input_ptr += first_operand_length;
-        input_ptr = skip_whitespace(input_ptr);
+        input_ptr = skip_to_next_word(input_ptr, first_operand_length);
         if (strncmp(input_ptr, ",", 1) == 0) {
-            input_ptr++;
-            input_ptr = skip_whitespace(input_ptr);
+            input_ptr = skip_to_next_word(input_ptr, LENGTH_OF_COMMA);
         }
         else { /* missing a comma between the two operands */
             error_handler("ERROR_MISSING_A_COMMA", file_name, line_counter);
             return 1;
         }
-        input_ptr = skip_whitespace(input_ptr);
         if (strncmp(input_ptr, ",", 1) == 0) { /* too many commas */
             error_handler("ERROR_TOO_MANY_COMMAS", file_name, line_counter);
             free(first_operand_name);
@@ -413,8 +421,7 @@ int parse_instruction(char *input_ptr, const int command, char **source, char **
         strncpy(second_operand_name, input_ptr, second_operand_length);
         second_operand_name[second_operand_length] = '\0';
 
-        input_ptr += second_operand_length;
-        input_ptr = skip_whitespace(input_ptr);
+        input_ptr = skip_to_next_word(input_ptr, second_operand_length);
         if(input_ptr && *input_ptr != '\n') { /* redundent chraters after seond operand*/
             error_handler("ERROR_REDUNDENT_CHARACTERS_AFTER_SECOND_OPERAND", file_name, line_counter);
             free(first_operand_name);
@@ -423,8 +430,7 @@ int parse_instruction(char *input_ptr, const int command, char **source, char **
         }
     }
     if(command > 4 && command < 14) {
-        input_ptr += first_operand_length;
-        input_ptr = skip_whitespace(input_ptr);
+        input_ptr = skip_to_next_word(input_ptr, first_operand_length);
         if(input_ptr &&*input_ptr != '\n' && *input_ptr != '\0') { /* redundent charaters after first operand*/
             error_handler("ERROR_REDUNDENT_CHARACTERS_AFTER_FIRST_OPERAND", file_name, line_counter);
             free(first_operand_name);
@@ -485,8 +491,7 @@ int parse_instruction_stage_2(char *input_ptr, const int command, char **source,
     *source = NULL;
     *dest = NULL;
 
-    input_ptr += command_length;
-    input_ptr = skip_whitespace(input_ptr);
+    input_ptr = skip_to_next_word(input_ptr, command_length);
     if (command == 14 || command == 15) {
         return 0;
     }
@@ -503,15 +508,10 @@ int parse_instruction_stage_2(char *input_ptr, const int command, char **source,
     first_operand_name[first_operand_length] = '\0';
     fflush(stdout);
     if (command < 5 /*mov, cmp, add, sub, lea*/) {
-        input_ptr += first_operand_length;
-        input_ptr = skip_whitespace(input_ptr);
-        if(input_ptr != NULL) {
-            if (strncmp(input_ptr, ",", 1) == 0) {
-                input_ptr++;
-                input_ptr = skip_whitespace(input_ptr);
-            }
-        }
-        input_ptr = skip_whitespace(input_ptr);
+        input_ptr = skip_to_next_word(input_ptr, first_operand_length);
+        if(input_ptr != NULL)
+            if (strncmp(input_ptr, ",", 1) == 0)
+                input_ptr = skip_whitespace(++input_ptr);
         if(input_ptr == NULL) {
             free(first_operand_name);
             return 1;
@@ -627,6 +627,19 @@ int is_label(const label_array *label_table, const char *name) {
     return 0;
 }
 
+
+int which_register(const char* operand_name) {
+    int i;
+    const int size_of_array = sizeof(register_list) / sizeof(register_list[0]);
+
+    if(operand_name[0] == '*')
+        operand_name++;
+    for(i = 0; i < size_of_array; i++) {
+        if(strcmp(operand_name, register_list[i]) == 0)
+            return i;
+    }
+    return -1;
+}
 /**
  * Converts a command and its operands into a binary string representation.
  *
@@ -838,16 +851,17 @@ char* label_operand_to_binary(const operand operand, const label_array *label_ta
  */
 char* immediate_operand_to_binary(const operand operand) {
     char* operand_number_in_binary = malloc(SIZE_OF_NUMBER_IN_BITS + LEANGTH_OF_ARE + 1);
-    if(operand_number_in_binary == NULL) {// handle error
-        return NULL;
+    if(operand_number_in_binary == NULL) {
+        printf("Failed to allocate memory");
+        exit(1);
     }
     char* operand_name = malloc( strlen(operand.name) + 1);
-    if(operand_name == NULL) {// handle error
-        return NULL;
+    if(operand_name == NULL) {
+        printf("Failed to allocate memory");
+        exit(1);
     }
     strcpy(operand_name, operand.name);
-    operand_name++;
-    operand_name = skip_whitespace(operand_name);
+    operand_name = skip_whitespace(++operand_name);
     if (isdigit(operand_name[0]) || ((*operand_name == '-' || *operand_name == '+') && isdigit(*(operand_name + 1)))) {
         strcpy(operand_number_in_binary, decimal_to_binary(atoi(operand_name)));
         strcat(operand_number_in_binary, "100");
@@ -939,8 +953,6 @@ char* register_name_to_binary(const char* register_name) {
     return register_number_in_binary;
 }
 
-
-
 /**
  * Handles errors by printing an error message along with the file name and line number where the error occurred.
  * Exits the program after printing the error message.
@@ -952,14 +964,6 @@ char* register_name_to_binary(const char* register_name) {
 void error_handler(const char *error_message, const char *file_name, const int line_counter) {
     printf("Error: %s in file %s at line %d\n", error_message, file_name, line_counter);
 }
-
-/**
- * Converts a decimal number to a binary string representation.
- *
- * @param integer The decimal number to be converted.
- * @return A string containing the binary representation of the decimal number.
- *         Returns NULL if memory allocation fails.
- */
 
 /**
  * Converts a decimal number to a binary string representation.
@@ -1015,23 +1019,6 @@ char* binary_to_octal(const char *binary_str) {
     }
     return octal_str;
 }
-/* remove later
-void copy_operand(operand *operand_dest, const operand *operand_src, const char *binary_str) {
-    operand_dest->name = (char *)malloc(strlen(operand_src->name) + 1);
-    if (operand_dest->name == NULL) {
-        printf("Failed to allocate memory\n");
-        exit(1);
-    }
-    strcpy(operand_dest->name, operand_src->name);
-
-    operand_dest->word_in_binary = (char *)malloc(LENGTH_OF_BINARY_WORD);
-    if (operand_dest->word_in_binary == NULL) {// handle error
-        printf("Failed to allocate memory\n");
-        free(operand_dest->name);
-        exit(1);
-    }
-    strcpy(operand_dest->word_in_binary, binary_str);
-}*/
 
 void free_label_array(label_array *array) {
     int i;
@@ -1049,3 +1036,42 @@ void reset_opernads_type( operand *first_operand, operand *second_operand) {
     second_operand->type = UNKNOWN;
 }
 
+
+int analyze_operand_stage_2(operand *operand, const label_array label_array) {
+    int i;
+    const char *operand_name = operand->name;
+
+    operand->type = UNKNOWN;
+    switch (operand_name[0]) {
+        case '#':
+            if(!(operand_name[1] == '\0' || isdigit(operand_name[1]) || operand_name[1] == '-' || operand_name[1] == '+')) {
+                operand->type = UNKNOWN;
+                return 1;
+            }
+        for(i = 2; operand_name[i] != '\0'; i++) {
+            if(!isdigit(operand_name[i])) {
+                operand->type = UNKNOWN;
+                return 1;
+            }
+        }
+        operand->type = IMMEDIATE;
+        return 0;
+        case '*':
+            if(which_register(operand_name) != -1) {
+                operand->type = REGISTER_PTR;
+                return 0;
+            }
+        case 'r':
+            if(which_register(operand_name) != -1) {
+                operand->type = REGISTER;
+                return 0;
+            }
+        default: {
+            if(is_label(&label_array, operand_name)) {
+                operand->type = LABEL_VALUE;
+                return 0;
+            }
+        }
+    }
+    return 1;
+}

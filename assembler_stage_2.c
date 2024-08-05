@@ -46,29 +46,30 @@ int stage_2_process_file(const char *file_name, const label_array *label_table, 
         //printf(" \n\n%s", line); fflush(stdout); // for testing
         is_vaild = 0;
         non_space_ptr = skip_whitespace(line);
-        firstWordInLineLength = first_word_length_counter(non_space_ptr);
-        location = line_location(non_space_ptr);
+        ptr = non_space_ptr;
+        firstWordInLineLength = first_word_length_counter(ptr);
+        location = line_location(ptr);
         if (location == LABEL) {
-            strncpy(label_header, non_space_ptr, firstWordInLineLength);
-            ptr = non_space_ptr + firstWordInLineLength + LENGTH_OF_COLON;
-            non_space_ptr = skip_whitespace(ptr);
-            firstWordInLineLength = first_word_length_counter(non_space_ptr);
-            location = line_location(non_space_ptr);
+            strncpy(label_header, ptr, firstWordInLineLength);
+            non_space_ptr = skip_to_next_word(ptr, firstWordInLineLength + LENGTH_OF_COLON);
+            ptr = non_space_ptr;
+            firstWordInLineLength = first_word_length_counter(ptr);
+            location = line_location(ptr);
         }
         if (location == ENTRY) {
             entry_flag = 1;
-            ptr = non_space_ptr + firstWordInLineLength;
-            non_space_ptr = skip_whitespace(ptr);
-            firstWordInLineLength = first_word_length_counter(non_space_ptr);
+            non_space_ptr = skip_to_next_word(ptr, firstWordInLineLength);
+            ptr = non_space_ptr;
+            firstWordInLineLength = first_word_length_counter(ptr);
             for (i = 0; i < label_table->rep; i++) {
-                if (!strncmp(label_table->label_element[i].name, non_space_ptr, firstWordInLineLength)) {
+                if (!strncmp(label_table->label_element[i].name, ptr, firstWordInLineLength)) {
                     is_vaild = 1;
                     label_table->label_element[i].characteristic = ENTRY;
                     break;
                 } //maybe put the if(is_vailid) in the if else statement
             }
             if (!is_vaild) {
-                error_handler("ERROR_LABEL_NOT_FOUND", file_name, line_counter);
+                error_handler("ERROR_LABEL_NOT_FOUND", am_version, line_counter);
                 error_found = 1;
             }
         }
@@ -82,19 +83,20 @@ int stage_2_process_file(const char *file_name, const label_array *label_table, 
         }
         if (location == CODE) {
             //printf("\ncheckpoint1"); fflush(stdout); // for testing
-            command_in_line = which_command(non_space_ptr);
-            parse_instruction_stage_2(non_space_ptr, command_in_line, &code_node->first_operand.name, &code_node->second_operand.name,
-                                      file_name, line_counter);
+            command_in_line = which_command(ptr);
+            parse_instruction_stage_2(ptr, command_in_line, &code_node->first_operand.name, &code_node->second_operand.name,
+                                      am_version, line_counter);
             reset_opernads_type(&code_node->first_operand, &code_node->second_operand);
             if (code_node->first_operand.name)
-                if(analyze_operand(&code_node->first_operand)) {
-                    error_handler("ERROR_INVALID_FIRST_OPERAND", file_name, line_counter);
+                if(analyze_operand_stage_2(&code_node->first_operand, *label_table)) {
+                    error_handler("ERROR_INVALID_FIRST_OPERAND", am_version, line_counter);
                     error_found = 1;
                 }
            //printf("\ncheckpoint2"); fflush(stdout);// for testing
             if (code_node->second_operand.name)
-                if(analyze_operand(&code_node->second_operand)) {
-                    error_handler("ERROR_INVALID_SECOND_OPERAND", file_name, line_counter);
+                if(analyze_operand_stage_2(&code_node->second_operand, *label_table)){
+                //if(analyze_operand(&code_node->second_operand)) {
+                    error_handler("ERROR_INVALID_SECOND_OPERAND", am_version, line_counter);
                     error_found = 1;
                 }
             //printf("\ncheckpoint3"); fflush(stdout); // for testing
@@ -151,57 +153,11 @@ int stage_2_process_file(const char *file_name, const label_array *label_table, 
              break;
          *data_node = *data_node->next_node;
      }*/ // for testing
+    //printLabels(label_table); // for testing
     if (entry_flag)
         ent_file_usher(file_name, label_table);
     if (extern_flag)
         ext_file_usher(file_name, code_image);
-    printLabels(label_table); // for testing
     ob_file_usher(file_name, data_image, code_image, IC, DC);
     return 0;
 }
-/* // insert is_label function here for validating LABEL_VALUE is a label
-int analyze_operand_stage_2(operand *operand) { // move to utils.c
-    int i;
-    operand->type = UNKNOWN;
-    switch (operand->name[0]) {
-        case '#':
-            if(!(operand->name[1] == '\0' || isdigit(operand->name[1]) || operand->name[1] == '-' || operand->name[1] == '+')) {
-                operand->type = UNKNOWN;
-                return 1;
-            }
-        for(i = 2; operand->name[i] != '\0'; i++) {
-            if(!isdigit(operand->name[i])) {
-                operand->type = UNKNOWN;
-                return 1;
-            }
-        }
-        operand->type = IMMEDIATE;
-        return 0;
-        case '*':
-            for (i = 0; i < 8; i++) {
-                if (strncmp(operand->name + 1, register_list[i], 2) == 0) {
-                    operand->type = REGISTER_PTR;
-                    return 0;
-                }
-            }
-        break;
-        default: {
-            for (i = 0; i < 8; i++) {
-                if (strncmp(operand->name, register_list[i], 2) == 0 && operand->name[2] == '\0') {
-                    operand->type = REGISTER;
-                    return 0;
-                }
-            }/*
-            if(strlen(operand->name) <= MAX_LENGTH_OF_LABEL_VALUE && isalpha(operand->name[0])) {
-                for(i = 1; i < strlen(operand->name); i++) {
-                    if(!isalnum(operand->name[i])) {
-                        operand->type = UNKNOWN;
-                        return 1;
-                    }
-                }
-                operand->type = LABEL_VALUE;
-            }
-        }
-    }
-    return 0;
-}*/

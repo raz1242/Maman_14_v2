@@ -5,7 +5,6 @@ char *commands_list[16] = {
     "dec"/*8*/, "jmp"/*9*/, "bne"/*10*/, "red"/*11*/, "prn"/*12*/, "jsr"/*13*/, "rts"/*14*/, "stop"/*15*/
 };
 
-char *register_list[8] = {"r0", "r1", "r2", "r3", "r4", "r5", "r6", "r7"};
 /*
 void printLabelTable(const label_array *array) { //- testing
     int i;
@@ -85,8 +84,9 @@ int stage_1_process_file(const char *file_name, label_array *label_table, code_i
             error_found = 1;
         }
         non_space_ptr = skip_whitespace(line);
-        first_word_in_line_length = first_word_length_counter(non_space_ptr);
-        location = line_location(non_space_ptr);
+        ptr = non_space_ptr;
+        first_word_in_line_length = first_word_length_counter(ptr);
+        location = line_location(ptr);
         if(location == -1) {
             error_handler("ERROR_UNKNOWN_LINE_TYPE", am_version, line_counter);
             error_found = 1;
@@ -94,17 +94,15 @@ int stage_1_process_file(const char *file_name, label_array *label_table, code_i
 
         if (location == LABEL) {
             labelFlag = 1;
-            strncpy(label_header, non_space_ptr, first_word_in_line_length);
+            strncpy(label_header, ptr, first_word_in_line_length);
             if (is_reserved_word(label_header, strlen(label_header))) {
                 error_handler("ERROR_LABEL_NAME_IS_A_RESERVED_WORD", am_version, line_counter);
                 error_found = 1;
-                //free label_table here as it might cause double-free issues outside this function
-                //might be a better idea to free it ouside this function. not sure why I wrote the comment above...
             }
-            ptr = non_space_ptr + first_word_in_line_length + LENGTH_OF_COLON;
-            non_space_ptr = skip_whitespace(ptr);
-            first_word_in_line_length = first_word_length_counter(non_space_ptr);
-            location = line_location(non_space_ptr);
+            non_space_ptr = skip_to_next_word(ptr, first_word_in_line_length + LENGTH_OF_COLON);
+            ptr = non_space_ptr;
+            first_word_in_line_length = first_word_length_counter(ptr);
+            location = line_location(ptr);
         }
         if (location == DATA || location == STRING) {
             if (labelFlag == 1) {
@@ -112,23 +110,21 @@ int stage_1_process_file(const char *file_name, label_array *label_table, code_i
                     error_found = 1;
             }
             if (location == DATA)
-                parse_dot_data(non_space_ptr, &parced_array, &array_size, &DC, am_version, line_counter);
+                parse_dot_data(ptr, &parced_array, &array_size, &DC, am_version, line_counter);
             else
-                parse_dot_string(non_space_ptr, &parced_array, &array_size, &DC, am_version, line_counter);
-            data_node = new_data_node(non_space_ptr, array_size, parced_array);
+                parse_dot_string(ptr, &parced_array, &array_size, &DC, am_version, line_counter);
+            data_node = new_data_node(ptr, array_size, parced_array);
             data_node_add(data_image, data_node);
             free(parced_array);
             parced_array = NULL;
         } else if (location == EXTERN) {
-            ptr = non_space_ptr + first_word_in_line_length;
-            non_space_ptr = skip_whitespace(ptr);
-            first_word_in_line_length = first_word_length_counter(non_space_ptr);
-            strncpy(label_header, non_space_ptr, first_word_in_line_length);
+            non_space_ptr = skip_to_next_word(ptr, first_word_in_line_length);
+            ptr = non_space_ptr;
+            first_word_in_line_length = first_word_length_counter(ptr);
+            strncpy(label_header, ptr, first_word_in_line_length);
             if (is_reserved_word(label_header, strlen(label_header))) {
                 error_handler("ERROR_LABEL_NAME_IS_A_RESERVED_WORD", am_version, line_counter);
                 error_found = 1;
-                //free label_table here as it might cause double-free issues outside this function
-                //might be a better idea to free it ouside this function. not sure why I wrote the comment above...
             }
             if(add_label_to_array(label_table, label_header, EXTERN_ADDRESS, EXTERN, am_version, line_counter))
                 error_found = 1;
@@ -137,23 +133,22 @@ int stage_1_process_file(const char *file_name, label_array *label_table, code_i
             if (labelFlag == 1)
                 if(add_label_to_array(label_table, label_header, IC + STARTING_POINT_OF_MEMORY, IRRLEVANT, am_version, line_counter))
                     error_found = 1;
-            ptr = non_space_ptr;
-            non_space_ptr = skip_whitespace(ptr);
-            command_in_line = which_command(non_space_ptr);
+            command_in_line = which_command(ptr);
             if(command_in_line == -1) {
                 error_handler("ERROR_COMMAND_NOT_FOUND", am_version, line_counter);
                 error_found = 1;
             }
             else {
-                if(analyze_command(non_space_ptr, command_in_line, &L, word_in_binary, am_version, line_counter))
+                if(analyze_command(ptr, command_in_line, &L, word_in_binary, am_version, line_counter))
                     error_found = 1;
             }
-            code_node = new_code_node(non_space_ptr, L, word_in_binary);
+            code_node = new_code_node(ptr, L, word_in_binary);
             code_node_add(code_image, code_node);
             IC += L;
             L = 0;
         }
     }
+
     free(am_version);
     am_version = NULL;
     ptr = NULL;
@@ -265,13 +260,13 @@ int which_command(const char *command) {
  * @param line_counter The current line number in the source code.
  * @return 0 if the command was successfully analyzed, 1 otherwise.
  */
-int analyze_command(char *ptr, const int command, int *L, char *word_in_binary, const char *file_name, const int line_counter) {
-     int is_error = 0;
+int analyze_command(char *ptr, const int command, int *L, char *word_in_binary, const char *file_name, const int line_counter) { // might make another part for stage 2, can't detect wrong type of operand if operand is a label
+    int is_error = 0;
     char *first_operand_name = NULL, *second_operand_name = NULL;
     operand first_operand, second_operand;
 
     if(parse_instruction(ptr, command, &first_operand_name, &second_operand_name, file_name, line_counter))
-        return  1;
+        return 1;
 
     if (first_operand_name) {
         first_operand.name = malloc(strlen(first_operand_name) + 1);
@@ -407,15 +402,17 @@ int analyze_command(char *ptr, const int command, int *L, char *word_in_binary, 
  */
 int analyze_operand(operand *operand) { // move to utils.c
     int i;
+    const char *operand_name = operand->name;
+
     operand->type = UNKNOWN;
-    switch (operand->name[0]) {
+    switch (operand_name[0]) {
         case '#':
-            if(!(operand->name[1] == '\0' || isdigit(operand->name[1]) || operand->name[1] == '-' || operand->name[1] == '+')) {
+            if(!(operand_name[1] == '\0' || isdigit(operand_name[1]) || operand_name[1] == '-' || operand_name[1] == '+')) {
                 operand->type = UNKNOWN;
                 return 1;
             }
-            for(i = 2; operand->name[i] != '\0'; i++) {
-                if(!isdigit(operand->name[i])) {
+            for(i = 2; operand_name[i] != '\0'; i++) {
+                if(!isdigit(operand_name[i])) {
                     operand->type = UNKNOWN;
                     return 1;
                 }
@@ -423,23 +420,17 @@ int analyze_operand(operand *operand) { // move to utils.c
             operand->type = IMMEDIATE;
         return 0;
         case '*':
-            for (i = 0; i < 8; i++) {
-                if (strncmp(operand->name + 1, register_list[i], 2) == 0) {
-                    operand->type = REGISTER_PTR;
-                    return 0;
-                }
-            }
-        break;
+            if(which_register(operand_name) != -1)
+                operand->type = REGISTER_PTR;
+        return 0;
+        case 'r':
+            if(which_register(operand_name) != -1)
+                operand->type = REGISTER;
+        return 0;
         default: {
-            for (i = 0; i < 8; i++) {
-                if (strncmp(operand->name, register_list[i], 2) == 0 && operand->name[2] == '\0') {
-                    operand->type = REGISTER;
-                    return 0;
-                }
-            }
-            if(strlen(operand->name) <= MAX_LENGTH_OF_LABEL_VALUE && isalpha(operand->name[0])) {
-                for(i = 1; i < strlen(operand->name); i++) {
-                    if(!isalnum(operand->name[i])) {
+            if(strlen(operand_name) <= MAX_LENGTH_OF_LABEL_VALUE && isalpha(operand_name[0])) {
+                for(i = 1; i < strlen(operand_name); i++) {
+                    if(!isalnum(operand_name[i])) {
                         operand->type = UNKNOWN;
                         return 1;
                     }

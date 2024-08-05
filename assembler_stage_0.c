@@ -41,13 +41,11 @@ int stage_0_process_file(const char *file_name) {
 
         if (line_location == HEADER) {
             is_inside_macro = 1;
-            ptr_line += first_word_of_line_length;
-            non_space_line = skip_whitespace(ptr_line);
+            non_space_line = skip_to_next_word(non_space_line, first_word_of_line_length);
             ptr_line = non_space_line;
-            first_word_of_line_length = first_word_length_counter(non_space_line);
+            first_word_of_line_length = first_word_length_counter(ptr_line);
             strncpy(macro_header, non_space_line, first_word_of_line_length);
-            ptr_line += first_word_of_line_length;
-            non_space_line = skip_whitespace(ptr_line);
+            non_space_line = skip_to_next_word(non_space_line, first_word_of_line_length);
             if (*non_space_line != '\n') {
                 /* check if there are redundant characters after setting up the macro name */
                 error_handler(" ERROR_REDUNDANT_CHARACTERS_AFTER_MACRO_NAME", as_version, line_counter);
@@ -61,8 +59,7 @@ int stage_0_process_file(const char *file_name) {
         } else if (line_location == BODY) {
             add_line_to_macro_body(&macro_body, line, &macro_body_length, &macro_body_allocated_size);
         } else if (line_location == END) {
-            ptr_line += first_word_of_line_length;
-            non_space_line = skip_whitespace(ptr_line);
+            non_space_line = skip_to_next_word(ptr_line, first_word_of_line_length);
             if (*non_space_line != '\n') {
                 error_handler(" ERROR_REDUNDANT_CHARACTERS_AFTER_ENDMACRO", as_version, line_counter);
                 is_error = 1;
