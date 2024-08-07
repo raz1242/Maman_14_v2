@@ -81,7 +81,6 @@ int stage_2_process_file(const char *file_name, const label_array *label_table, 
             data_node = data_node->next_node;
         }
         if (location == CODE) {
-            //printf("\ncheckpoint1"); fflush(stdout); // for testing
             command_in_line = which_command(ptr);
             parse_instruction_stage_2(ptr, command_in_line, &code_node->first_operand.name, &code_node->second_operand.name,
                                       am_version, line_counter);
@@ -91,30 +90,27 @@ int stage_2_process_file(const char *file_name, const label_array *label_table, 
                     error_handler("ERROR_INVALID_FIRST_OPERAND", am_version, line_counter);
                     error_found = 1;
                 }
-           //printf("\ncheckpoint2"); fflush(stdout);// for testing
             if (code_node->second_operand.name)
                 if(analyze_operand_stage_2(&code_node->second_operand, *label_table)){
                     error_handler("ERROR_INVALID_SECOND_OPERAND", am_version, line_counter);
                     error_found = 1;
                 }
             validate_operands(command_in_line, code_node->first_operand, code_node->second_operand, am_version, line_counter);
-            //printf("\ncheckpoint3"); fflush(stdout); // for testing
             convert_operands_to_binary(code_node->first_operand, code_node->second_operand, &first_operand_in_binary, &second_operand_in_binary, label_table);
-            //printf("\ncheckpoint4"); fflush(stdout); // for testing
             if (code_node->length >= 2) {
                 if(code_node->first_operand.type != UNKNOWN && first_operand_in_binary) {
                     strcpy(code_node->first_operand.word_in_binary, first_operand_in_binary);
                     free(first_operand_in_binary);
                 }
-            } /*else
-                code_node->first_operand.word_in_binary = NULL;*/
+            }
+
             if (code_node->length == 3) {
                 if(code_node->second_operand.type != UNKNOWN && second_operand_in_binary) {
                     strcpy(code_node->second_operand.word_in_binary, second_operand_in_binary);
                     free(second_operand_in_binary);
                 }
-            } /*else
-                code_node->second_operand.word_in_binary = NULL;*/
+            }
+
             code_node->decimal_address_in_machine = IC + STARTING_POINT_OF_MEMORY;
             IC += code_node->length;
             if (code_node != code_image->last && code_node->next_node != NULL)

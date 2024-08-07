@@ -818,6 +818,7 @@ char* label_operand_to_binary(const operand operand, const label_array *label_ta
         printf("\nERROR_FAILED_TO_ALLOCATE_MEM");
         exit(1);
     }
+    memset(full_operand_address_in_binary, '\0', SIZE_OF_NUMBER_IN_BITS + LEANGTH_OF_ARE + 1);
     for(i = 0; i < label_table->rep; i++) {
         if(strcmp(operand.name, label_table->label_element[i].name) == 0) {
             operand_address = label_table->label_element[i].address;
@@ -857,6 +858,7 @@ char* immediate_operand_to_binary(const operand operand) {
         printf("\nERROR_FAILED_TO_ALLOCATE_MEM");
         exit(1);
     }
+    memset(operand_number_in_binary, '\0', SIZE_OF_NUMBER_IN_BITS + LEANGTH_OF_ARE + 1);
     operand_name = malloc(strlen(operand.name) + 1);
     if(operand_name == NULL) {
         printf("\nERROR_FAILED_TO_ALLOCATE_MEM");
@@ -890,7 +892,7 @@ char* register_operand_to_binary(const operand first_operand, const operand seco
         printf("\nERROR_FAILED_TO_ALLOCATE_MEM");
         exit(1);
     }
-    memset(operand_number_in_binary, 0, SIZE_OF_NUMBER_IN_BITS + LEANGTH_OF_ARE + 1);
+    memset(operand_number_in_binary, '\0', SIZE_OF_NUMBER_IN_BITS + LEANGTH_OF_ARE + 1);
     strcat(operand_number_in_binary, "000000");
     if (second_operand.type == UNKNOWN) {
         first_operand_binary = register_name_to_binary(first_operand.name);
@@ -937,6 +939,7 @@ char* register_name_to_binary(const char* register_name) {
         printf("\nERROR_FAILED_TO_ALLOCATE_MEM");
         exit(1);
     }
+    memset(register_number_in_binary, '\0', SIZE_OF_NUMBER_IN_BITS + LEANGTH_OF_ARE + 1);
     if(strncmp(register_name, "*", 1) == 0)
         register_name++;
     if(strcmp(register_name, "r0") == 0) {
