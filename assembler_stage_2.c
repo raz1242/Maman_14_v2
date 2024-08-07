@@ -25,8 +25,7 @@ int stage_2_process_file(const char *file_name, const label_array *label_table, 
             , entry_flag = 0, error_found = 0;
     int j = STARTING_POINT_OF_MEMORY; // for testing
     char line[MAX_LENGTH_OF_LINE], label_header[MAX_LENGTH_OF_LABEL_HEADER + 1];
-    char *am_version = NULL, *ptr = NULL, *non_space_ptr = NULL, *first_operand_in_binary = NULL, *
-            second_operand_in_binary = NULL;
+    char *am_version = NULL, *ptr = NULL, *non_space_ptr = NULL, *first_operand_in_binary = NULL, *second_operand_in_binary = NULL;
     FILE *am_extension_file = NULL;
 
     code_node *code_node = code_image->first;
@@ -103,57 +102,31 @@ int stage_2_process_file(const char *file_name, const label_array *label_table, 
             convert_operands_to_binary(code_node->first_operand, code_node->second_operand, &first_operand_in_binary, &second_operand_in_binary, label_table);
             //printf("\ncheckpoint4"); fflush(stdout); // for testing
             if (code_node->length >= 2) {
-                if(code_node->first_operand.type != UNKNOWN && first_operand_in_binary)
+                if(code_node->first_operand.type != UNKNOWN && first_operand_in_binary) {
                     strcpy(code_node->first_operand.word_in_binary, first_operand_in_binary);
-            } else
-                code_node->first_operand.word_in_binary = NULL;
+                    free(first_operand_in_binary);
+                }
+            } /*else
+                code_node->first_operand.word_in_binary = NULL;*/
             if (code_node->length == 3) {
-                if(code_node->second_operand.type != UNKNOWN && second_operand_in_binary)
+                if(code_node->second_operand.type != UNKNOWN && second_operand_in_binary) {
                     strcpy(code_node->second_operand.word_in_binary, second_operand_in_binary);
-            } else
-                code_node->second_operand.word_in_binary = NULL;
+                    free(second_operand_in_binary);
+                }
+            } /*else
+                code_node->second_operand.word_in_binary = NULL;*/
             code_node->decimal_address_in_machine = IC + STARTING_POINT_OF_MEMORY;
             IC += code_node->length;
             if (code_node != code_image->last && code_node->next_node != NULL)
                 code_node = code_node->next_node;
         }
     }
-    if (error_found) {
-        free(am_version);
-        am_version = NULL;
+    fclose(am_extension_file);
+    free(am_version);
+    am_version = NULL;
+    if (error_found)
         return 1;
-    }
-    /* while(1) { // for testing - print the binary code of the commands and operands
-         printf("\n%d %s", j++, code_node->word_command_in_binary);
-         if(code_node->length >= 2)
-             printf("\n%d %s", j++, code_node->word_operand1_in_binary);
-         if(code_node->length == 3)
-             printf("\n%d %s", j++, code_node->word_operand2_in_binary);
-         printf("\n");
-         if(code_node->next_node == NULL)
-             break;
-         *code_node = *code_node->next_node;
-     }
 
-     for (current_node = code_image->first; current_node != NULL; current_node = current_node->next_node) {
-         printf("\n%d %s", j++, current_node->word_command_in_binary);
-         if (current_node->length >= 2)
-             printf("\n%d %s", j++, current_node->word_operand1_in_binary);
-         if (current_node->length == 3)
-             printf("\n%d %s", j++, current_node->word_operand2_in_binary);
-         printf("\n");
-     }
-
-     while(1) { // for testing - print the binary code of the data
-         for(i = 0; i < data_node->length; i++) {
-             printf("\n%d %s", j++, data_node->word_in_binary[i]);
-         }
-         printf("\n");
-         if(data_node->next_node == NULL)
-             break;
-         *data_node = *data_node->next_node;
-     }*/ // for testing
-    //printLabels(label_table); // for testing
     if (entry_flag)
         ent_file_usher(file_name, label_table);
     if (extern_flag)

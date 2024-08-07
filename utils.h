@@ -61,7 +61,7 @@ int first_word_length_counter(const char *str);
 
 int operand_length_counter(const char *str);
 
-int is_reserved_word(char *word, int length, const char *file_name, int line_counter);
+int is_reserved_word(char *word, int length);
 
 int is_end_of_line(char *str);
 

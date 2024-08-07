@@ -46,6 +46,7 @@ code_node *new_code_node(const char *line, const int L, const char* word_in_bina
         free(new_node);
         exit(1);
     }
+    memset(new_node->first_operand.word_in_binary, '\0', 16);
     new_node->second_operand.word_in_binary = (char*)malloc(16);// change to #define from a constant
     if(new_node->second_operand.word_in_binary == NULL) {
         printf("\nERROR_FAILED_TO_ALLOCATE_MEM");
@@ -54,18 +55,21 @@ code_node *new_code_node(const char *line, const int L, const char* word_in_bina
         free(new_node);
         exit(1);
     }
+    memset(new_node->second_operand.word_in_binary, '\0', 16);
     strncpy(new_node->word_command_in_binary, word_in_binary,16);// change to #define from a constant
     new_node->word_command_in_binary[15] = '\0';
     new_node->original_line = (char *) malloc(strlen(line) + 1); // for testing
     if (new_node->original_line == NULL) {
         printf("\nERROR_FAILED_TO_ALLOCATE_MEM");
         free(new_node->word_command_in_binary);
+        free(new_node->first_operand.word_in_binary);
+        free(new_node->second_operand.word_in_binary);
         free(new_node);
         exit(1);
     }
     strcpy(new_node->original_line, line);
-
     new_node->length = L;
+
     new_node->next_node = NULL;
     return new_node;
 }
@@ -165,7 +169,8 @@ void data_node_add(data_image *data_image, data_node *new_node) {
  */
 void convert_ascii_to_binary(data_node *data_node) {
     int i;
-    char str[16]; // Buffer to hold the 15-bit binary string + null-terminator
+    char str[16];
+    char* ascii_in_12bit_binary = 0;
     data_node->word_in_binary = malloc(data_node->length * sizeof(char *));
     if (data_node->word_in_binary == NULL) {
         printf("\nERROR_FAILED_TO_ALLOCATE_MEM");
@@ -177,7 +182,9 @@ void convert_ascii_to_binary(data_node *data_node) {
             strcpy(str, "000");
         else
             strcpy(str, "111");
-        strcat(str, decimal_to_binary(data_node->char_in_ASCII[i])); // retruns 12 bit binary number
+        ascii_in_12bit_binary = decimal_to_binary(data_node->char_in_ASCII[i]);
+        strcat(str, ascii_in_12bit_binary);
+        free(ascii_in_12bit_binary);
         data_node->word_in_binary[i] = (char *)malloc(16);
         if(data_node->word_in_binary[i] == NULL) {
             printf("\nERROR_FAILED_TO_ALLOCATE_MEM");
@@ -198,24 +205,36 @@ void convert_ascii_to_binary(data_node *data_node) {
  */
 void ob_file_usher(const char* file_name, const data_image *data_image, const code_image *code_image, const int IC, const int DC) {
     int i, j = STARTING_POINT_OF_MEMORY;
+    char *command_in_octal, *first_operand_in_octal = 0, *second_operand_in_octal = 0, *data_in_octal = 0;
     const code_node *code_node = code_image->first;
     const data_node *data_node = data_image->first;
-    const char *file_OB = file_name_extender(file_name, ".ob");
+    char *file_OB = file_name_extender(file_name, ".ob");
     FILE *ob_extension  = fopen(file_OB, "w");
     file_inspector(ob_extension, file_OB);
+    free(file_OB);
     fprintf(ob_extension, "%d %d\n", IC, DC);
 
-    while(code_node != NULL) { // for testing - maybe think on a smarter way instead of while(1)
-        fprintf(ob_extension, "%04d %s\n", j++, binary_to_octal(code_node->word_command_in_binary));
-        if (code_node->length >= 2)
-            fprintf(ob_extension, "%04d %s\n", j++, binary_to_octal(code_node->first_operand.word_in_binary));
-        if (code_node->length == 3)
-            fprintf(ob_extension, "%04d %s\n", j++, binary_to_octal(code_node->second_operand.word_in_binary));
+    while(code_node != NULL) {
+        command_in_octal = binary_to_octal(code_node->word_command_in_binary);
+        fprintf(ob_extension, "%04d %s\n", j++, command_in_octal);
+        free(command_in_octal);
+        if (code_node->length >= 2) {
+            first_operand_in_octal = binary_to_octal(code_node->first_operand.word_in_binary);
+            fprintf(ob_extension, "%04d %s\n", j++, first_operand_in_octal);
+            free(first_operand_in_octal);
+        }
+        if (code_node->length == 3) {
+            second_operand_in_octal = binary_to_octal(code_node->second_operand.word_in_binary);
+            fprintf(ob_extension, "%04d %s\n", j++, second_operand_in_octal);
+            free(second_operand_in_octal);
+        }
         code_node = code_node->next_node;
     }
-    while (data_node != NULL) {// for testing - maybe think on a smarter way instead of while(1)
+    while (data_node != NULL) {
         for (i = 0; i < data_node->length; i++) {
-            fprintf(ob_extension, "%04d %s\n", j++, binary_to_octal(data_node->word_in_binary[i]));
+            data_in_octal = binary_to_octal(data_node->word_in_binary[i]);
+            fprintf(ob_extension, "%04d %s\n", j++, data_in_octal);
+            free(data_in_octal);
         }
         data_node = data_node->next_node;
     }
@@ -228,20 +247,25 @@ void ob_file_usher(const char* file_name, const data_image *data_image, const co
  * @param file_name The name of the file to write the external labels to.
  * @param code_image A pointer to the code image containing the code and its characteristics.
  */
-void  ext_file_usher(const char *file_name, const code_image *code_image) {
+void ext_file_usher(const char *file_name, const code_image *code_image) {
+    const code_node *code_node = code_image->first;
     char *file_EXT = file_name_extender(file_name, ".ext");
     FILE *ext_extension = fopen(file_EXT, "w");
+
     file_inspector(ext_extension, file_EXT);
-    const code_node *code_node = code_image->first;
     while(code_node != NULL) {
-        if(code_node->first_operand.word_in_binary) {
-            if(strcmp(code_node->first_operand.word_in_binary, "000000000000001") == 0) {
-                fprintf(ext_extension, "%s %04d\n", code_node->first_operand.name, code_node->decimal_address_in_machine + 1);
+        if(code_node->first_operand.word_in_binary[0] != '\0') {
+            if(code_node->first_operand.word_in_binary[0] == '0' ||code_node->first_operand.word_in_binary[0] == '1') {
+                if(strcmp(code_node->first_operand.word_in_binary, "000000000000001") == 0) {
+                    fprintf(ext_extension, "%s %04d\n", code_node->first_operand.name, code_node->decimal_address_in_machine + 1);
+                }
             }
         }
-        if(code_node->second_operand.word_in_binary) {
-            if(strcmp(code_node->second_operand.word_in_binary, "000000000000001") == 0) {
-                fprintf(ext_extension, "%s %04d\n", code_node->second_operand.name, code_node->decimal_address_in_machine + 2);
+        if(code_node->second_operand.word_in_binary[0] != '\0') {
+            if(code_node->second_operand.word_in_binary[0] == '0' ||code_node->second_operand.word_in_binary[0] == '1') {
+                if(strcmp(code_node->second_operand.word_in_binary, "000000000000001") == 0) {
+                    fprintf(ext_extension, "%s %04d\n", code_node->second_operand.name, code_node->decimal_address_in_machine + 2);
+                }
             }
         }
         code_node = code_node->next_node;
@@ -308,15 +332,15 @@ void free_data_image(data_image *image) {
 }
 
 void free_operand(const operand *operand) {
-    if (operand != NULL) {
+    free(operand->name);
+    free(operand->word_in_binary);/*
         if (operand->name != NULL) {
             free(operand->name);
         }
         if (operand->word_in_binary != NULL) {
             free(operand->word_in_binary);
-        }
-        //free(operand);
-    }
+        }*/
+
 }
 
 void free_code_node(code_node *node) {

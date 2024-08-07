@@ -12,7 +12,7 @@ int stage_0_process_file(const char *file_name) {
     macro_array macro_array;
     char macro_header[MAX_LENGTH_OF_MACRO_HEADER], line[MAX_LENGTH_OF_LINE_LENGTH];
     char *non_space_line, *ptr_line, *macro_body,  *output_buffer = NULL;
-    const char *as_version = file_name_extender(file_name, ".as"), *am_version = NULL;
+    char *as_version = file_name_extender(file_name, ".as"), *am_version = NULL;
     FILE *as_extension_file = fopen(as_version, "r");
     FILE *am_extension_file = NULL;
 
@@ -33,7 +33,7 @@ int stage_0_process_file(const char *file_name) {
         if(strncmp(line, ";", 1)==0 || strncmp(line, "\n", 1)==0)
             continue;
         non_space_line = skip_whitespace(line);
-        if(non_space_line == NULL || *non_space_line == '\n')
+        if(non_space_line == NULL || *non_space_line == '\n' || *non_space_line == '\r')
             continue;
         ptr_line = non_space_line;
         first_word_of_line_length = first_word_length_counter(non_space_line);
@@ -46,26 +46,25 @@ int stage_0_process_file(const char *file_name) {
             first_word_of_line_length = first_word_length_counter(ptr_line);
             strncpy(macro_header, non_space_line, first_word_of_line_length);
             non_space_line = skip_to_next_word(non_space_line, first_word_of_line_length);
-            if (*non_space_line != '\n') {
+            if (*non_space_line != '\n' && *non_space_line != '\r') {
                 /* check if there are redundant characters after setting up the macro name */
-                error_handler(" ERROR_REDUNDANT_CHARACTERS_AFTER_MACRO_NAME", as_version, line_counter);
+                error_handler("ERROR_REDUNDANT_CHARACTERS_AFTER_MACRO_NAME", as_version, line_counter);
                 is_error = 1;
             }
             macro_header[first_word_of_line_length] = '\0';
             if (is_reserved_word(macro_header, first_word_of_line_length)) {
-                error_handler(" ERROR_MACRO_NAME_IS_RESERVED_WORD", as_version, line_counter);
+                error_handler("ERROR_MACRO_NAME_IS_RESERVED_WORD", as_version, line_counter);
                 is_error = 1;
             }
         } else if (line_location == BODY) {
             add_line_to_macro_body(&macro_body, line, &macro_body_length, &macro_body_allocated_size);
         } else if (line_location == END) {
             non_space_line = skip_to_next_word(ptr_line, first_word_of_line_length);
-            if (*non_space_line != '\n') {
-                error_handler(" ERROR_REDUNDANT_CHARACTERS_AFTER_ENDMACRO", as_version, line_counter);
+            if (*non_space_line != '\n' && *non_space_line != '\r') {
+                error_handler("ERROR_REDUNDANT_CHARACTERS_AFTER_ENDMACRO", as_version, line_counter);
                 is_error = 1;
             }
-            if (macro_array_add(&macro_array, macro_header, macro_body))
-                is_error = 1;
+            macro_array_add(&macro_array, macro_header, macro_body);
             macro_body[0] = 0;
             is_inside_macro = 0;
         } else /* REGULAR */{
@@ -84,16 +83,10 @@ int stage_0_process_file(const char *file_name) {
                 append_to_buffer(&output_buffer, line);
             match_found = 0;
         }
-    }/*
-    free(macro_body);
-    macro_array_free(&macro_array);
-    fclose(as_extension_file);
-    fclose(am_extension_file);
-    if (is_error)
-        return 1;
-    return 0;*/
+    }
     fclose(as_extension_file);
     free(macro_body);
+    free(as_version);
 
     if (!is_error) {
         am_version = file_name_extender(file_name, ".am");
@@ -104,6 +97,7 @@ int stage_0_process_file(const char *file_name) {
             macro_array_free(&macro_array);
             return 0;
         }
+        free(am_version);
         fputs(output_buffer, am_extension_file);
         fclose(am_extension_file);
     }
@@ -112,7 +106,6 @@ int stage_0_process_file(const char *file_name) {
     if(is_error)
         return 1;
     return 0;
-
 }
 
 /**
@@ -220,10 +213,11 @@ void macro_array_free(const macro_array *array) {
  */
 void add_line_to_macro_body(char **macro_body, const char *line, int *current_length, int *allocated_size) {
     const int line_length = strlen(line);
+    char *new_body;
 
     if (*current_length + line_length + 1 > *allocated_size) {
         *allocated_size += line_length;
-        char *new_body = realloc(*macro_body, *allocated_size);
+        new_body = realloc(*macro_body, *allocated_size);
         if (new_body == NULL) {
             printf("ERROR_FAILED_TO_REALLOC_MEM\n");
             free(*macro_body);

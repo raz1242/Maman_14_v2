@@ -51,4 +51,6 @@ void free_data_image(data_image *image);
 void free_operand(const operand *operand);
 void free_code_node(code_node *node);
 void free_code_image(code_image *code_image);
-#endif //TABLE_UTILS_H
+void free_code_node_temp(code_node *node);
+
+#endif

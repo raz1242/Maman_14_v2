@@ -79,7 +79,7 @@ int stage_1_process_file(const char *file_name, label_array *label_table, code_i
         labelFlag = 0;
         memset(label_header, '\0', sizeof(label_header));
         memset(word_in_binary, '\0', sizeof(word_in_binary));
-        if(strlen(line) == (MAX_LENGTH_OF_LINE - 1)&& line[MAX_LENGTH_OF_LINE] != '\n') {
+        if(strlen(line) == (MAX_LENGTH_OF_LINE - 1) && line[MAX_LENGTH_OF_LINE] != '\n' && line[MAX_LENGTH_OF_LINE] != '\r') {
             error_handler("ERROR_LINE_TOO_LONG", am_version, line_counter);
             error_found = 1;
         }
@@ -154,8 +154,7 @@ int stage_1_process_file(const char *file_name, label_array *label_table, code_i
         return 1;
     }
     for (i = 0; i < label_table->rep; i++) {
-        if (label_table->label_element[i].characteristic == DATA || label_table->label_element[i].characteristic ==
-            STRING) {
+        if (label_table->label_element[i].characteristic == DATA || label_table->label_element[i].characteristic ==STRING) {
             label_table->label_element[i].address += (IC + STARTING_POINT_OF_MEMORY);
             }
     }
@@ -231,11 +230,9 @@ int which_command(const char *command) {
     int i;
     int str_length = 0;
 
-    for (i = 0; (command[i] && command[i] != ' ' && command[i] != '\t' && command[i] != ',' && command[i] != '\n'); i
-         ++) {
+    for (i = 0; (command[i] && command[i] != ' ' && command[i] != '\t' && command[i] != ',' && command[i] != '\n'  && command[i] != '\r'); i++) {
         str_length++;
     }
-
     for (i = 0; i < 16; i++) {
         if (strlen(commands_list[i]) == str_length && !strncmp(commands_list[i], command, str_length)) {
             return i;
@@ -258,7 +255,7 @@ int which_command(const char *command) {
  */
 int analyze_command(char *ptr, const int command, int *L, char *word_in_binary, const char *file_name, const int line_counter) {
     int is_error = 0;
-    char *first_operand_name = NULL, *second_operand_name = NULL;
+    char *first_operand_name = NULL, *second_operand_name = NULL,  *command_in_binary;
     operand first_operand, second_operand;
 
     if (parse_instruction(ptr, command, &first_operand_name, &second_operand_name, file_name, line_counter))
@@ -273,10 +270,10 @@ int analyze_command(char *ptr, const int command, int *L, char *word_in_binary, 
             free(first_operand_name);
             exit(1);
         }
-    } else {
+    } /*else {
         first_operand.name = NULL;
-    }
-    free(first_operand_name);
+    }*/
+    //free(first_operand_name);
 
     if (second_operand_name) {
         second_operand.name = malloc(strlen(second_operand_name) + 1);
@@ -288,10 +285,10 @@ int analyze_command(char *ptr, const int command, int *L, char *word_in_binary, 
             free(second_operand_name);
             exit(1);
         }
-    } else {
+    } /*else {
         second_operand.name = NULL;
-    }
-    free(second_operand_name);
+    }*/
+    //free(second_operand_name);
 
     first_operand.type = UNKNOWN;
     second_operand.type = UNKNOWN;
@@ -318,22 +315,31 @@ int analyze_command(char *ptr, const int command, int *L, char *word_in_binary, 
     }
 
     if (is_error) {
-        if (first_operand.name)
+        if (first_operand_name) {
             free(first_operand.name);
-        if (second_operand.name)
+            free(first_operand_name);
+        }
+        if (second_operand_name) {
             free(second_operand.name);
+            free(second_operand_name);
+        }
         return 1;
     }
-
-    strcpy(word_in_binary, command_to_binary(command, first_operand, second_operand));
+    command_in_binary = command_to_binary(command, first_operand, second_operand);
+    strcpy(word_in_binary, command_in_binary);
+    free(command_in_binary);
     if (word_in_binary == NULL) {
-        error_handler("ERROR_BINARY_VERSION_CLOUD_NOT_BE_CREATED", file_name, line_counter);
+        error_handler("ERROR_BINARY_VERSION_COULD_NOT_BE_CREATED", file_name, line_counter);
         return 1;
     }
-    if (first_operand.name)
+    if (first_operand_name) {
         free(first_operand.name);
-    if (second_operand.name)
+        free(first_operand_name);
+    }
+    if (second_operand_name) {
         free(second_operand.name);
+        free(second_operand_name);
+    }
     return 0;
 }
 
