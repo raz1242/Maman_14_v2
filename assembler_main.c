@@ -14,12 +14,11 @@ int main(const int argc, char *argv[]) {
 
     /* Check that at least one file name was passed to the program */
     if (argc == 1) {
-        //PRINT_MESSAGE(ERROR_MSG_TYPE, ERROR_NO_FILES_PROVIDED);
-        //exit(1);
+        printf("ERROR_NO_FILE_PROVIDED");
+        exit(1);
     }
 
     /* Process each file if the file name does not exceed the maximum length */
-    //PRINT_MESSAGE(INFO_MSG_TYPE, INFO_START_OF_ASSEMBLER);
     for (i = 1; i < argc; i++) {
         if (strlen(argv[i]) > 80) {
             printf("ERROR_FILE_NAME_IS_TOO_LONG");
@@ -48,6 +47,5 @@ int main(const int argc, char *argv[]) {
         free_code_image(my_code_image);
         free_data_image(my_data_image);
     }
-    printf("\n"); // for testing
     return 0;
 }

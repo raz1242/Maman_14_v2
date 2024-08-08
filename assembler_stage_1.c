@@ -259,7 +259,8 @@ int analyze_command(char *ptr, const int command, int *L, char *word_in_binary, 
     operand first_operand, second_operand;
 
     if (parse_instruction(ptr, command, &first_operand_name, &second_operand_name, file_name, line_counter))
-        return 1;
+        //return 1;
+        is_error = 1;
 
     if (first_operand_name) {
         first_operand.name = malloc(strlen(first_operand_name) + 1);
@@ -295,13 +296,13 @@ int analyze_command(char *ptr, const int command, int *L, char *word_in_binary, 
     if (command <= 15) {
         (*L)++;
         if (command <= 13) {
-            if (analyze_operand(&first_operand)) {
+            if (!is_error && analyze_operand(&first_operand)) {
                 error_handler("ERROR_INVALID_FIRST_OPERAND", file_name, line_counter);
                 is_error = 1;
             }
             (*L)++;
             if (command <= 4) {
-                if (analyze_operand(&second_operand)) {
+                if (!is_error && analyze_operand(&second_operand)) {
                     error_handler("ERROR_INVALID_SECOND_OPERAND", file_name, line_counter);
                     is_error = 1;
                 }

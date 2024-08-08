@@ -397,6 +397,7 @@ int parse_instruction(char *input_ptr, const int command, char **source, char **
         }
         else { /* missing a comma between the two operands */
             error_handler("ERROR_MISSING_A_COMMA", file_name, line_counter);
+            free(first_operand_name);
             return 1;
         }
         if (strncmp(input_ptr, ",", 1) == 0) { /* too many commas */
