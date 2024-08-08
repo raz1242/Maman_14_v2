@@ -143,16 +143,19 @@ int stage_1_process_file(const char *file_name, label_array *label_table, code_i
             IC += L;
             L = 0;
         }
+        if(IC + DC == MAX_SIZE_OF_MEMORY) {
+            printf("ERROR_MEMORY_LIMIT_REACHED");
+            exit(1);
+        }
     }
 
     free(am_version);
     am_version = NULL;
     ptr = NULL;
     non_space_ptr = NULL;
-    if (error_found) {
-        fclose(am_extension);
+    fclose(am_extension);
+    if (error_found)
         return 1;
-    }
     for (i = 0; i < label_table->rep; i++) {
         if (label_table->label_element[i].characteristic == DATA || label_table->label_element[i].characteristic ==STRING) {
             label_table->label_element[i].address += (IC + STARTING_POINT_OF_MEMORY);
@@ -164,7 +167,6 @@ int stage_1_process_file(const char *file_name, label_array *label_table, code_i
     printCodeImage(code_image); //- testing
     printExternLabels(label_table); //- testing*/
 
-    fclose(am_extension);
     return 0;
 }
 
@@ -296,13 +298,13 @@ int analyze_command(char *ptr, const int command, int *L, char *word_in_binary, 
     if (command <= 15) {
         (*L)++;
         if (command <= 13) {
-            if (!is_error && analyze_operand(&first_operand)) {
+            if (analyze_operand(&first_operand) && !is_error) {
                 error_handler("ERROR_INVALID_FIRST_OPERAND", file_name, line_counter);
                 is_error = 1;
             }
             (*L)++;
             if (command <= 4) {
-                if (!is_error && analyze_operand(&second_operand)) {
+                if (analyze_operand(&second_operand) && !is_error) {
                     error_handler("ERROR_INVALID_SECOND_OPERAND", file_name, line_counter);
                     is_error = 1;
                 }

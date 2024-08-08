@@ -3,6 +3,7 @@
 
 #include "table_utils.h"
 
+#define MAX_SIZE_OF_MEMORY 4096
 #define MIN_LENGTH_OF_LABEL_BODY 1
 #define MAX_LENGTH_OF_LINE 81
 #define MAX_LENGTH_OF_LABEL_HEADER 32

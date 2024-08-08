@@ -429,9 +429,9 @@ int parse_instruction(char *input_ptr, const int command, char **source, char **
         input_ptr = skip_to_next_word(input_ptr, second_operand_length);
         if(input_ptr && *input_ptr != '\n' && *input_ptr != '\r') { /* redundent chraters after seond operand*/
             error_handler("ERROR_REDUNDENT_CHARACTERS_AFTER_SECOND_OPERAND", file_name, line_counter);
-            free(first_operand_name);
-            free(second_operand_name);
-            return 1;
+            //free(first_operand_name);
+            //free(second_operand_name);
+            //return 1;
         }
     }
     if(command > 4 && command < 14) {
@@ -539,6 +539,7 @@ int parse_instruction_stage_2(char *input_ptr, const int command, char **source,
             free(second_operand_name);
         exit(1);
     }
+    if (first_operand_name != NULL)
     strncpy(*source, first_operand_name, first_operand_length + 1);
     free(first_operand_name);
     first_operand_name = NULL;
@@ -551,6 +552,7 @@ int parse_instruction_stage_2(char *input_ptr, const int command, char **source,
             free(second_operand_name);
             exit(1);
         }
+        if (second_operand_name != NULL)
         strncpy(*dest, second_operand_name, second_operand_length + 1);
         free(second_operand_name);
         second_operand_name = NULL;
@@ -795,8 +797,10 @@ void convert_operands_to_binary(const operand first_operand, const operand secon
         break;
         case REGISTER_PTR:
         case REGISTER:
-            if(first_operand.type == REGISTER_PTR || first_operand.type == REGISTER)
+            if(first_operand.type == REGISTER_PTR || first_operand.type == REGISTER) {
+                //free(*second_operand_in_binary);
                 break;
+            }
             *second_operand_in_binary = register_operand_to_binary(first_operand, second_operand);
             break;
         case UNKNOWN:

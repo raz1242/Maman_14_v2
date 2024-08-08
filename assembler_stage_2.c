@@ -65,7 +65,7 @@ int stage_2_process_file(const char *file_name, const label_array *label_table, 
                     is_vaild = 1;
                     label_table->label_element[i].characteristic = ENTRY;
                     break;
-                } //maybe put the if(is_vailid) in the if else statement
+                }
             }
             if (!is_vaild) {
                 error_handler("ERROR_LABEL_NOT_FOUND", am_version, line_counter);
