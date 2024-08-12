@@ -53,4 +53,4 @@ void free_code_node(code_node *node);
 void free_code_image(code_image *code_image);
 void free_code_node_temp(code_node *node);
 
-#endif
+#endif /* TABLE_UTILS_H */

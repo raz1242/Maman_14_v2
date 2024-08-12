@@ -8,9 +8,9 @@
  * @return 1 if the file was processed successfully, 0 otherwise
  */
 int stage_0_process_file(const char *file_name) {
-    int i, is_inside_macro = 0, first_word_of_line_length, macro_body_length =0, macro_body_allocated_size = MIN_LENGTH_OF_MACRO_BODY, line_location, is_error = 0, match_found = 0, line_counter = 0;
+    int i, is_inside_macro = 0, first_word_of_line_length, macro_body_length = 0, macro_body_allocated_size = MIN_LENGTH_OF_MACRO_BODY, line_location, is_error = 0, match_found = 0, line_counter = 0;
     macro_array macro_array;
-    char macro_header[MAX_LENGTH_OF_MACRO_HEADER], line[MAX_LENGTH_OF_LINE_LENGTH];
+    char macro_header[MAX_LENGTH_OF_MACRO_HEADER], line[MAX_LENGTH_OF_LINE_2];
     char *non_space_line, *ptr_line, *macro_body,  *output_buffer = NULL;
     char *as_version = file_name_extender(file_name, ".as"), *am_version = NULL;
     FILE *as_extension_file = fopen(as_version, "r");
@@ -28,8 +28,13 @@ int stage_0_process_file(const char *file_name) {
     }
     macro_array_allocator(&macro_array, MIN_LENGTH_OF_MACRO_BODY);
 
-    while (fgets(line, MAX_LENGTH_OF_LINE_LENGTH, as_extension_file)) {
+    while (fgets(line, MAX_LENGTH_OF_LINE_2, as_extension_file)) {
         line_counter++;
+        if(strlen(line) >= MAX_LENGTH_OF_LINE_LENGTH){ /*check if the line is longer than the max of 80 characters*/
+            error_handler("ERROR_LINE_TOO_LONG", as_version, line_counter);
+            is_error = 1;
+            continue;
+        }
         if(strncmp(line, ";", 1)==0 || strncmp(line, "\n", 1)==0)
             continue;
         non_space_line = skip_whitespace(line);
@@ -46,26 +51,31 @@ int stage_0_process_file(const char *file_name) {
             first_word_of_line_length = first_word_length_counter(ptr_line);
             strncpy(macro_header, non_space_line, first_word_of_line_length);
             non_space_line = skip_to_next_word(non_space_line, first_word_of_line_length);
-            if (*non_space_line != '\n' && *non_space_line != '\r') {
-                /* check if there are redundant characters after setting up the macro name */
+            if (*non_space_line != '\n' && *non_space_line != '\r') { /*check if there're redundant characters after the macro name set up*/
                 error_handler("ERROR_REDUNDANT_CHARACTERS_AFTER_MACRO_NAME", as_version, line_counter);
                 is_error = 1;
             }
             macro_header[first_word_of_line_length] = '\0';
-            if (is_reserved_word(macro_header, first_word_of_line_length)) {
+            if (is_reserved_word(macro_header, first_word_of_line_length)) { /*check if the macro name is a reserved word*/
                 error_handler("ERROR_MACRO_NAME_IS_RESERVED_WORD", as_version, line_counter);
                 is_error = 1;
             }
+            if(is_duplicate_macro_name(&macro_array, macro_header)){ /*check if the macro name already exists*/
+                error_handler("ERROR_DUPLICATE_MACRO_NAME", as_version, line_counter);
+                is_error = 1;
+            }
         } else if (line_location == BODY) {
-            add_line_to_macro_body(&macro_body, line, &macro_body_length, &macro_body_allocated_size);
+            add_line_to_macro_body(&macro_body, non_space_line, &macro_body_length, &macro_body_allocated_size);
         } else if (line_location == END) {
             non_space_line = skip_to_next_word(ptr_line, first_word_of_line_length);
-            if (*non_space_line != '\n' && *non_space_line != '\r') {
+            if (*non_space_line != '\n' && *non_space_line != '\r') { /*check if there're redundant characters after the end of the macro*/
                 error_handler("ERROR_REDUNDANT_CHARACTERS_AFTER_ENDMACRO", as_version, line_counter);
                 is_error = 1;
             }
             macro_array_add(&macro_array, macro_header, macro_body);
-            macro_body[0] = 0;
+            macro_body_length = 0;
+            macro_body_allocated_size = MIN_LENGTH_OF_MACRO_BODY;
+            memset(macro_body, 0, macro_body_length);
             is_inside_macro = 0;
         } else /* REGULAR */{
             if (is_error)
@@ -103,9 +113,7 @@ int stage_0_process_file(const char *file_name) {
     }
     free(output_buffer);
     macro_array_free(&macro_array);
-    if(is_error)
-        return 1;
-    return 0;
+    return is_error;
 }
 
 /**
@@ -255,4 +263,23 @@ void append_to_buffer(char **buffer, const char *content) {
         }
         strcat(*buffer, content);
     }
+}
+
+/**
+ * Checks if a given macro name already exists in the macro array.
+ *
+ * This function iterates through the macro array and compares each macro's name
+ * with the provided name. Returns a number based on the match result.
+ *
+ * @param array A pointer to the macro array to be checked.
+ * @param name The name of the macro to check for duplicates.
+ * @return 1 if the macro name is a duplicate, 0 otherwise.
+ */
+int is_duplicate_macro_name (const macro_array *array, const char *name){
+    int i;
+    for(i = 0; i < array->rep; i++){
+        if(strcmp(array->macro_element[i].name, name) == 0)
+            return 1;
+    }
+    return 0;
 }

@@ -20,9 +20,9 @@ void printLabels(const label_array *label_table) {
 }
 
 int stage_2_process_file(const char *file_name, const label_array *label_table, const code_image *code_image,
-                         const data_image *data_image) {
+                         const data_image *data_image, int *error_flag) {
     int i, IC = 0, DC = 0, location, firstWordInLineLength, command_in_line, is_vaild, line_counter = 0, extern_flag = 0
-            , entry_flag = 0, error_found = 0;
+            , entry_flag = 0;
     int j = STARTING_POINT_OF_MEMORY; // for testing
     char line[MAX_LENGTH_OF_LINE], label_header[MAX_LENGTH_OF_LABEL_HEADER + 1];
     char *am_version = NULL, *ptr = NULL, *non_space_ptr = NULL, *first_operand_in_binary = NULL, *second_operand_in_binary = NULL;
@@ -42,13 +42,12 @@ int stage_2_process_file(const char *file_name, const label_array *label_table, 
 
     while (fgets(line, MAX_LENGTH_OF_LINE, am_extension_file)) {
         line_counter++;
-        //printf(" \n\n%s", line); fflush(stdout); // for testing
         is_vaild = 0;
         non_space_ptr = skip_whitespace(line);
         ptr = non_space_ptr;
         firstWordInLineLength = first_word_length_counter(ptr);
         location = line_location(ptr);
-        if (location == LABEL) {
+        if (location == LABEL_DEFINITION) {
             strncpy(label_header, ptr, firstWordInLineLength);
             non_space_ptr = skip_to_next_word(ptr, firstWordInLineLength + LENGTH_OF_COLON);
             ptr = non_space_ptr;
@@ -69,31 +68,31 @@ int stage_2_process_file(const char *file_name, const label_array *label_table, 
             }
             if (!is_vaild) {
                 error_handler("ERROR_LABEL_NOT_FOUND", am_version, line_counter);
-                error_found = 1;
+                *error_flag = 1;
             }
         }
         if (location == EXTERN) {
             extern_flag = 1;
         }
         if (location == DATA || location == STRING) {
-            convert_ascii_to_binary(data_node);
+            /*convert_ascii_to_binary(data_node);
             DC += data_node->length;
-            data_node = data_node->next_node;
+            data_node = data_node->next_node;*/
         }
         if (location == CODE) {
             command_in_line = which_command(ptr);
             parse_instruction_stage_2(ptr, command_in_line, &code_node->first_operand.name, &code_node->second_operand.name,
                                       am_version, line_counter);
             reset_opernads_type(&code_node->first_operand, &code_node->second_operand);
-            if (code_node->first_operand.name)
+            if (code_node->first_operand.name && strcmp(code_node->first_operand.name, "") != 0)
                 if(analyze_operand_stage_2(&code_node->first_operand, *label_table)) {
                     error_handler("ERROR_INVALID_FIRST_OPERAND", am_version, line_counter);
-                    error_found = 1;
+                    *error_flag = 1;
                 }
-            if (code_node->second_operand.name)
+            if (code_node->second_operand.name && strcmp(code_node->second_operand.name, "") != 0)
                 if(analyze_operand_stage_2(&code_node->second_operand, *label_table)){
                     error_handler("ERROR_INVALID_SECOND_OPERAND", am_version, line_counter);
-                    error_found = 1;
+                    *error_flag = 1;
                 }
             validate_operands(command_in_line, code_node->first_operand, code_node->second_operand, am_version, line_counter);
             convert_operands_to_binary(code_node->first_operand, code_node->second_operand, &first_operand_in_binary, &second_operand_in_binary, label_table);
@@ -117,10 +116,15 @@ int stage_2_process_file(const char *file_name, const label_array *label_table, 
                 code_node = code_node->next_node;
         }
     }
+    while(data_node != NULL) {
+        convert_ascii_to_binary(data_node);
+        DC += data_node->length;
+        data_node = data_node->next_node;
+    }
     fclose(am_extension_file);
     free(am_version);
     am_version = NULL;
-    if (error_found)
+    if (*error_flag)
         return 1;
 
     if (entry_flag)
@@ -147,23 +151,23 @@ int validate_operands(const int command, const operand first_operand, const oper
     if (command == 1) {}
     else if (command <= 3) {
         if (second_operand.type == IMMEDIATE) {
-            error_handler("ERROR_INVALID_TYPE_IN_SECOND_OPERAND", file_name, line_counter);
+            error_handler("ERROR_INVALID_OPERAND_TYPE_IN_SECOND_OPERAND", file_name, line_counter);
             is_error = 1;
         }
     }
     if (command == 4) {
         if (first_operand.type != LABEL_VALUE) {
-            error_handler("ERROR_INVALID_TYPE_IN_FIRST_OPERAND", file_name, line_counter);
+            error_handler("ERROR_INVALID_OPERAND_TYPE_IN_FIRST_OPERAND", file_name, line_counter);
             is_error = 1;
         }
         if (second_operand.type == IMMEDIATE) {
-            error_handler("ERROR_INVALID_TYPE_IN_SECOND_OPERAND", file_name, line_counter);
+            error_handler("ERROR_INVALID_OPERAND_TYPE_IN_SECOND_OPERAND", file_name, line_counter);
             is_error = 1;
         }
     }
     if ((command >= 5 && command <= 8) || command == 11) {
         if (first_operand.type == IMMEDIATE) {
-            error_handler("ERROR_INVALID_TYPE_IN_FIRST_OPERAND", file_name, line_counter);
+            error_handler("ERROR_INVALID_OPERAND_TYPE_IN_FIRST_OPERAND", file_name, line_counter);
             is_error = 1;
         }
         if (second_operand.type != UNKNOWN) {
@@ -173,7 +177,7 @@ int validate_operands(const int command, const operand first_operand, const oper
     }
     if (command == 9 || command == 10 || command == 13) {
         if (first_operand.type == IMMEDIATE || first_operand.type == REGISTER) {
-            error_handler("ERROR_INVALID_TYPE_IN_FIRST_OPERAND", file_name, line_counter);
+            error_handler("ERROR_INVALID_OPERAND_TYPE_IN_FIRST_OPERAND", file_name, line_counter);
             is_error = 1;
         }
         if (second_operand.type != UNKNOWN) {

@@ -7,10 +7,12 @@
 #include <ctype.h>
 
 #define EXTERN_ADDRESS -1
-#define SIZE_OF_NUMBER_IN_BITS 12
-#define LEANGTH_OF_ARE 3
 #define STARTING_POINT_OF_MEMORY 100
 #define LENGTH_OF_COMMA 1
+#define LEANGTH_OF_ARE 3
+#define SIZE_OF_NUMBER_IN_BITS 12
+#define MAX_POSSIBLE_NUMBER 2047
+#define MIN_POSSIBLE_NUMBER -2048
 
 typedef enum addressing_method {
     IMMEDIATE,
@@ -27,7 +29,7 @@ typedef struct oprator_structure {
 } operand;
 
 typedef enum code_structure {
-    LABEL, /*0*/
+    LABEL_DEFINITION, /*0*/
     DATA, /*1*/
     STRING, /*2*/
     ENTRY, /*3*/
@@ -73,9 +75,11 @@ int parse_instruction(char *input_ptr, int command, char **source, char **dest, 
                       int line_counter);
 
 label_array *label_array_allocator(int size); // might move to table_utils
-void add_label_to_array(label_array *array, const char *name, int address, line_type label_characteristic,
-                        const char *file_name, int line_counter); // might move to table_utils
+
+void add_label_to_array(label_array *array, const char *name, int address, line_type label_characteristic); // might move to table_utils
+
 int is_label(const label_array *label_table, const char *name); // might move to table_utils
+
 int which_register(const char *operand_name);
 
 char *command_to_binary(int command, operand first_operand, operand second_operand);
@@ -105,5 +109,6 @@ void reset_opernads_type(operand *first_operand, operand *second_operand);
 
 int analyze_operand_stage_2(operand *operand, label_array label_array);
 
+int is_immidiate_out_of_bounds(operand operand);
 
-#endif //UTILS_H
+#endif /* UTILS_H */

@@ -7,7 +7,7 @@
 
 
 int main(const int argc, char *argv[]) {
-    int i;
+    int index, error_flag = 0;
     data_image *my_data_image;
     code_image *my_code_image;
     label_array* label_table;
@@ -19,12 +19,12 @@ int main(const int argc, char *argv[]) {
     }
 
     /* Process each file if the file name does not exceed the maximum length */
-    for (i = 1; i < argc; i++) {
-        if (strlen(argv[i]) > 80) {
+    for (index = 1; index < argc; index++) {
+        if (strlen(argv[index]) > 80) {
             printf("ERROR_FILE_NAME_IS_TOO_LONG");
             return 1;
         }
-        if(stage_0_process_file(argv[i])) {
+        if(stage_0_process_file(argv[index])) {
             printf("pre stage failed\n"); // for testing
             return 1 ;
         }
@@ -34,11 +34,11 @@ int main(const int argc, char *argv[]) {
         my_data_image = data_image_allocator();
         my_code_image = code_image_allocator();
 
-        if(stage_1_process_file(argv[i], label_table, my_code_image, my_data_image))
+        if(stage_1_process_file(argv[index], label_table, my_code_image, my_data_image, &error_flag))
             printf("stage 1 failed\n"); // for testing
         else
             printf("stage 1 success\n"); // for testing
-        if(stage_2_process_file(argv[i], label_table, my_code_image, my_data_image))
+        if(stage_2_process_file(argv[index], label_table, my_code_image, my_data_image, &error_flag))
             printf("stage 2 failed\n"); // for testing
         else
             printf("stage 2 success\n"); // for testing
