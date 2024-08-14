@@ -1,4 +1,4 @@
-addy
+addy 
 add r3
 crazy: add crazy,r4
 crazy: add crazy,r4
@@ -13,10 +13,14 @@ macr m_macr
  bne END
 endmacr
 : stop
+macr m1macr   
+ cmp 2r3, #-6
+ bne END
+endmacr
  TEMP:
  inc r6
  mov *r6,K
- sub r1, r4
+m1macr: sub r1, r4
  m_macr
  dec K parse_instruction_operands
  jmp LOOP

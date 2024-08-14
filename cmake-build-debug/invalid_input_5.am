@@ -1,4 +1,4 @@
-addy
+addy 
 add r3
 crazy: add crazy,r4
 crazy: add crazy,r4
@@ -11,7 +11,7 @@ LOOP de loop: prn #48
  TEMP:
  inc r6
  mov *r6,K
- sub r1, r4
+m1macr: sub r1, r4
 cmp 2r3, #-6
 bne END
  dec K parse_instruction_operands

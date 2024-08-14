@@ -5,6 +5,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
+#include "output_handling.h"
 
 #define EXTERN_ADDRESS -1
 #define STARTING_POINT_OF_MEMORY 100

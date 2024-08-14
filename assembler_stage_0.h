@@ -2,6 +2,7 @@
 #define ASSEMBLER_STAGE_0_H
 
 #include "utils.h"
+#include "table_utils.h"
 
 #define MAX_LENGTH_OF_MACRO_HEADER 50
 #define MIN_LENGTH_OF_MACRO_BODY 1
@@ -31,7 +32,7 @@ enum precode_structure{
 };
 
 /* Declarations */
-int stage_0_process_file(const char* file_name);
+int stage_0_process_file(const char *file_name, macro_name_image *my_macro_name_image);
 void macro_array_allocator(macro_array *array, int size);
 int macro_location(const char *str, int flag, int length);
 int macro_array_add(macro_array *array, const char* name, const char* body);

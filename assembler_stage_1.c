@@ -55,12 +55,13 @@ void printExternLabels(const label_array *array) { //- testing
     }
 }*/
 
-int stage_1_process_file(const char *file_name, label_array *label_table, code_image *code_image, data_image *data_image, int *error_flag) {
+int stage_1_process_file(const char *file_name, label_array *label_table, code_image *code_image, data_image *data_image, const macro_name_image *macro_name_image, int *error_flag) {
 
     int i, IC = 0, DC = 0, L = 0, location, first_word_in_line_length, label_flag, command_in_line, array_size, line_counter = 0, total_memory_size;
     int *parced_array = NULL;
     char line[MAX_LENGTH_OF_LINE], label_header[MAX_LENGTH_OF_LABEL_HEADER], word_in_binary[LENGTH_OF_BINARY_WORD];
     char *am_version = NULL, *ptr = NULL, *non_space_ptr = NULL;
+    const macro_name *macro_name = NULL;
     data_node *data_node = NULL;
     code_node *code_node = NULL;
     FILE *am_extension = NULL;
@@ -82,41 +83,35 @@ int stage_1_process_file(const char *file_name, label_array *label_table, code_i
         memset(label_header, '\0', sizeof(label_header));
         memset(word_in_binary, '\0', sizeof(word_in_binary));
         if(strlen(line) == (MAX_LENGTH_OF_LINE - 1) && line[MAX_LENGTH_OF_LINE] != '\n' && line[MAX_LENGTH_OF_LINE] != '\r') {
-            error_handler("ERROR_LINE_TOO_LONG", am_version, line_counter);
+            error_handler(ERROR_LINE_TOO_LONG, am_version, line_counter);
             *error_flag = 1;
         }
         non_space_ptr = skip_whitespace(line);
         ptr = non_space_ptr;
+        if(ptr[0] == ';') {
+            error_handler(ERROR_COMMENT_NOT_AT_THE_BEGINNING_OF_THE_LINE, am_version, line_counter);
+            *error_flag = 1;
+            continue;
+        }
         first_word_in_line_length = first_word_length_counter(ptr);
         location = line_location(ptr);
         if(location == -1) {
-            error_handler("ERROR_UNKNOWN_COMMAND", am_version, line_counter);
+            error_handler(ERROR_UNKNOWN_COMMAND, am_version, line_counter);
             *error_flag = 1;
         }
 
         if (location == LABEL_DEFINITION) {
             label_flag = 1;
+            macro_name = macro_name_image->first;
             strncpy(label_header, ptr, first_word_in_line_length);
-            if (strlen(label_header) > MAX_LENGTH_OF_LABEL_HEADER) {
-                error_handler("ERROR_LABEL_NAME_TOO_LONG", am_version, line_counter);
-                *error_flag = 1;
-            }
-            if (is_reserved_word(label_header, strlen(label_header))) {
-                error_handler("ERROR_LABEL_NAME_IS_A_RESERVED_WORD", am_version, line_counter);
-                *error_flag = 1;
-            }
-            if (is_duplicate_label_name(label_table, label_header)) {
-                error_handler("ERROR_DUPLICATE_LABEL_NAME", am_version, line_counter);
-                *error_flag = 1;
-            }
+            validate_label_name(label_header, label_table, macro_name, am_version, line_counter, error_flag);
             non_space_ptr = skip_to_next_word(ptr, first_word_in_line_length + LENGTH_OF_COLON);
             ptr = non_space_ptr;
             if(is_end_of_line(ptr)) {
-                error_handler("ERROR_LABEL_CANNOT_BE_EMPTY", am_version, line_counter);
+                error_handler(ERROR_LABEL_CANNOT_BE_EMPTY_OF_COMMAND, am_version, line_counter);
                 *error_flag = 1;
                 continue;
             }
-            first_word_in_line_length = first_word_length_counter(ptr);
             location = line_location(ptr);
         }
         if (location == DATA || location == STRING) {
@@ -139,12 +134,12 @@ int stage_1_process_file(const char *file_name, label_array *label_table, code_i
             free(parced_array);
             parced_array = NULL;
         } else if (location == EXTERN) {
-            non_space_ptr = skip_to_next_word(ptr, first_word_in_line_length);
+            non_space_ptr = skip_to_next_word(ptr, strlen(".extern"));
             ptr = non_space_ptr;
             first_word_in_line_length = first_word_length_counter(ptr);
             location = line_location(ptr);
             if (location == LABEL_DEFINITION) {
-                error_handler("ERROR_LABEL_CANNOT_BE_DEFINED_IN_.EXTERN_COMMAND", am_version, line_counter);
+                error_handler(ERROR_LABEL_CANNOT_BE_DEFINED_IN_EXTERN_COMMAND, am_version, line_counter);
                 *error_flag = 1;
                 continue;
             }
@@ -152,30 +147,38 @@ int stage_1_process_file(const char *file_name, label_array *label_table, code_i
             non_space_ptr = skip_to_next_word(ptr, first_word_in_line_length);
             ptr = non_space_ptr;
             if(!is_end_of_line(ptr)) {
-                error_handler("ERROR_REDUNDANT_CHARACTERS_AFTER_LABEL", am_version, line_counter);
+                error_handler(ERROR_REDUNDANT_CHARACTERS_AFTER_LABEL, am_version, line_counter);
                 *error_flag = 1;
                 continue;
             }
             if (is_reserved_word(label_header, strlen(label_header))) {
-                error_handler("ERROR_LABEL_NAME_IS_A_RESERVED_WORD", am_version, line_counter);
+                error_handler(ERROR_LABEL_NAME_IS_A_RESERVED_WORD, am_version, line_counter);
                 *error_flag = 1;
             }
             add_label_to_array(label_table, label_header, EXTERN_ADDRESS, EXTERN);
         } else if (location == ENTRY) {
-            non_space_ptr = skip_to_next_word(ptr, first_word_in_line_length);
+            non_space_ptr = skip_to_next_word(ptr, strlen(".entry"));;
             ptr = non_space_ptr;
             first_word_in_line_length = first_word_length_counter(ptr);
             location = line_location(ptr);
             if (location == LABEL_DEFINITION) {
-                error_handler("ERROR_LABEL_CANNOT_BE_DEFINED_IN_.ENTRY_COMMAND", am_version, line_counter);
+                error_handler(ERROR_LABEL_CANNOT_BE_DEFINED_IN_ENTRY_COMMAND, am_version, line_counter);
                 *error_flag = 1;
                 continue;
             }
-
+            for (i = 0; i < label_table->rep; i++) {
+                if (!strncmp(label_table->label_element[i].name, ptr, first_word_in_line_length)) {
+                    if(label_table -> label_element[i].characteristic == EXTERN) {
+                        error_handler(ERROR_LABEL_IS_EXTERN, am_version, line_counter);
+                        *error_flag = 1;
+                        break;
+                    }
+                }
+            }
             non_space_ptr = skip_to_next_word(ptr, first_word_in_line_length);
             ptr = non_space_ptr;
             if(!is_end_of_line(ptr)) {
-                error_handler("ERROR_REDUNDANT_CHARACTERS_AFTER_LABEL", am_version, line_counter);
+                error_handler(ERROR_REDUNDANT_CHARACTERS_AFTER_LABEL, am_version, line_counter);
                 *error_flag = 1;
                 continue;
             }
@@ -184,7 +187,7 @@ int stage_1_process_file(const char *file_name, label_array *label_table, code_i
                 add_label_to_array(label_table, label_header, IC + STARTING_POINT_OF_MEMORY, IRRLEVANT);
             command_in_line = which_command(ptr);
             if(command_in_line == -1) {
-                error_handler("ERROR_COMMAND_NOT_FOUND", am_version, line_counter);
+                error_handler(ERROR_COMMAND_NOT_FOUND, am_version, line_counter);
                 *error_flag = 1;
             }
             else {
@@ -198,7 +201,7 @@ int stage_1_process_file(const char *file_name, label_array *label_table, code_i
         }
         total_memory_size = IC + DC + STARTING_POINT_OF_MEMORY;
         if(total_memory_size >= 4096) {
-            printf("ERROR_MEMORY_LIMIT_REACHED");
+            printf("%s\n", ERROR_MEMORY_LIMIT_REACHED);
             exit(1);
         }
     }
@@ -321,7 +324,7 @@ int analyze_command(char *ptr, const int command, int *L, char *word_in_binary, 
         if (first_operand.name) {
             strcpy(first_operand.name, first_operand_name);
         } else {
-            printf("\nERROR_FAILED_TO_ALLOCATE_MEM");
+            printf("%s\n", ERROR_FAILED_TO_ALLOCATE_MEM);
             free(first_operand_name);
             exit(1);
         }
@@ -332,7 +335,7 @@ int analyze_command(char *ptr, const int command, int *L, char *word_in_binary, 
         if (second_operand.name) {
             strcpy(second_operand.name, second_operand_name);
         } else {
-            printf("\nERROR_FAILED_TO_ALLOCATE_MEM");
+            printf("%s\n", ERROR_FAILED_TO_ALLOCATE_MEM);
             free(first_operand_name);
             free(second_operand_name);
             exit(1);
@@ -346,12 +349,12 @@ int analyze_command(char *ptr, const int command, int *L, char *word_in_binary, 
         if (command <= 13) {
             if (!is_error) {
                 if(analyze_operand(&first_operand)) {
-                    error_handler("ERROR_INVALID_FIRST_OPERAND", file_name, line_counter);
+                    error_handler(ERROR_INVALID_FIRST_OPERAND, file_name, line_counter);
                     is_error = 1;
                 }
                 if (first_operand.type == IMMEDIATE) {
                     if(is_immidiate_out_of_bounds(first_operand)) {
-                        error_handler("ERROR_OPERAND_VALUE_OUT_OF_BOUNDS", file_name, line_counter);
+                        error_handler(ERROR_OPERAND_VALUE_OUT_OF_BOUNDS, file_name, line_counter);
                         is_error = 1;
                     }
                 }
@@ -361,12 +364,12 @@ int analyze_command(char *ptr, const int command, int *L, char *word_in_binary, 
             if (command <= 4) {
                 if (!is_error) {
                     if (analyze_operand(&second_operand)) {
-                        error_handler("ERROR_INVALID_SECOND_OPERAND", file_name, line_counter);
+                        error_handler(ERROR_INVALID_SECOND_OPERAND, file_name, line_counter);
                         is_error = 1;
                     }
                     if (second_operand.type == IMMEDIATE) {
                         if(is_immidiate_out_of_bounds(second_operand)) {
-                            error_handler("ERROR_OPERAND_VALUE_OUT_OF_BOUNDS", file_name, line_counter);
+                            error_handler(ERROR_OPERAND_VALUE_OUT_OF_BOUNDS, file_name, line_counter);
                             is_error = 1;
                         }
                     }
@@ -395,7 +398,7 @@ int analyze_command(char *ptr, const int command, int *L, char *word_in_binary, 
     strcpy(word_in_binary, command_in_binary);
     free(command_in_binary);
     if (word_in_binary == NULL) {
-        error_handler("ERROR_BINARY_VERSION_COULD_NOT_BE_CREATED", file_name, line_counter);
+        error_handler(ERROR_BINARY_VERSION_COULD_NOT_BE_CREATED, file_name, line_counter);
         return 1;
     }
     if (first_operand_name) {
@@ -478,4 +481,26 @@ int is_duplicate_label_name(const label_array *label_table, const char *label_na
             return 1;
     }
     return 0;
+}
+
+void validate_label_name(char *label_header, const label_array *label_table, const macro_name *macro_name, const char *am_version, const int line_counter, int *error_flag) {
+    if (strlen(label_header) > MAX_LENGTH_OF_LABEL_HEADER) {
+        error_handler(ERROR_LABEL_NAME_TOO_LONG, am_version, line_counter);
+        *error_flag = 1;
+    }
+    if (is_reserved_word(label_header, strlen(label_header))) {
+        error_handler(ERROR_LABEL_NAME_IS_A_RESERVED_WORD, am_version, line_counter);
+        *error_flag = 1;
+    }
+    if (is_duplicate_label_name(label_table, label_header)) {
+        error_handler(ERROR_DUPLICATE_LABEL_NAME, am_version, line_counter);
+        *error_flag = 1;
+    }
+    while (macro_name != NULL) {
+        if (strcmp(macro_name->name, label_header) == 0) {
+            error_handler(ERROR_LABEL_NAME_IS_A_MACRO_NAME, am_version, line_counter);
+            *error_flag = 1;
+        }
+        macro_name = macro_name->next;
+    }
 }

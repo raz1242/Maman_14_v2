@@ -19,7 +19,7 @@ char *register_list[8] = {"r0", "r1", "r2", "r3", "r4", "r5", "r6", "r7"};
 char *file_name_extender(const char *str, const char *type) {
     char *file_type = malloc(strlen(str) + strlen(type) + 1);
     if (file_type == NULL) {
-        printf("\nERROR_FAILED_TO_ALLOCATE_MEM");
+        printf("%s\n", ERROR_FAILED_TO_ALLOCATE_MEM);
         exit(1);
     }
     strcpy(file_type, str);
@@ -172,20 +172,20 @@ int parse_dot_data2(const char *input, int **array, int *size, int *DC, const ch
     ptr = (char *) dataStart;
     while (*ptr) {
         if(*ptr != '-' && *ptr != '+' && !isdigit(*ptr) && *ptr != ',' && *ptr != '\n' && *ptr != '\r' && !isspace(*ptr)) { /* if character is not a digit, comma, newline, or whitespace*/
-            error_handler("INVALID_DATA_VALUE", file_name, line_counter);
+            error_handler(ERROR_INVALID_DATA_VALUE, file_name, line_counter);
             return 1;
         }
         if(numberFlag == 1 && !isspace(*ptr) && *ptr != ',' && *ptr != '\n' && *ptr != '\r') { /* if a number is found and the next character is not a whitespace, comma, or newline*/
-            error_handler("INVALID_DATA_VALUE", file_name, line_counter);
+            error_handler(ERROR_INVALID_DATA_VALUE, file_name, line_counter);
             return 1;
         }
         if (*ptr == '\n' || *ptr == '\r' || *ptr == '\0') {
             if(commaFlag == 1) { // if a comma is found at the end of the line
-                error_handler("ERROR_MISSING_DATA_VALUE", file_name, line_counter);
+                error_handler(ERROR_MISSING_DATA_VALUE, file_name, line_counter);
                 return 1;
             }
             if(count == 0) { /* if no data values are found*/
-                error_handler("ERROR_MISSING_DATA_VALUE", file_name, line_counter);
+                error_handler(ERROR_MISSING_DATA_VALUE, file_name, line_counter);
                 return 1;
             }
             break;
@@ -196,7 +196,7 @@ int parse_dot_data2(const char *input, int **array, int *size, int *DC, const ch
         }
         if(commaFlag == 1) {
             if (*ptr == ',') { /* if multiple commas are found*/
-                error_handler("ERROR_MULTIPLE_COMMA_FOUND", file_name, line_counter);
+                error_handler(ERROR_MULTIPLE_COMMA_FOUND, file_name, line_counter);
                 return 1;
             }
         }
@@ -234,11 +234,11 @@ int parse_dot_data2(const char *input, int **array, int *size, int *DC, const ch
         if (isdigit(*ptr) || ((*ptr == '-' || *ptr == '+') && isdigit(*(ptr + 1)))) {
             current_number = strtol(ptr, &ptr, 10);
             if (current_number > MAX_POSSIBLE_NUMBER || current_number < MIN_POSSIBLE_NUMBER) {
-                error_handler("ERROR_NUMBER_IS_OUT_OF_MACHINE_RANGE", file_name, line_counter);
+                error_handler(ERROR_NUMBER_IS_OUT_OF_MACHINE_RANGE, file_name, line_counter);
             } else {
                 temp_array = realloc(*array, (index + 1) * sizeof(int));
                 if (temp_array == NULL) {
-                    printf("\nERROR_FAILED_TO_ALLOCATE_MEM");
+                    printf("%s\n", ERROR_FAILED_TO_ALLOCATE_MEM);
                     free(*array);
                     exit(1);
                 }
@@ -276,23 +276,23 @@ int parse_dot_data(const char *input, int **array, int *size, int *DC, const cha
     ptr = (char *)dataStart;
     while (*ptr) {
         if (*ptr != '-' && *ptr != '+' && !isdigit(*ptr) && *ptr != ',' && *ptr != '\n' && *ptr != '\r' && !isspace(*ptr)) {
-            error_handler("INVALID_DATA_VALUE", file_name, line_counter);
+            error_handler(ERROR_INVALID_DATA_VALUE, file_name, line_counter);
             free(*array);
             return 1;
         }
         if (numberFlag == 1 && !isspace(*ptr) && *ptr != ',' && *ptr != '\n' && *ptr != '\r') {
-            error_handler("INVALID_DATA_VALUE", file_name, line_counter);
+            error_handler(ERROR_INVALID_DATA_VALUE, file_name, line_counter);
             free(*array);
             return 1;
         }
         if (*ptr == '\n' || *ptr == '\r' || *ptr == '\0') {
             if (commaFlag == 1) {
-                error_handler("ERROR_MISSING_DATA_VALUE", file_name, line_counter);
+                error_handler(ERROR_MISSING_DATA_VALUE, file_name, line_counter);
                 free(*array);
                 return 1;
             }
             if (index == 0) {  /* No valid data found */
-                error_handler("ERROR_MISSING_DATA_VALUE", file_name, line_counter);
+                error_handler(ERROR_MISSING_DATA_VALUE, file_name, line_counter);
                 free(*array);
                 return 1;
             }
@@ -303,7 +303,7 @@ int parse_dot_data(const char *input, int **array, int *size, int *DC, const cha
             continue;
         }
         if (commaFlag == 1 && *ptr == ',') {
-            error_handler("ERROR_MULTIPLE_COMMA_FOUND", file_name, line_counter);
+            error_handler(ERROR_MULTIPLE_COMMA_FOUND, file_name, line_counter);
             free(*array);
             return 1;
         }
@@ -316,11 +316,11 @@ int parse_dot_data(const char *input, int **array, int *size, int *DC, const cha
         if (isdigit(*ptr) || ((*ptr == '-' || *ptr == '+') && isdigit(*(ptr + 1)))) {
             current_number = strtol(ptr, &ptr, 10);
             if (current_number > MAX_POSSIBLE_NUMBER || current_number < MIN_POSSIBLE_NUMBER) {
-                error_handler("ERROR_NUMBER_IS_OUT_OF_MACHINE_RANGE", file_name, line_counter);
+                error_handler(ERROR_NUMBER_IS_OUT_OF_MACHINE_RANGE, file_name, line_counter);
             } else {
                 int *temp_array = realloc(*array, (index + 1) * sizeof(int));
                 if (temp_array == NULL) {
-                    printf("\nERROR_FAILED_TO_ALLOCATE_MEM");
+                    printf("%s\n", ERROR_FAILED_TO_ALLOCATE_MEM);
                     free(*array);
                     exit(1);
                 }
@@ -367,13 +367,13 @@ int parse_dot_string(const char *input, int **array, int *size, int *DC, const c
     }
     while (*stringStart && *stringStart != '"') {
         if(isalpha(*stringStart) || isdigit(*stringStart)){ /* if a character is found outside of quotation marks*/
-            error_handler("ERROR_STRING_MUST_START_WITH_QUOTATION_MARK", file_name, line_counter);
+            error_handler(ERROR_STRING_MUST_START_WITH_QUOTATION_MARK, file_name, line_counter);
             *array = NULL;
             *size = 0;
             return 1;
         }
         if(*stringStart == '\n' || *stringStart == '\r') { /* if no string is found*/
-            error_handler("ERROR_NO_STRING_FOUND", file_name, line_counter);
+            error_handler(ERROR_NO_STRING_FOUND, file_name, line_counter);
             *array = NULL;
             *size = 0;
             return 1;
@@ -383,7 +383,7 @@ int parse_dot_string(const char *input, int **array, int *size, int *DC, const c
     }
 
     if (*stringStart != '"') { /* if the closing quotation mark is missing. */
-        error_handler("ERROR_MISSING_OPENING_QUOTATION_MARK", file_name, line_counter);
+        error_handler(ERROR_MISSING_OPENING_QUOTATION_MARK, file_name, line_counter);
         *array = NULL;
         *size = 0;
         return 1;
@@ -397,7 +397,7 @@ int parse_dot_string(const char *input, int **array, int *size, int *DC, const c
 
     while(*ptr != '\n'  && *ptr != '\r') {
         if(*ptr != ' ' && *ptr != '\t') { /* if a character is found outside of quotation marks. */
-            error_handler("ERROR_INVALID_CHARATER_FOUND_OUTSIDE_OF_QUOTATION_MARKS", file_name, line_counter);
+            error_handler(ERROR_INVALID_CHARATER_FOUND_OUTSIDE_OF_QUOTATION_MARKS, file_name, line_counter);
             break;
         }
         ptr++;
@@ -405,7 +405,7 @@ int parse_dot_string(const char *input, int **array, int *size, int *DC, const c
 
     *array = (int *) malloc((count + 1) * sizeof(int));
     if (*array == NULL) { /* if memory allocation fails. */
-        printf("\nERROR_FAILED_TO_ALLOCATE_MEM");
+        printf("%s\n", ERROR_FAILED_TO_ALLOCATE_MEM);
         *size = 0;
         exit(1);
     }
@@ -451,27 +451,27 @@ int parse_instruction(char *input_ptr, const int command, char **source, char **
 
     if (command == 14 || command == 15) {
         if(*input_ptr != '\n' && *input_ptr != '\r') { /* redundent characters after stop or rts command */
-            error_handler("ERROR_REDUNDENT_CHARACTERS_AFTER_COMMAND", file_name, line_counter);
+            error_handler(ERROR_REDUNDENT_CHARACTERS_AFTER_COMMAND, file_name, line_counter);
             return 1;
         }
         return 0;
     }
     if(*input_ptr == '\n' || *input_ptr == '\r') { /* lacks the first operand */
-        error_handler("ERROR_MISSING_FIRST_OPERAND", file_name, line_counter);
+        error_handler(ERROR_MISSING_FIRST_OPERAND, file_name, line_counter);
         return 1;
     }
     if (strncmp(input_ptr, ",", 1) == 0) { /* lacks the first operand */
-        error_handler("ERROR_REDUNDENT_COMMA_AFTER_COMMAND", file_name, line_counter);
+        error_handler(ERROR_REDUNDENT_COMMA_AFTER_COMMAND, file_name, line_counter);
         return 1;
     }
     if(!isalpha(*input_ptr) && !isdigit(*input_ptr) && *input_ptr != '#' && *input_ptr != '*') { /* invalid first operand */
-        error_handler("ERROR_INVALID_FIRST_OPERAND", file_name, line_counter);
+        error_handler(ERROR_INVALID_FIRST_OPERAND, file_name, line_counter);
         return 1;
     }
     first_operand_length = operand_length_counter(input_ptr);
     first_operand_name = (char *) malloc(first_operand_length + 1);
     if (first_operand_name == NULL) {
-        printf("\nERROR_FAILED_TO_ALLOCATE_MEM");
+        printf("%s\n", ERROR_FAILED_TO_ALLOCATE_MEM);
         exit(1);
     }
     strncpy(first_operand_name, input_ptr, first_operand_length);
@@ -483,22 +483,22 @@ int parse_instruction(char *input_ptr, const int command, char **source, char **
             input_ptr = skip_to_next_word(input_ptr, LENGTH_OF_COMMA);
         }
         else { /* missing a comma between the two operands */
-            error_handler("ERROR_MISSING_A_COMMA", file_name, line_counter);
+            error_handler(ERROR_MISSING_A_COMMA, file_name, line_counter);
             free(first_operand_name);
             return 1;
         }
         if (strncmp(input_ptr, ",", 1) == 0) { /* too many commas */
-            error_handler("ERROR_TOO_MANY_COMMAS", file_name, line_counter);
+            error_handler(ERROR_TOO_MANY_COMMAS, file_name, line_counter);
             free(first_operand_name);
             return 1;
         }
         if(*input_ptr == '\n' || *input_ptr == '\r') { /* lacks the second operand */
-            error_handler("ERROR_MISSING_SECOND_OPERAND", file_name, line_counter);
+            error_handler(ERROR_MISSING_SECOND_OPERAND, file_name, line_counter);
             free(first_operand_name);
             return 1;
         }
         if(isalpha(*input_ptr) == 0 && !isdigit(*input_ptr) && *input_ptr != '#' && *input_ptr != '*') { /* invalid second operand */
-            error_handler("ERROR_INVALID_SECOND_OPERAND", file_name, line_counter);
+            error_handler(ERROR_INVALID_SECOND_OPERAND, file_name, line_counter);
             free(first_operand_name);
             return 1;
         }
@@ -506,7 +506,7 @@ int parse_instruction(char *input_ptr, const int command, char **source, char **
         second_operand_length = operand_length_counter(input_ptr);
         second_operand_name = (char *) malloc(second_operand_length + 1);
         if (second_operand_name == NULL) {
-            printf("\nERROR_FAILED_TO_ALLOCATE_MEM");
+            printf("%s\n", ERROR_FAILED_TO_ALLOCATE_MEM);
             free(first_operand_name);
             exit(1);
         }
@@ -515,13 +515,13 @@ int parse_instruction(char *input_ptr, const int command, char **source, char **
 
         input_ptr = skip_to_next_word(input_ptr, second_operand_length);
         if(input_ptr && *input_ptr != '\n' && *input_ptr != '\r') { /* redundent chraters after seond operand*/
-            error_handler("ERROR_REDUNDENT_CHARACTERS_AFTER_SECOND_OPERAND", file_name, line_counter);
+            error_handler(ERROR_REDUNDENT_CHARACTERS_AFTER_SECOND_OPERAND, file_name, line_counter);
         }
     }
     if(command > 4 && command < 14) {
         input_ptr = skip_to_next_word(input_ptr, first_operand_length);
         if(input_ptr && *input_ptr != '\n' && *input_ptr != '\r' && *input_ptr != '\0') { /* redundent charaters after first operand*/
-            error_handler("ERROR_REDUNDENT_CHARACTERS_AFTER_FIRST_OPERAND", file_name, line_counter);
+            error_handler(ERROR_REDUNDENT_CHARACTERS_AFTER_FIRST_OPERAND, file_name, line_counter);
             free(first_operand_name);
             free(second_operand_name);
             return 1;
@@ -530,7 +530,7 @@ int parse_instruction(char *input_ptr, const int command, char **source, char **
 
     *source = (char *) malloc(first_operand_length + 1);
     if (*source == NULL) {
-        printf("\nERROR_FAILED_TO_ALLOCATE_MEM");
+        printf("%s\n", ERROR_FAILED_TO_ALLOCATE_MEM);
         free(first_operand_name);
         if (second_operand_name)
             free(second_operand_name);
@@ -543,7 +543,7 @@ int parse_instruction(char *input_ptr, const int command, char **source, char **
     if (command < 5) {
         *dest = (char *) malloc(second_operand_length + 1);
         if (*dest == NULL) {
-            printf("\nERROR_FAILED_TO_ALLOCATE_MEM");
+            printf("%s\n", ERROR_FAILED_TO_ALLOCATE_MEM);
             free(*source);
             free(second_operand_name);
             exit(1);
@@ -590,7 +590,7 @@ int parse_instruction_stage_2(char *input_ptr, const int command, char **source,
     first_operand_length = operand_length_counter(input_ptr);
     first_operand_name = (char *) malloc(first_operand_length + 1);
     if (first_operand_name == NULL) {
-        printf("\nERROR_FAILED_TO_ALLOCATE_MEM");
+        printf("%s\n", ERROR_FAILED_TO_ALLOCATE_MEM);
         exit(1);
     }
     strncpy(first_operand_name, input_ptr, first_operand_length);
@@ -608,7 +608,7 @@ int parse_instruction_stage_2(char *input_ptr, const int command, char **source,
         second_operand_length = operand_length_counter(input_ptr);
         second_operand_name = (char *) malloc(second_operand_length + 1);
         if (second_operand_name == NULL) {
-            printf("\nERROR_FAILED_TO_ALLOCATE_MEM");
+            printf("%s\n", ERROR_FAILED_TO_ALLOCATE_MEM);
             free(first_operand_name);
             exit(1);
         }
@@ -617,7 +617,7 @@ int parse_instruction_stage_2(char *input_ptr, const int command, char **source,
     }
     *source = (char *) malloc(first_operand_length + 1);
     if (*source == NULL) {
-        printf("\nERROR_FAILED_TO_ALLOCATE_MEM");
+        printf("%s\n", ERROR_FAILED_TO_ALLOCATE_MEM);
         free(first_operand_name);
         if (second_operand_name)
             free(second_operand_name);
@@ -631,7 +631,7 @@ int parse_instruction_stage_2(char *input_ptr, const int command, char **source,
     if (command < 5) {
         *dest = (char *) malloc(second_operand_length + 1);
         if (*dest == NULL) {
-            printf("\nERROR_FAILED_TO_ALLOCATE_MEM");
+            printf("%s\n", ERROR_FAILED_TO_ALLOCATE_MEM);
             free(*source);
             free(second_operand_name);
             exit(1);
@@ -655,7 +655,7 @@ label_array *label_array_allocator(const int size) {
     label_array *array = malloc(sizeof(label_array));
     array->label_element = (label *) malloc(size * sizeof(label));
     if (array->label_element == NULL) {
-        printf("\nERROR_FAILED_TO_ALLOCATE_MEM");
+        printf("%s\n", ERROR_FAILED_TO_ALLOCATE_MEM);
         exit(1);
     }
     array->rep = 0;
@@ -684,7 +684,7 @@ void add_label_to_array(label_array *array, const char *name, const int address,
             length_of_array = (length_of_array) * 2;
         new_label = realloc(array->label_element, length_of_array * sizeof(label));
         if (new_label == NULL) {
-            printf("\nERROR_FAILED_TO_ALLOCATE_MEM");
+            printf("%s\n", ERROR_FAILED_TO_ALLOCATE_MEM);
             exit(1);
         }
         array->label_element = new_label;
@@ -692,7 +692,7 @@ void add_label_to_array(label_array *array, const char *name, const int address,
     }
     array->label_element[number_of_reps].name = malloc(strlen(name) + 1);
     if (array->label_element[number_of_reps].name == NULL) {
-        printf("\nERROR_FAILED_TO_ALLOCATE_MEM");
+        printf("%s\n", ERROR_FAILED_TO_ALLOCATE_MEM);
         exit(1);
     }
     strcpy(array->label_element[number_of_reps].name, name);
@@ -751,7 +751,7 @@ char *command_to_binary(const int command, const operand first_operand, const op
     char *str;
     str = (char *) malloc(15 * sizeof(char) + 1);
     if (str == NULL) {
-        printf("\nERROR_FAILED_TO_ALLOCATE_MEM");
+        printf("%s\n", ERROR_FAILED_TO_ALLOCATE_MEM);
         exit(1);
     }
     str[0] = '\0';
@@ -901,7 +901,7 @@ char* label_operand_to_binary(const operand operand, const label_array *label_ta
     int i, operand_address = -2; // instead of -2 make #define for it
     char *part_operand_address_in_binary, *full_operand_address_in_binary = malloc(SIZE_OF_NUMBER_IN_BITS + LEANGTH_OF_ARE + 1);
     if(full_operand_address_in_binary == NULL) {
-        printf("\nERROR_FAILED_TO_ALLOCATE_MEM");
+        printf("%s\n", ERROR_FAILED_TO_ALLOCATE_MEM);
         exit(1);
     }
     memset(full_operand_address_in_binary, '\0', SIZE_OF_NUMBER_IN_BITS + LEANGTH_OF_ARE + 1);
@@ -941,13 +941,13 @@ char* immediate_operand_to_binary(const operand operand) {
     char *operand_name, *binary_representation;
     char *operand_number_in_binary = malloc(SIZE_OF_NUMBER_IN_BITS + LEANGTH_OF_ARE + 1);
     if(operand_number_in_binary == NULL) {
-        printf("\nERROR_FAILED_TO_ALLOCATE_MEM");
+        printf("%s\n", ERROR_FAILED_TO_ALLOCATE_MEM);
         exit(1);
     }
     memset(operand_number_in_binary, '\0', SIZE_OF_NUMBER_IN_BITS + LEANGTH_OF_ARE + 1);
     operand_name = malloc(strlen(operand.name) + 1);
     if(operand_name == NULL) {
-        printf("\nERROR_FAILED_TO_ALLOCATE_MEM");
+        printf("%s\n", ERROR_FAILED_TO_ALLOCATE_MEM);
         exit(1);
     }
     strcpy(operand_name, operand.name);
@@ -975,7 +975,7 @@ char* immediate_operand_to_binary(const operand operand) {
 char* register_operand_to_binary(const operand first_operand, const operand second_operand) {
     char *first_operand_binary, *second_operand_binary, *operand_number_in_binary = malloc(SIZE_OF_NUMBER_IN_BITS + LEANGTH_OF_ARE + 1);
     if (operand_number_in_binary == NULL) {
-        printf("\nERROR_FAILED_TO_ALLOCATE_MEM");
+        printf("%s\n", ERROR_FAILED_TO_ALLOCATE_MEM);
         exit(1);
     }
     memset(operand_number_in_binary, '\0', SIZE_OF_NUMBER_IN_BITS + LEANGTH_OF_ARE + 1);
@@ -1022,7 +1022,7 @@ char* register_operand_to_binary(const operand first_operand, const operand seco
 char* register_name_to_binary(const char* register_name) {
     char* register_number_in_binary = malloc(SIZE_OF_NUMBER_IN_BITS + LEANGTH_OF_ARE + 1);
     if(register_number_in_binary == NULL) {
-        printf("\nERROR_FAILED_TO_ALLOCATE_MEM");
+        printf("%s\n", ERROR_FAILED_TO_ALLOCATE_MEM);
         exit(1);
     }
     memset(register_number_in_binary, '\0', SIZE_OF_NUMBER_IN_BITS + LEANGTH_OF_ARE + 1);
@@ -1068,7 +1068,7 @@ char* register_name_to_binary(const char* register_name) {
  * @param line_counter The line number in the file where the error occurred.
  */
 void error_handler(const char *error_message, const char *file_name, const int line_counter) {
-    printf("Error: %s in file %s at line %d\n", error_message, file_name, line_counter);
+    printf("%s in file %s at line %d\n", error_message, file_name, line_counter);
 }
 
 /**
@@ -1084,7 +1084,7 @@ char* decimal_to_binary(const int integer) {
     unsigned int mask;
     char* binary_string = malloc(number_in_bits + 1);
     if(binary_string == NULL) {
-        printf("\nERROR_FAILED_TO_ALLOCATE_MEM");
+        printf("%s\n", ERROR_FAILED_TO_ALLOCATE_MEM);
         exit(1);
     }
     binary_string[number_in_bits] = '\0';
@@ -1115,7 +1115,7 @@ char* binary_to_octal(const char *binary_str) {
     }
     octal_str = malloc(6); // make #define for 6
     if (octal_str == NULL) {
-        printf("\nERROR_FAILED_TO_ALLOCATE_MEM");
+        printf("%s\n", ERROR_FAILED_TO_ALLOCATE_MEM);
         exit(1);
     }
     octal_str[5] = '\0';

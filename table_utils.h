@@ -5,6 +5,16 @@
 
 #define EXTERN_ADDRESS -1
 
+typedef struct macro_name {
+    char* name;
+    struct macro_name *next;
+} macro_name;
+
+typedef struct {
+    macro_name *first;
+    macro_name *last;
+} macro_name_image;
+
 typedef struct data_node {
     char* original_line; // need to remove, only for debugging
     int* char_in_ASCII;
@@ -35,13 +45,16 @@ typedef struct {
     code_node *last;
 } code_image;
 
-/*declarations*/
+/*Declarations*/
 code_image *code_image_allocator();
 code_node *new_code_node(const char *line, int L, const char* word_in_binary);
 void code_node_add(code_image *code_image, code_node *new_node);
 data_image *data_image_allocator();
 data_node *new_data_node(const char *line, int array_size, const int *data);
 void data_node_add(data_image *data_image, data_node *new_node);
+macro_name_image *macro_name_image_allocator();
+macro_name *new_macro_name(const char* name);
+void macro_name_add(macro_name_image *macro_name_image, macro_name *new_node);
 void convert_ascii_to_binary(data_node *data_node);
 void ob_file_usher(const char* file_name, const data_image *data_image, const code_image *code_image, int IC, int DC);
 void ext_file_usher(const char *file_name, const code_image *code_image);
@@ -52,5 +65,6 @@ void free_operand(const operand *operand);
 void free_code_node(code_node *node);
 void free_code_image(code_image *code_image);
 void free_code_node_temp(code_node *node);
+void free_macro_name_image(macro_name_image *macro_name_image);
 
 #endif /* TABLE_UTILS_H */
