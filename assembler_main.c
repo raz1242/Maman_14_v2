@@ -10,15 +10,14 @@ int main(const int argc, char *argv[]) {
     int index, error_flag = 0;
     macro_name_image *my_macro_name_image;
     data_image *my_data_image;
-    code_image *my_code_image;
+    instruction_image *my_instruction_image;
     label_array* label_table;
-
+    printf("%o", 192    );
     /* Check that at least one file name was passed to the program */
     if (argc == 1) {
         printf("%s\n", ERROR_NO_FILE_PROVIDED);
         exit(1);
     }
-    printf("%s\n", ERROR_FILE_NAME_IS_TOO_LONG);    /* Process each file if the file name does not exceed the maximum length */
     for (index = 1; index < argc; index++) {
         if (strlen(argv[index]) > 80) {
             printf("%s\n", ERROR_FILE_NAME_IS_TOO_LONG);
@@ -33,22 +32,22 @@ int main(const int argc, char *argv[]) {
 
         label_table = label_array_allocator(MIN_LENGTH_OF_LABEL_BODY);
         my_data_image = data_image_allocator();
-        my_code_image = code_image_allocator();
+        my_instruction_image = instruction_image_allocator();
 
-        if(stage_1_process_file(argv[index], label_table, my_code_image, my_data_image, my_macro_name_image, &error_flag))
+        if(stage_1_process_file(argv[index], label_table, my_instruction_image, my_data_image, my_macro_name_image, &error_flag))
             printf("stage 1 failed\n"); // for testing
         else
             printf("stage 1 success\n"); // for testing
 
         free_macro_name_image(my_macro_name_image);
 
-        if(stage_2_process_file(argv[index], label_table, my_code_image, my_data_image, &error_flag))
+        if(stage_2_process_file(argv[index], label_table, my_instruction_image, my_data_image, &error_flag))
             printf("stage 2 failed\n"); // for testing
         else
             printf("stage 2 success\n"); // for testing
 
         free_label_array(label_table);
-        free_code_image(my_code_image);
+        free_instruction_image(my_instruction_image);
         free_data_image(my_data_image);
     }
     return 0;

@@ -24,7 +24,7 @@ typedef struct macro_array_structure{
     int length;
 } macro_array;
 
-enum precode_structure{
+enum pre_instruction_structure{//maybe think of a better name
     HEADER,
     BODY,
     END,

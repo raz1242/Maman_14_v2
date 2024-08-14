@@ -1,12 +1,8 @@
 #include "assembler_stage_2.h"
 
 
-/**
- * Prints all labels with their characteristics.
- *
- * @param label_table A pointer to the label array containing the labels and their characteristics.
- */
-void printLabels(const label_array *label_table) {
+
+void printLabels(const label_array *label_table) { // for testing
     int i;
     printf("\n");
     for (i = 0; i < label_table->rep; i++) {
@@ -19,25 +15,22 @@ void printLabels(const label_array *label_table) {
     }
 }
 
-int stage_2_process_file(const char *file_name, const label_array *label_table, const code_image *code_image,
+int stage_2_process_file(const char *file_name, const label_array *label_table, const instruction_image *instruction_image,
                          const data_image *data_image, int *error_flag) {
     int i, IC = 0, DC = 0, location, first_word_in_line_length, command_in_line, label_match_found, line_counter = 0, extern_flag = 0
             , entry_flag = 0;
-    char line[MAX_LENGTH_OF_LINE], label_header[MAX_LENGTH_OF_LABEL_HEADER + 1];
-    char *am_version = NULL, *ptr = NULL, *non_space_ptr = NULL, *first_operand_in_binary = NULL, *second_operand_in_binary = NULL;
-    FILE *am_extension_file = NULL;
-
-    code_node *code_node = code_image->first;
-    data_node *data_node = data_image->first;
-    am_version = file_name_extender(file_name, ".am");
-    am_extension_file = fopen(am_version, "r");
-    // fix naming of the files in all stages for consistency, also in at the function at the end
+    char line[MAX_LENGTH_OF_LINE], label_header[MAX_LENGTH_OF_LABEL_HEADER + LENGTH_OF_NULL_TERMINATOR];
+    char *ptr = NULL, *non_space_ptr = NULL, *first_operand_in_binary = NULL, *second_operand_in_binary = NULL;
+    char *am_version = file_name_extender(file_name, ".am");
+    FILE *am_extension_file = fopen(am_version, "r");
     if (am_extension_file == NULL) {
         printf("Error opening file\n");
         free(am_version);
         am_version = NULL;
         return 1;
     }
+    instruction_node *instruction_node = instruction_image->first;
+    data_node *data_node = data_image->first;
 
     while (fgets(line, MAX_LENGTH_OF_LINE, am_extension_file)) {
         line_counter++;
@@ -84,41 +77,40 @@ int stage_2_process_file(const char *file_name, const label_array *label_table, 
                 }
             }
         }
-        if (location == CODE) {
+        if (location == INSTRCTION) {
             command_in_line = which_command(ptr);
-            parse_instruction_stage_2(ptr, command_in_line, &code_node->first_operand.name, &code_node->second_operand.name,
-                                      am_version, line_counter);
-            reset_opernads_type(&code_node->first_operand, &code_node->second_operand);
-            if (code_node->first_operand.name && strcmp(code_node->first_operand.name, "") != 0)
-                if(analyze_operand_stage_2(&code_node->first_operand, *label_table)) {
+            parse_instruction_stage_2(ptr, command_in_line, &instruction_node->first_operand.name, &instruction_node->second_operand.name);
+            reset_opernads_type(&instruction_node->first_operand, &instruction_node->second_operand);
+            if (instruction_node->first_operand.name && strcmp(instruction_node->first_operand.name, "") != 0)
+                if(analyze_operand_stage_2(&instruction_node->first_operand, *label_table)) {
                     error_handler(ERROR_INVALID_FIRST_OPERAND, am_version, line_counter);
                     *error_flag = 1;
                 }
-            if (code_node->second_operand.name && strcmp(code_node->second_operand.name, "") != 0)
-                if(analyze_operand_stage_2(&code_node->second_operand, *label_table)){
+            if (instruction_node->second_operand.name && strcmp(instruction_node->second_operand.name, "") != 0)
+                if(analyze_operand_stage_2(&instruction_node->second_operand, *label_table)){
                     error_handler(ERROR_INVALID_SECOND_OPERAND, am_version, line_counter);
                     *error_flag = 1;
                 }
-            validate_operands(command_in_line, code_node->first_operand, code_node->second_operand, am_version, line_counter);
-            convert_operands_to_binary(code_node->first_operand, code_node->second_operand, &first_operand_in_binary, &second_operand_in_binary, label_table);
-            if (code_node->length >= 2) {
-                if(code_node->first_operand.type != UNKNOWN && first_operand_in_binary) {
-                    strcpy(code_node->first_operand.word_in_binary, first_operand_in_binary);
+            validate_operands(command_in_line, instruction_node->first_operand, instruction_node->second_operand, am_version, line_counter);
+            convert_operands_to_binary(instruction_node->first_operand, instruction_node->second_operand, &first_operand_in_binary, &second_operand_in_binary, label_table);
+            if (instruction_node->length >= 2) {
+                if(instruction_node->first_operand.type != UNKNOWN && first_operand_in_binary) {
+                    strcpy(instruction_node->first_operand.word_in_binary, first_operand_in_binary);
                     free(first_operand_in_binary);
                 }
             }
 
-            if (code_node->length == 3) {
-                if(code_node->second_operand.type != UNKNOWN && second_operand_in_binary) {
-                    strcpy(code_node->second_operand.word_in_binary, second_operand_in_binary);
+            if (instruction_node->length == 3) {
+                if(instruction_node->second_operand.type != UNKNOWN && second_operand_in_binary) {
+                    strcpy(instruction_node->second_operand.word_in_binary, second_operand_in_binary);
                     free(second_operand_in_binary);
                 }
             }
 
-            code_node->decimal_address_in_machine = IC + STARTING_POINT_OF_MEMORY;
-            IC += code_node->length;
-            if (code_node != code_image->last && code_node->next_node != NULL)
-                code_node = code_node->next_node;
+            instruction_node->decimal_address_in_machine = IC + STARTING_POINT_OF_MEMORY;
+            IC += instruction_node->length;
+            if (instruction_node != instruction_image->last && instruction_node->next_node != NULL)
+                instruction_node = instruction_node->next_node;
         }
     }
     while(data_node != NULL) {
@@ -136,8 +128,8 @@ int stage_2_process_file(const char *file_name, const label_array *label_table, 
     if (entry_flag)
         ent_file_usher(file_name, label_table);
     if (extern_flag)
-        ext_file_usher(file_name, code_image);
-    ob_file_usher(file_name, data_image, code_image, IC, DC);
+        ext_file_usher(file_name, instruction_image);
+    ob_file_usher(file_name, data_image, instruction_image, IC, DC);
     return 0;
 }
 
@@ -204,4 +196,137 @@ int validate_operands(const int command, const operand first_operand, const oper
         }
     }
     return is_error;
+}
+
+/**
+ * Parses the input string to extract the source and destination operands based on the given command.
+ * like parse_instruction but without error handling
+ *
+ * @param input_ptr A pointer to the input string containing the command and operands.
+ * @param command The command value indicating the type of command to be parsed.
+ * @param source A pointer to a string where the source operand will be stored.
+ * @param dest A pointer to a string where the destination operand will be stored.
+ * @return Returns 0 on success, otherwise returns 1 if memory allocation fails.
+ */
+int parse_instruction_stage_2(char *input_ptr, const int command, char **source, char **dest) {//maybe change in the end to strcmp instead of strn
+    int command_length, first_operand_length , second_operand_length = 0;
+    char *first_operand_name = NULL, *second_operand_name = NULL;
+    *source = NULL;
+    *dest = NULL;
+
+    if (command < 15 /* stop */)
+        command_length = 3;
+    else
+        command_length = 4;
+
+    input_ptr = skip_to_next_word(input_ptr, command_length);
+    if (command == 14 /* rts */ || command == 15 /* stop */) {
+        return 0;
+    }
+    if(input_ptr == NULL) {
+        return 1;
+    }
+    first_operand_length = operand_length_counter(input_ptr);
+    first_operand_name = (char *) malloc(first_operand_length + LENGTH_OF_NULL_TERMINATOR);
+    if (first_operand_name == NULL) {
+        printf("%s\n", ERROR_FAILED_TO_ALLOCATE_MEM);
+        exit(1);
+    }
+    strncpy(first_operand_name, input_ptr, first_operand_length);
+    first_operand_name[first_operand_length] = '\0';
+    fflush(stdout);
+    if (command < 5 /*mov, cmp, add, sub, lea*/) {
+        input_ptr = skip_to_next_word(input_ptr, first_operand_length);
+        if(input_ptr != NULL)
+            if (strncmp(input_ptr, ",", 1) == 0)
+                input_ptr = skip_whitespace(++input_ptr);
+        if(input_ptr == NULL) {
+            free(first_operand_name);
+            return 1;
+        }
+        second_operand_length = operand_length_counter(input_ptr);
+        second_operand_name = (char *) malloc(second_operand_length + LENGTH_OF_NULL_TERMINATOR);
+        if (second_operand_name == NULL) {
+            printf("%s\n", ERROR_FAILED_TO_ALLOCATE_MEM);
+            free(first_operand_name);
+            exit(1);
+        }
+        strncpy(second_operand_name, input_ptr, second_operand_length);
+        second_operand_name[second_operand_length] = '\0';
+    }
+    *source = (char *) malloc(first_operand_length + LENGTH_OF_NULL_TERMINATOR);
+    if (*source == NULL) {
+        printf("%s\n", ERROR_FAILED_TO_ALLOCATE_MEM);
+        free(first_operand_name);
+        first_operand_name = NULL;
+        if (second_operand_name) {
+            free(second_operand_name);
+            second_operand_name = NULL;
+        }
+        exit(1);
+    }
+    strncpy(*source, first_operand_name, first_operand_length + 1);
+    free(first_operand_name);
+    first_operand_name = NULL;
+
+    if (command < 5 /*mov, cmp, add, sub, lea*/) {
+        *dest = (char *) malloc(second_operand_length + LENGTH_OF_NULL_TERMINATOR);
+        if (*dest == NULL) {
+            printf("%s\n", ERROR_FAILED_TO_ALLOCATE_MEM);
+            free(*source);
+            free(second_operand_name);
+            second_operand_name = NULL;
+            exit(1);
+        }
+        strncpy(*dest, second_operand_name, second_operand_length + LENGTH_OF_NULL_TERMINATOR);
+        free(second_operand_name);
+        second_operand_name = NULL;
+    }
+    return 0;
+}
+
+/**
+ * Analyzes the given operand and determines its type based on its name.
+ *
+ * @param operand A pointer to the operand to be analyzed.
+ * @param label_array The array of labels to check against for label type operands.
+ * @return Returns 0 if the operand type is successfully determined, otherwise returns 1.
+ */
+int analyze_operand_stage_2(operand *operand, const label_array label_array) {
+    int i;
+    const char *operand_name = operand->name;
+
+    operand->type = UNKNOWN;
+    switch (operand_name[0]) {
+        case '#':
+            if(!(operand_name[1] == '\0' || isdigit(operand_name[1]) || operand_name[1] == '-' || operand_name[1] == '+')) {
+                operand->type = UNKNOWN;
+                return 1;
+            }
+        for(i = 2; operand_name[i] != '\0'; i++) {
+            if(!isdigit(operand_name[i])) {
+                operand->type = UNKNOWN;
+                return 1;
+            }
+        }
+        operand->type = IMMEDIATE;
+        return 0;
+        case '*':
+            if(which_register(operand_name) != -1) {
+                operand->type = REGISTER_PTR;
+                return 0;
+            }
+        case 'r':
+            if(which_register(operand_name) != -1) {
+                operand->type = REGISTER;
+                return 0;
+            }
+        default: {
+            if(is_label(&label_array, operand_name)) {
+                operand->type = LABEL_VALUE;
+                return 0;
+            }
+        }
+    }
+    return 1;
 }
