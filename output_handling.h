@@ -4,7 +4,7 @@
 /* Memory Allocation Errors */
 #define ERROR_FAILED_TO_ALLOCATE_MEM "Error: Failed to allocate memory"
 #define ERROR_FAILED_TO_REALLOC_MEM "Error: Failed to reallocate memory"
-#define ERROR_MEMORY_LIMIT_REACHED "Error: The memory limit has been reached"
+#define ERROR_MEMORY_LIMIT_REACHED "Error: The memory limit has been reached, cannot analyze more lines of code or proceed into the second stage"
 
 /* File Handling Errors */
 #define ERROR_FAILED_TO_OPEN_FILE "Error: Failed to open file"

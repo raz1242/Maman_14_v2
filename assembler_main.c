@@ -1,6 +1,3 @@
-#include <stdio.h>
-#include <string.h>
-#include <stdlib.h>
 #include "assembler_stage_0.h"
 #include "assembler_stage_1.h"
 #include "assembler_stage_2.h"
@@ -19,6 +16,7 @@ int main(const int argc, char *argv[]) {
         exit(1);
     }
     for (index = 1; index < argc; index++) {
+        error_flag = 0;
         if (strlen(argv[index]) > MAX_LENGTH_OF_FILE_NAME) {
             printf("%s\n", ERROR_FILE_NAME_IS_TOO_LONG);
             return 1;
@@ -27,6 +25,7 @@ int main(const int argc, char *argv[]) {
 
         if (stage_0_process_file(argv[index], my_macro_name_image)) {
             printf("pre stage failed\n"); // for testing
+            free_macro_name_image(my_macro_name_image);
             return 1;
         }
         printf("pre stage success\n"); // for testing

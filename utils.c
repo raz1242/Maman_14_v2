@@ -39,12 +39,12 @@ char *file_name_extender(const char *str, const char *type) {
  * Inspects the given file pointer to check if the file is readable.
  *
  * @param file A pointer to the file to be inspected.
- * @param fileName The name of the file being inspected.
+ * @param file_name The name of the file being inspected.
  * @return Returns 0 if the file is readable, otherwise returns 1.
  */
-int file_inspector(const FILE *file, const char *fileName) {
+int file_inspector(const FILE *file, const char *file_name) {
     if (file == NULL) {
-        printf("Failed to read file: %s\n", fileName);
+        printf("Failed to read file: %s\n", file_name);
         return 1;
     }
     return 0;

@@ -17,8 +17,8 @@ int stage_0_process_file(const char *file_name, macro_name_image *my_macro_name_
     char *as_version = file_name_extender(file_name, ".as"), *am_version = NULL;
     FILE *as_extension_file = fopen(as_version, "r"), *am_extension_file = NULL;
 
-    if (file_inspector(as_extension_file, am_version)) {
-        fclose(as_extension_file);
+    if (file_inspector(as_extension_file, as_version)) {
+        free(as_version);
         return 1;
     }
     macro_header[0] = '\0',

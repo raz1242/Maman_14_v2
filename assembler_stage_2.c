@@ -7,6 +7,8 @@ int stage_2_process_file(const char *file_name, const label_array *label_table, 
             , entry_flag = 0;
     char line[MAX_LEGAL_LENGTH_OF_LINE], label_header[MAX_LENGTH_OF_LABEL_HEADER + LENGTH_OF_NULL_TERMINATOR];
     char *ptr = NULL, *non_space_ptr = NULL, *first_operand_in_binary = NULL, *second_operand_in_binary = NULL;
+    instruction_node *instruction_node = instruction_image->first;
+    data_node *data_node = data_image->first;
     char *am_version = file_name_extender(file_name, ".am");
     FILE *am_extension_file = fopen(am_version, "r");
     if (am_extension_file == NULL) {
@@ -15,8 +17,7 @@ int stage_2_process_file(const char *file_name, const label_array *label_table, 
         am_version = NULL;
         return 1;
     }
-    instruction_node *instruction_node = instruction_image->first;
-    data_node *data_node = data_image->first;
+
 
     while (fgets(line, MAX_LEGAL_LENGTH_OF_LINE + LENGTH_OF_NULL_TERMINATOR, am_extension_file)) {
         line_counter++;
@@ -80,19 +81,21 @@ int stage_2_process_file(const char *file_name, const label_array *label_table, 
                     *error_flag = 1;
                 }
             validate_operands(command_in_line, instruction_node->first_operand, instruction_node->second_operand, am_version, line_counter);
-            convert_operands_to_binary(instruction_node->first_operand, instruction_node->second_operand, &first_operand_in_binary, &second_operand_in_binary, label_table);
+
             if (instruction_node->length >= 2) {
+                convert_operands_to_binary(instruction_node->first_operand, instruction_node->second_operand, &first_operand_in_binary, &second_operand_in_binary, label_table);
                 if (instruction_node->first_operand.type != UNKNOWN && first_operand_in_binary) {
                     strcpy(instruction_node->first_operand.word_in_binary, first_operand_in_binary);
                     free(first_operand_in_binary);
                 }
             }
-            if (instruction_node->length == 3) {
+            else if (instruction_node->length == 3) {
                 if (instruction_node->second_operand.type != UNKNOWN && second_operand_in_binary) {
                     strcpy(instruction_node->second_operand.word_in_binary, second_operand_in_binary);
                     free(second_operand_in_binary);
                 }
             }
+
             instruction_node->decimal_address_in_machine = IC + STARTING_POINT_OF_MEMORY;
             IC += instruction_node->length;
             if (instruction_node != instruction_image->last && instruction_node->next_node != NULL)

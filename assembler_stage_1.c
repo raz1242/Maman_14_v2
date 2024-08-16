@@ -119,6 +119,7 @@ int stage_1_process_file(const char *file_name, label_array *label_table, instru
             else {
                 if (parse_dot_string(ptr, &parced_array, &array_size, &DC, am_version, line_counter)){
                     *error_flag = 1;
+                    free(parced_array);
                     continue;
                 }
             }

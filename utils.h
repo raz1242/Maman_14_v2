@@ -89,7 +89,7 @@ typedef struct label_array {
 
 /* Declarations */
 char *file_name_extender(const char *str, const char *type);
-int file_inspector(const FILE *file, const char *fileName);
+int file_inspector(const FILE *file, const char *file_name);
 char *skip_whitespace(char *str);
 char *skip_to_next_word(char *str, int length);
 int first_word_length_counter(const char *str);
