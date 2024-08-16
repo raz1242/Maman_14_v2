@@ -22,89 +22,8 @@
   <component name="ChangeListManager">
     <list default="true" id="dd7bdd1b-c627-4398-a71b-30bb2865290f" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/assembler_main.c" beforeDir="false" afterPath="$PROJECT_DIR$/assembler_main.c" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/assembler_stage_0.h" beforeDir="false" afterPath="$PROJECT_DIR$/assembler_stage_0.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/assembler_stage_1.c" beforeDir="false" afterPath="$PROJECT_DIR$/assembler_stage_1.c" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/assembler_stage_1.h" beforeDir="false" afterPath="$PROJECT_DIR$/assembler_stage_1.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/assembler_stage_2.c" beforeDir="false" afterPath="$PROJECT_DIR$/assembler_stage_2.c" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/assembler_stage_2.h" beforeDir="false" afterPath="$PROJECT_DIR$/assembler_stage_2.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/cmake-build-debug/.ninja_deps" beforeDir="false" afterPath="$PROJECT_DIR$/cmake-build-debug/.ninja_deps" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/cmake-build-debug/.ninja_log" beforeDir="false" afterPath="$PROJECT_DIR$/cmake-build-debug/.ninja_log" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/cmake-build-debug/CMakeFiles/Maman_14v2.dir/assembler_main.c.obj" beforeDir="false" afterPath="$PROJECT_DIR$/cmake-build-debug/CMakeFiles/Maman_14v2.dir/assembler_main.c.obj" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/cmake-build-debug/CMakeFiles/Maman_14v2.dir/assembler_stage_0.c.obj" beforeDir="false" afterPath="$PROJECT_DIR$/cmake-build-debug/CMakeFiles/Maman_14v2.dir/assembler_stage_0.c.obj" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/cmake-build-debug/CMakeFiles/Maman_14v2.dir/assembler_stage_1.c.obj" beforeDir="false" afterPath="$PROJECT_DIR$/cmake-build-debug/CMakeFiles/Maman_14v2.dir/assembler_stage_1.c.obj" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/cmake-build-debug/CMakeFiles/Maman_14v2.dir/assembler_stage_2.c.obj" beforeDir="false" afterPath="$PROJECT_DIR$/cmake-build-debug/CMakeFiles/Maman_14v2.dir/assembler_stage_2.c.obj" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/cmake-build-debug/CMakeFiles/Maman_14v2.dir/table_utils.c.obj" beforeDir="false" afterPath="$PROJECT_DIR$/cmake-build-debug/CMakeFiles/Maman_14v2.dir/table_utils.c.obj" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/cmake-build-debug/CMakeFiles/Maman_14v2.dir/utils.c.obj" beforeDir="false" afterPath="$PROJECT_DIR$/cmake-build-debug/CMakeFiles/Maman_14v2.dir/utils.c.obj" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/cmake-build-debug/Maman_14v2.exe" beforeDir="false" afterPath="$PROJECT_DIR$/cmake-build-debug/Maman_14v2.exe" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/cmake-build-debug/Testing/Temporary/LastTest.log" beforeDir="false" afterPath="$PROJECT_DIR$/cmake-build-debug/Testing/Temporary/LastTest.log" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/cmake-build-debug/expected answer test1.txt" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/cmake-build-debug/expected answer test2.txt" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/cmake-build-debug/expected answer test3.txt" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/cmake-build-debug/expected answer test4.txt" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/cmake-build-debug/fib_exam.am" beforeDir="false" afterPath="$PROJECT_DIR$/cmake-build-debug/fib_exam.am" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/cmake-build-debug/fib_exam.as" beforeDir="false" afterPath="$PROJECT_DIR$/cmake-build-debug/fib_exam.as" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/cmake-build-debug/fib_exam.ent" beforeDir="false" afterPath="$PROJECT_DIR$/cmake-build-debug/fib_exam.ent" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/cmake-build-debug/fib_exam.ob" beforeDir="false" afterPath="$PROJECT_DIR$/cmake-build-debug/fib_exam.ob" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/cmake-build-debug/fib_exam2.am" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/cmake-build-debug/fib_exam2.as" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/cmake-build-debug/fib_exam2.ent" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/cmake-build-debug/fib_exam2.ext" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/cmake-build-debug/fib_exam2.ob" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/cmake-build-debug/guidance_only.am" beforeDir="false" afterPath="$PROJECT_DIR$/cmake-build-debug/guidance_only.am" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/cmake-build-debug/guidance_only.as" beforeDir="false" afterPath="$PROJECT_DIR$/cmake-build-debug/guidance_only.as" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/cmake-build-debug/guidance_only.ent" beforeDir="false" afterPath="$PROJECT_DIR$/cmake-build-debug/guidance_only.ent" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/cmake-build-debug/guidance_only.ob" beforeDir="false" afterPath="$PROJECT_DIR$/cmake-build-debug/guidance_only.ob" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/cmake-build-debug/invalid_input_1.am" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/cmake-build-debug/invalid_input_1.ob" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/cmake-build-debug/invalid_input_2.am" beforeDir="false" afterPath="$PROJECT_DIR$/cmake-build-debug/invalid_input_2.am" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/cmake-build-debug/invalid_input_2.as" beforeDir="false" afterPath="$PROJECT_DIR$/cmake-build-debug/invalid_input_2.as" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/cmake-build-debug/invalid_input_5.am" beforeDir="false" afterPath="$PROJECT_DIR$/cmake-build-debug/invalid_input_5.am" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/cmake-build-debug/invalid_input_5.as" beforeDir="false" afterPath="$PROJECT_DIR$/cmake-build-debug/invalid_input_5.as" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/cmake-build-debug/kelet2.am" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/cmake-build-debug/kelet2.as" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/cmake-build-debug/kelet2.ent" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/cmake-build-debug/kelet2.ext" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/cmake-build-debug/kelet2.ob" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/cmake-build-debug/kelet3.am" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/cmake-build-debug/kelet3.as" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/cmake-build-debug/kelet3.ent" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/cmake-build-debug/kelet3.ext" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/cmake-build-debug/kelet3.ob" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/cmake-build-debug/kelet4.am" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/cmake-build-debug/kelet4.as" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/cmake-build-debug/kelet4.ent" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/cmake-build-debug/kelet4.ext" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/cmake-build-debug/kelet4.ob" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/cmake-build-debug/kelet5_errors.am" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/cmake-build-debug/kelet5_errors.as" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/cmake-build-debug/test1.am" beforeDir="false" afterPath="$PROJECT_DIR$/cmake-build-debug/test1.am" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/cmake-build-debug/test1.as" beforeDir="false" afterPath="$PROJECT_DIR$/cmake-build-debug/test1.as" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/cmake-build-debug/test1.ob" beforeDir="false" afterPath="$PROJECT_DIR$/cmake-build-debug/test1.ob" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/cmake-build-debug/test2.am" beforeDir="false" afterPath="$PROJECT_DIR$/cmake-build-debug/test2.am" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/cmake-build-debug/test2.as" beforeDir="false" afterPath="$PROJECT_DIR$/cmake-build-debug/test2.as" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/cmake-build-debug/test3 - perfect.ext" beforeDir="false" afterPath="$PROJECT_DIR$/cmake-build-debug/test3 - perfect.ext" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/cmake-build-debug/test4.am" beforeDir="false" afterPath="$PROJECT_DIR$/cmake-build-debug/test4.am" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/cmake-build-debug/test4.ent" beforeDir="false" afterPath="$PROJECT_DIR$/cmake-build-debug/test4.ent" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/cmake-build-debug/test4.ext" beforeDir="false" afterPath="$PROJECT_DIR$/cmake-build-debug/test4.ext" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/cmake-build-debug/test4.ob" beforeDir="false" afterPath="$PROJECT_DIR$/cmake-build-debug/test4.ob" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/cmake-build-debug/test6.am" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/cmake-build-debug/test6.as" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/cmake-build-debug/test6.ob" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/cmake-build-debug/test7.am" beforeDir="false" afterPath="$PROJECT_DIR$/cmake-build-debug/test7.am" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/cmake-build-debug/test7.as" beforeDir="false" afterPath="$PROJECT_DIR$/cmake-build-debug/test7.as" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/cmake-build-debug/test_grammer.as" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/cmake-build-debug/valid_input_2.am" beforeDir="false" afterPath="$PROJECT_DIR$/cmake-build-debug/valid_input_2.am" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/cmake-build-debug/valid_input_2.as" beforeDir="false" afterPath="$PROJECT_DIR$/cmake-build-debug/valid_input_2.as" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/cmake-build-debug/valid_input_2.ent" beforeDir="false" afterPath="$PROJECT_DIR$/cmake-build-debug/valid_input_2.ent" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/cmake-build-debug/valid_input_2.ob" beforeDir="false" afterPath="$PROJECT_DIR$/cmake-build-debug/valid_input_2.ob" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/cmake-build-debug/valid_input_3.ent" beforeDir="false" afterPath="$PROJECT_DIR$/cmake-build-debug/valid_input_3.ent" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/cmake-build-debug/valid_input_3.ob" beforeDir="false" afterPath="$PROJECT_DIR$/cmake-build-debug/valid_input_3.ob" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/output_handling.h" beforeDir="false" afterPath="$PROJECT_DIR$/output_handling.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/table_utils.c" beforeDir="false" afterPath="$PROJECT_DIR$/table_utils.c" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/table_utils.h" beforeDir="false" afterPath="$PROJECT_DIR$/table_utils.h" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/utils.c" beforeDir="false" afterPath="$PROJECT_DIR$/utils.c" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/utils.h" beforeDir="false" afterPath="$PROJECT_DIR$/utils.h" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -131,6 +50,80 @@
   }
 }</component>
   <component name="HighlightingSettingsPerFile">
+    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
+    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
+    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
+    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
+    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
+    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
+    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
+    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
+    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
+    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
+    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
+    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
+    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
+    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
+    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
+    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
+    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
+    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
+    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
+    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
+    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
+    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
+    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
+    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
+    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
+    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
+    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
+    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
+    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
+    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
+    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
+    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
+    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
+    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
+    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
+    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
+    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
+    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
+    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
+    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
+    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
+    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
+    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
+    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
+    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
+    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
+    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
+    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
+    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
+    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
+    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
+    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
+    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
+    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
+    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
+    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
+    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
+    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
+    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
+    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
+    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
+    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
+    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
+    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
+    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
+    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
+    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
+    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
+    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
+    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
+    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
+    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
+    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
+    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
     <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
     <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
     <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
@@ -923,7 +916,7 @@
       <workItem from="1723068478506" duration="59800000" />
       <workItem from="1723461041150" duration="17720000" />
       <workItem from="1723564229754" duration="43133000" />
-      <workItem from="1723733859725" duration="20142000" />
+      <workItem from="1723733859725" duration="21944000" />
     </task>
     <servers />
   </component>
@@ -971,8 +964,8 @@
         </line-breakpoint>
         <line-breakpoint enabled="true" type="com.jetbrains.cidr.execution.debugger.OCBreakpointType">
           <url>file://$PROJECT_DIR$/utils.c</url>
-          <line>277</line>
-          <option name="timeStamp" value="692" />
+          <line>261</line>
+          <option name="timeStamp" value="693" />
         </line-breakpoint>
       </breakpoints>
     </breakpoint-manager>

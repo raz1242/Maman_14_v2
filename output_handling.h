@@ -49,7 +49,7 @@
 #define ERROR_MISSING_CLOSING_QUOTATION_MARK "Error: Missing closing quotation mark"
 #define ERROR_NO_STRING_FOUND "Error: No string found"
 #define ERROR_MISSING_OPENING_QUOTATION_MARK "Error: Missing opening quotation mark"
-#define ERROR_INVALID_CHARATER_FOUND_OUTSIDE_OF_QUOTATION_MARKS "Error: Invalid character found outside of quotation marks"
+#define ERROR_INVALID_CHARACTER_FOUND_OUTSIDE_OF_QUOTATION_MARKS "Error: Invalid character found outside of quotation marks"
 
 /* Command Errors */
 #define ERROR_UNKNOWN_COMMAND "Error: Command is unknown"

@@ -297,22 +297,22 @@ int parse_dot_string(const char *input, int **array, int *size, int *DC, const c
         *size = 0;
         return 1;
     }
-    ptr = (char *) (stringStart + 1);
+    ptr = (char *)(stringStart + 1);
     while (*ptr && *ptr != '"') {
         count++;
         ptr++;
     }
     ptr++; /* skips the closing quotation mark */
 
-    while(*ptr != '\n'  && *ptr != '\r') {
+    while(*ptr != '\n' && *ptr != '\r') {
         if(*ptr != ' ' && *ptr != '\t') { /* if a character is found outside of quotation marks. */
-            error_handler(ERROR_INVALID_CHARATER_FOUND_OUTSIDE_OF_QUOTATION_MARKS, file_name, line_counter);
+            error_handler(ERROR_INVALID_CHARACTER_FOUND_OUTSIDE_OF_QUOTATION_MARKS, file_name, line_counter);
             break;
         }
         ptr++;
     }
 
-    *array = (int *) malloc((count + LENGTH_OF_NULL_TERMINATOR) * sizeof(int));
+    *array = (int *)malloc((count + LENGTH_OF_NULL_TERMINATOR) * sizeof(int));
     if (*array == NULL) { /* if memory allocation fails. */
         printf("%s\n", ERROR_FAILED_TO_ALLOCATE_MEM);
         *size = 0;
@@ -321,7 +321,7 @@ int parse_dot_string(const char *input, int **array, int *size, int *DC, const c
 
     ptr = (char *) (stringStart + 1);
     for (index = 0; index < count; index++) {
-        (*array)[index] = (int) *ptr;
+        (*array)[index] = (int)*ptr;
         (*DC)++;
         ptr++;
     }
