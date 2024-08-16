@@ -6,8 +6,6 @@
 #define MAX_LENGTH_OF_MACRO_HEADER 50
 #define MIN_LENGTH_OF_MACRO_BODY 1
 #define MAX_LENGTH_OF_MACRO_BODY 80
-#define MAX_LENGTH_OF_LINE_2 800
-#define MAX_LENGTH_OF_LINE_LENGTH 81
 #define AS_FILE_EXTENTION as
 #define AM_FILE_EXTENTION am
 
@@ -37,7 +35,7 @@ int macro_location(const char *str, int flag, int length);
 int macro_array_add(macro_array *array, const char* name, const char* body);
 void macro_array_free(const macro_array *array);
 void add_line_to_macro_body(char **macro_body, const char *line, int *current_length, int *allocated_size);
-void append_to_buffer(char **buffer, const char *content);
+void add_to_macro_buffer(char **buffer, const char *content);
 int is_duplicate_macro_name (const macro_array *array, const char *name);
 
 #endif /* ASSEMBLER_STAGE_0_H */

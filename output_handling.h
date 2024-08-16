@@ -21,7 +21,7 @@
 #define ERROR_LABEL_NOT_FOUND "Error: Label was not found"
 #define ERROR_LABEL_IS_ENTRY "Error: Label is of type entry"
 #define ERROR_LABEL_IS_EXTERN "Error: Label is of type extern"
-#define ERROR_DUPLICATE_LABEL_NAME "Error: Duplicate label name"
+#define ERROR_DUPLICATE_LABEL_NAME "Error: The label name has already been defined"
 #define ERROR_LABEL_CANNOT_BE_DEFINED_IN_EXTERN_COMMAND "Error: Label cannot be defined in '.extern' command"
 #define ERROR_LABEL_CANNOT_BE_DEFINED_IN_ENTRY_COMMAND "Error: Label cannot be defined in '.entry' command"
 #define ERROR_LABEL_NAME_IS_A_RESERVED_WORD "Error: Label name is a reserved word"
@@ -45,10 +45,9 @@
 #define ERROR_NUMBER_IS_OUT_OF_MACHINE_RANGE "Error: Number is out of machine's range"
 
 /* String Handling Errors */
-#define ERROR_STRING_MUST_START_WITH_QUOTATION_MARK "Error: String must start with quotation mark"
+#define ERROR_MISSING_OPENING_QUOTATION_MARK "Error: Missing opening quotation mark"
 #define ERROR_MISSING_CLOSING_QUOTATION_MARK "Error: Missing closing quotation mark"
 #define ERROR_NO_STRING_FOUND "Error: No string found"
-#define ERROR_MISSING_OPENING_QUOTATION_MARK "Error: Missing opening quotation mark"
 #define ERROR_INVALID_CHARACTER_FOUND_OUTSIDE_OF_QUOTATION_MARKS "Error: Invalid character found outside of quotation marks"
 
 /* Command Errors */
@@ -61,7 +60,7 @@
 #define ERROR_LABEL_CANNOT_BE_EMPTY_OF_COMMAND "Error: Label cannot be empty of command"
 
 /* Syntax Errors */
-#define ERROR_LINE_TOO_LONG "Error: The line is too long"
+#define ERROR_LINE_TOO_LONG "Error: Line exceeds the maximum allowed length"
 #define ERROR_COMMENT_NOT_AT_THE_BEGINNING_OF_THE_LINE "Error: Comment sign is not at the beginning of the line"
 #define ERROR_REDUNDANT_CHARACTERS_AFTER_LABEL "Error: Redundant characters after label"
 #define ERROR_REDUNDENT_COMMA_AFTER_COMMAND "Error: Redundant comma after command"

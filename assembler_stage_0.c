@@ -9,10 +9,10 @@
  * @return 1 if the file was processed successfully, 0 otherwise
  */
 int stage_0_process_file(const char *file_name, macro_name_image *my_macro_name_image) {
-    int i, is_inside_macro = 0, first_word_of_line_length, macro_body_length = 0, macro_body_allocated_size = MIN_LENGTH_OF_MACRO_BODY, ptr_location, is_error = 0, match_found = 0, line_counter = 0;
+    int i, is_inside_macro = 0, first_word_of_line_length, macro_body_length = 0, macro_body_allocated_size = MIN_LENGTH_OF_MACRO_BODY, ptr_location, error_flag = 0, match_found = 0, line_counter = 0;
     macro_array macro_array;
     macro_name *macro_name;
-    char macro_header[MAX_LENGTH_OF_MACRO_HEADER], line[MAX_LENGTH_OF_LINE_2];
+    char macro_header[MAX_LENGTH_OF_MACRO_HEADER], line[MAX_ILLEGAL_LENGTH_OF_LINE];
     char *non_space_line, *ptr_line, *macro_body, *output_buffer = NULL;
     char *as_version = file_name_extender(file_name, ".as"), *am_version = NULL;
     FILE *as_extension_file = fopen(as_version, "r"), *am_extension_file = NULL;
@@ -29,17 +29,17 @@ int stage_0_process_file(const char *file_name, macro_name_image *my_macro_name_
     }
     macro_array_allocator(&macro_array, MIN_LENGTH_OF_MACRO_BODY);
 
-    while (fgets(line, MAX_LENGTH_OF_LINE_2, as_extension_file)) {
+    while (fgets(line, MAX_ILLEGAL_LENGTH_OF_LINE, as_extension_file)) {
         line_counter++;
-        if(strlen(line) >= MAX_LENGTH_OF_LINE_LENGTH){ /*check if the line is longer than the max of 80 characters*/
+        if (is_line_length_overlimit(line)){ /*check if the line is longer than the max of 80 characters*/
             error_handler(ERROR_LINE_TOO_LONG, as_version, line_counter);
-            is_error = 1;
+            error_flag = 1;
             continue;
         }
-        if(strncmp(line, ";", 1)==0 || strncmp(line, "\n", 1) == 0)
+        if (strncmp(line, ";", 1)==0 || strncmp(line, "\n", 1) == 0)
             continue;
         non_space_line = skip_whitespace(line);
-        if(non_space_line == NULL || *non_space_line == '\n' || *non_space_line == '\r')
+        if (non_space_line == NULL || *non_space_line == '\n' || *non_space_line == '\r')
             continue;
         ptr_line = non_space_line;
         first_word_of_line_length = first_word_length_counter(non_space_line);
@@ -54,16 +54,16 @@ int stage_0_process_file(const char *file_name, macro_name_image *my_macro_name_
             non_space_line = skip_to_next_word(non_space_line, first_word_of_line_length);
             if (*non_space_line != '\n' && *non_space_line != '\r') { /*check if there're redundant characters after the macro name set up*/
                 error_handler(ERROR_REDUNDANT_CHARACTERS_AFTER_MACRO_NAME, as_version, line_counter);
-                is_error = 1;
+                error_flag = 1;
             }
             macro_header[first_word_of_line_length] = '\0';
             if (is_reserved_word(macro_header, first_word_of_line_length)) { /*check if the macro name is a reserved word*/
                 error_handler(ERROR_MACRO_NAME_IS_RESERVED_WORD, as_version, line_counter);
-                is_error = 1;
+                error_flag = 1;
             }
-            if(is_duplicate_macro_name(&macro_array, macro_header)){ /*check if the macro name already exists*/
+            if (is_duplicate_macro_name(&macro_array, macro_header)){ /*check if the macro name already exists*/
                 error_handler(ERROR_DUPLICATE_MACRO_NAME, as_version, line_counter);
-                is_error = 1;
+                error_flag = 1;
             }
         } else if (ptr_location == BODY) {
             add_line_to_macro_body(&macro_body, non_space_line, &macro_body_length, &macro_body_allocated_size);
@@ -71,7 +71,7 @@ int stage_0_process_file(const char *file_name, macro_name_image *my_macro_name_
             non_space_line = skip_to_next_word(ptr_line, first_word_of_line_length);
             if (*non_space_line != '\n' && *non_space_line != '\r') { /*check if there're redundant characters after the end of the macro*/
                 error_handler(ERROR_REDUNDANT_CHARACTERS_AFTER_ENDMACRO, as_version, line_counter);
-                is_error = 1;
+                error_flag = 1;
             }
             macro_array_add(&macro_array, macro_header, macro_body);
             macro_body_length = 0;
@@ -79,19 +79,19 @@ int stage_0_process_file(const char *file_name, macro_name_image *my_macro_name_
             memset(macro_body, 0, macro_body_length);
             is_inside_macro = 0;
         } else /* REGULAR */{
-            if (is_error)
+            if (error_flag)
                 continue;
             for (i = 0; i < macro_array.rep; i++) {
                 if (strncmp(non_space_line, macro_array.macro_element[i].name, first_word_of_line_length) == 0) {
-                    if (is_end_of_line(non_space_line + first_word_of_line_length + 1)) {
+                    if (is_end_of_line(non_space_line + first_word_of_line_length + LENGTH_OF_NULL_TERMINATOR)) {
                         match_found = 1;
-                        append_to_buffer(&output_buffer, macro_array.macro_element[i].body);
+                        add_to_macro_buffer(&output_buffer, macro_array.macro_element[i].body);
                         break;
                     }
                 }
             }
             if (!match_found)
-                append_to_buffer(&output_buffer, line);
+                add_to_macro_buffer(&output_buffer, line);
             match_found = 0;
         }
     }
@@ -104,7 +104,7 @@ int stage_0_process_file(const char *file_name, macro_name_image *my_macro_name_
         macro_name_add(my_macro_name_image, macro_name);
     }
 
-    if (!is_error) {
+    if (!error_flag) {
         am_version = file_name_extender(file_name, ".am");
         am_extension_file = fopen(am_version, "w");
         if (am_extension_file == NULL) {
@@ -119,7 +119,7 @@ int stage_0_process_file(const char *file_name, macro_name_image *my_macro_name_
     }
     free(output_buffer);
     macro_array_free(&macro_array);
-    return is_error;
+    return error_flag;
 }
 
 /**
@@ -150,8 +150,9 @@ void macro_array_allocator(macro_array *array, const int size) {
  * @return An integer representing the location type of the line.
  */
 int macro_location(const char *str, const int flag, const int length) {
-    if (str && str[4]) {
-        if (str[4] == ' ' && strncmp(str, "macr", 4) == 0)
+    const int COMMAND_LENGTH = strlen("macr");
+    if (str && str[COMMAND_LENGTH]) {
+        if (str[COMMAND_LENGTH] == ' ' && strncmp(str, "macr", COMMAND_LENGTH) == 0)
             return HEADER;
     }
     if (flag && strncmp(str, "endmacr", length) != 0)
@@ -209,9 +210,9 @@ int macro_array_add(macro_array *array, const char *name, const char *body) {
 void macro_array_free(const macro_array *array) {
     int i;
     for (i = 0; i < array->rep; i++) {
-        if(array->macro_element[i].name)
+        if (array->macro_element[i].name)
             free(array->macro_element[i].name);
-        if(array->macro_element[i].body)
+        if (array->macro_element[i].body)
             free(array->macro_element[i].body);
     }
     free(array->macro_element);
@@ -229,7 +230,7 @@ void add_line_to_macro_body(char **macro_body, const char *line, int *current_le
     const int line_length = strlen(line);
     char *new_body;
 
-    if (*current_length + line_length + 1 > *allocated_size) {
+    if (*current_length + line_length + LENGTH_OF_NULL_TERMINATOR > *allocated_size) {
         *allocated_size += line_length;
         new_body = realloc(*macro_body, *allocated_size);
         if (new_body == NULL) {
@@ -250,19 +251,19 @@ void add_line_to_macro_body(char **macro_body, const char *line, int *current_le
  * @param buffer Pointer to the output buffer.
  * @param content Content to append to the buffer.
  */
-void append_to_buffer(char **buffer, const char *content) {
+void add_to_macro_buffer(char **buffer, const char *content) {
     int new_size;
     if (*buffer == NULL) {
-        new_size = strlen(content) + 1;
-        *buffer = malloc(new_size);
+        new_size = strlen(content);
+        *buffer = malloc(new_size + LENGTH_OF_NULL_TERMINATOR);
         if (*buffer == NULL) {
             printf("%s\n", ERROR_FAILED_TO_ALLOCATE_MEM);
             exit(1);
         }
         strcpy(*buffer, content);
     } else {
-        new_size = strlen(*buffer) + strlen(content) + 1;
-        *buffer = realloc(*buffer, new_size);
+        new_size = strlen(*buffer) + strlen(content);
+        *buffer = realloc(*buffer, new_size + LENGTH_OF_NULL_TERMINATOR);
         if (*buffer == NULL) {
             printf("%s\n", ERROR_FAILED_TO_REALLOC_MEM);
             exit(1);
@@ -284,7 +285,7 @@ void append_to_buffer(char **buffer, const char *content) {
 int is_duplicate_macro_name (const macro_array *array, const char *name){
     int i;
     for(i = 0; i < array->rep; i++){
-        if(strcmp(array->macro_element[i].name, name) == 0)
+        if (strcmp(array->macro_element[i].name, name) == 0)
             return 1;
     }
     return 0;

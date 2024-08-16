@@ -11,7 +11,11 @@
 #define LENGTH_OF_NULL_TERMINATOR 1
 #define LENGTH_OF_COMMA 1
 #define LENGTH_OF_COLON 1
-#define MAX_LENGTH_OF_LINE 80
+#define STOP_COMMAND_LENGTH 4
+#define OTHER_COMMAND_LENGTH 3
+#define MAX_LEGAL_LENGTH_OF_LINE 80
+#define MAX_LENGTH_OF_FILE_NAME 80
+#define MAX_ILLEGAL_LENGTH_OF_LINE 800
 #define MAX_LENGTH_OF_LABEL_HEADER 31
 #define MIN_LENGTH_OF_LABEL_BODY 1
 #define MAX_LENGTH_OF_LABEL_VALUE 50
@@ -21,8 +25,10 @@
 #define AMOUNT_OF_COMMANDS 16
 #define AMOUNT_OF_REGISTERS 8
 #define STARTING_POINT_OF_MEMORY 100
-#define MAX_POSSIBLE_NUMBER 2047
-#define MIN_POSSIBLE_NUMBER -2048
+#define MAX_POSSIBLE_NUMBER_IN_12_BITS 2047
+#define MIN_POSSIBLE_NUMBER_IN_12_BITS -2048
+#define MAX_POSSIBLE_NUMBER_IN_15_BITS 16383
+#define MIN_POSSIBLE_NUMBER_IN_15_BITS -16384
 #define MAX_SIZE_OF_MEMORY 4096
 
 typedef enum commands_names {
@@ -53,20 +59,20 @@ typedef enum addressing_method {
     UNKNOWN
 } addressing_method;
 
-typedef struct oprator_structure {
+typedef struct operand {
     char *name;
     char *word_in_binary;
     addressing_method type;
 } operand;
 
 typedef enum line_characteristic {
-    LABEL_DEFINITION, /*0*/
-    DATA, /*1*/
-    STRING, /*2*/
-    ENTRY, /*3*/
-    EXTERN, /*4*/
-    INSTRUCTION, /*5*/
-    IRRLEVANT /*6*/
+    LABEL_DEFINITION,
+    DATA,
+    STRING,
+    ENTRY,
+    EXTERN,
+    INSTRUCTION,
+    IRRLEVANT
 } line_characteristic;
 
 typedef struct label {
@@ -110,5 +116,5 @@ int is_command(const char* command);
 int which_command(const char* command);
 int analyze_command(char *ptr, int command, int *L, char *word_in_binary, const char *file_name, int line_counter);
 int analyze_operand(operand *operand);
-
+int is_line_length_overlimit(const char *line);
 #endif /* UTILS_H */
