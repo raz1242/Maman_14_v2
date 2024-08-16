@@ -2,6 +2,5 @@ funcCall       0136
 loopLabel      0160
 funcOneLocal   0184
 funcTwoLocal   0202
-funcTwo        0214
-funcThree      0271
+funcThreeLocal 0223
 finalStop      0312

@@ -1,11 +1,7 @@
 #ifndef ASSEMBLER_STAGE_2_H
 #define ASSEMBLER_STAGE_2_H
 
-
 #include "table_utils.h"
-#include "assembler_stage_1.h"
-
-#define LENGTH_OF_ARE 3
 
 /* Declarations */
 int stage_2_process_file(const char *file_name, const label_array *label_table, const instruction_image *instruction_image, const data_image *data_image, int *error_flag);

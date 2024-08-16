@@ -8,12 +8,14 @@ const char *reserved_words[] = {
     ".data", ".string", ".entry", ".extern", "macr", "endmacr", "r0", "r1", "r2", "r3", "r4", "r5", "r6", "r7"
 };
 
-char *commands_list[16] = {
+char *commands_list[AMOUNT_OF_COMMANDS] = {
     "mov"/*0*/, "cmp"/*1*/, "add"/*2*/, "sub"/*3*/, "lea"/*4*/, "clr"/*5*/, "not"/*6*/, "inc"/*7*/,
     "dec"/*8*/, "jmp"/*9*/, "bne"/*10*/, "red"/*11*/, "prn"/*12*/, "jsr"/*13*/, "rts"/*14*/, "stop"/*15*/
 };
 
-char *register_list[8] = {"r0", "r1", "r2", "r3", "r4", "r5", "r6", "r7"};
+char *register_list[AMOUNT_OF_REGISTERS] = {"r0", "r1", "r2", "r3", "r4", "r5", "r6", "r7"};
+
+
 
 /**
  * Creates a new file name by appending a specified file type extension to the given file name.
@@ -181,8 +183,6 @@ int parse_dot_data(const char *input, int **array, int *size, int *DC, const cha
         return 1;
     }
 
-
-
     ptr = (char *)dataStart;
     while (*ptr) {
         if (*ptr != '-' && *ptr != '+' && !isdigit(*ptr) && *ptr != ',' && *ptr != '\n' && *ptr != '\r' && !isspace(*ptr)) {
@@ -292,7 +292,7 @@ int parse_dot_string(const char *input, int **array, int *size, int *DC, const c
     }
 
     if (*stringStart != '"') { /* if the closing quotation mark is missing. */
-        error_handler(ERROR_MISSING_OPENING_QUOTATION_MARK, file_name, line_counter);
+        error_handler(ERROR_MISSING_CLOSING_QUOTATION_MARK, file_name, line_counter);
         *array = NULL;
         *size = 0;
         return 1;
@@ -302,7 +302,7 @@ int parse_dot_string(const char *input, int **array, int *size, int *DC, const c
         count++;
         ptr++;
     }
-    ptr++; /* skip the closing quotation mark */
+    ptr++; /* skips the closing quotation mark */
 
     while(*ptr != '\n'  && *ptr != '\r') {
         if(*ptr != ' ' && *ptr != '\t') { /* if a character is found outside of quotation marks. */
@@ -312,7 +312,7 @@ int parse_dot_string(const char *input, int **array, int *size, int *DC, const c
         ptr++;
     }
 
-    *array = (int *) malloc((count + 1) * sizeof(int));
+    *array = (int *) malloc((count + LENGTH_OF_NULL_TERMINATOR) * sizeof(int));
     if (*array == NULL) { /* if memory allocation fails. */
         printf("%s\n", ERROR_FAILED_TO_ALLOCATE_MEM);
         *size = 0;
@@ -348,17 +348,17 @@ int parse_instruction(char *input_ptr, const int command, char **source, char **
     int command_length, first_operand_length, second_operand_length = 0;
     char *first_operand_name = NULL, *second_operand_name = NULL;
 
-    if (command < 15)
-        command_length = 3;
-    else
+    if (command == stop)
         command_length = 4;
+    else
+        command_length = 3;
 
     *source = NULL;
     *dest = NULL;
 
     input_ptr = skip_to_next_word(input_ptr, command_length);
 
-    if (command == 14 || command == 15) {
+    if (command == rts || command == stop) {
         if(*input_ptr != '\n' && *input_ptr != '\r') { /* redundent characters after stop or rts command */
             error_handler(ERROR_REDUNDENT_CHARACTERS_AFTER_COMMAND, file_name, line_counter);
             return 1;
@@ -386,7 +386,7 @@ int parse_instruction(char *input_ptr, const int command, char **source, char **
     strncpy(first_operand_name, input_ptr, first_operand_length);
     first_operand_name[first_operand_length] = '\0';
 
-    if (command < 5 /*mov, cmp, add, sub, lea*/) {
+    if (command == mov || command == cmp || command == add || command == sub || command == lea) {
         input_ptr = skip_to_next_word(input_ptr, first_operand_length);
         if (strncmp(input_ptr, ",", 1) == 0) {
             input_ptr = skip_to_next_word(input_ptr, LENGTH_OF_COMMA);
@@ -427,7 +427,7 @@ int parse_instruction(char *input_ptr, const int command, char **source, char **
             error_handler(ERROR_REDUNDENT_CHARACTERS_AFTER_SECOND_OPERAND, file_name, line_counter);
         }
     }
-    if(command > 4 && command < 14) {
+    if(command == clr || command == not || command == inc || command == dec || command == jmp || command == bne || command == red || command == prn || command == jsr) {
         input_ptr = skip_to_next_word(input_ptr, first_operand_length);
         if(input_ptr && *input_ptr != '\n' && *input_ptr != '\r' && *input_ptr != '\0') { /* redundent charaters after first operand*/
             error_handler(ERROR_REDUNDENT_CHARACTERS_AFTER_FIRST_OPERAND, file_name, line_counter);
@@ -449,7 +449,7 @@ int parse_instruction(char *input_ptr, const int command, char **source, char **
     free(first_operand_name);
     first_operand_name = NULL;
 
-    if (command < 5 /*mov, cmp, add, sub, lea*/ ) {
+    if (command == mov || command == cmp || command == add || command == sub || command == lea) {
         *dest = (char *) malloc(second_operand_length + LENGTH_OF_NULL_TERMINATOR);
         if (*dest == NULL) {
             printf("%s\n", ERROR_FAILED_TO_ALLOCATE_MEM);
@@ -741,16 +741,15 @@ void error_handler(const char *error_message, const char *file_name, const int l
  */
 char* decimal_to_binary(const int integer) {
     int i;
-    const int number_in_bits = SIZE_OF_NUMBER_IN_BITS;
     unsigned int mask;
-    char* binary_string = malloc(number_in_bits + LENGTH_OF_NULL_TERMINATOR);
+    char* binary_string = malloc(SIZE_OF_NUMBER_IN_BITS + LENGTH_OF_NULL_TERMINATOR);
     if(binary_string == NULL) {
         printf("%s\n", ERROR_FAILED_TO_ALLOCATE_MEM);
         exit(1);
     }
-    binary_string[number_in_bits] = '\0';
-    mask = 1 << (number_in_bits - 1);
-    for(i = 0; i < number_in_bits; i++) {
+    binary_string[SIZE_OF_NUMBER_IN_BITS] = '\0';
+    mask = 1 << (SIZE_OF_NUMBER_IN_BITS - 1);
+    for(i = 0; i < SIZE_OF_NUMBER_IN_BITS; i++) {
         if(integer & mask)
             binary_string[i] = '1';
         else
@@ -868,7 +867,7 @@ int line_location(char *str) {
         if (strncmp(ptr_to_firstWord, ".extern ", 8) == 0)
             return EXTERN;
         if(is_command(ptr_to_firstWord))
-            return INSTRCTION;
+            return INSTRUCTION;
     }
     return -1;
 }
@@ -908,7 +907,7 @@ int which_command(const char *command) {
             return i;
         }
     }
-    return -1;
+    return unknown_command;
 }
 
 /**
@@ -1053,9 +1052,11 @@ int analyze_operand(operand *operand) {
             operand->type = IMMEDIATE;
         return 0;
         case '*':
-            if(which_register(operand_name) != -1)
+            if(which_register(operand_name) != -1) {
                 operand->type = REGISTER_PTR;
-        return 0;
+                return 0;
+            }
+        return 1;
         case 'r':
             if(which_register(operand_name) != -1) {
                 operand->type = REGISTER;

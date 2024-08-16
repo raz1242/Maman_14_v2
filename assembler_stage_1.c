@@ -53,7 +53,7 @@ void printExternLabels(const label_array *array) { //- testing
 
 int stage_1_process_file(const char *file_name, label_array *label_table, instruction_image *instruction_image, data_image *data_image, const macro_name_image *macro_name_image, int *error_flag) {
 
-    int i, IC = 0, DC = 0, L = 0, location, first_word_in_line_length, label_flag, command_in_line, array_size, line_counter = 0, total_memory_size;
+    int i, IC = 0, DC = 0, L = 0, location, first_word_in_line_length, label_flag, command, array_size, line_counter = 0, total_memory_size;
     int *parced_array = NULL;
     char line[MAX_LENGTH_OF_LINE + LENGTH_OF_NULL_TERMINATOR], label_header[MAX_LENGTH_OF_LABEL_HEADER], word_in_binary[SIZE_OF_REGISTER_IN_BITS + LENGTH_OF_NULL_TERMINATOR];
     char *ptr = NULL, *non_space_ptr = NULL;
@@ -71,6 +71,12 @@ int stage_1_process_file(const char *file_name, label_array *label_table, instru
 
     label_header[0] = '\0';
     while (fgets(line, MAX_LENGTH_OF_LINE, am_extension_file)) {
+        total_memory_size = IC + DC + STARTING_POINT_OF_MEMORY;
+        if (total_memory_size >= MAX_SIZE_OF_MEMORY) {
+            printf("%s\n", ERROR_MEMORY_LIMIT_REACHED);
+            exit(1);
+        }
+
         line_counter++;
         label_flag = 0;
         memset(label_header, '\0', sizeof(label_header));
@@ -150,9 +156,10 @@ int stage_1_process_file(const char *file_name, label_array *label_table, instru
             }
             add_label_to_array(label_table, label_header, EXTERN_ADDRESS, EXTERN);
         } else if (location == ENTRY) {
-            non_space_ptr = skip_to_next_word(ptr, strlen(".entry"));;
+            non_space_ptr = skip_to_next_word(ptr, strlen(".entry"));
             ptr = non_space_ptr;
             first_word_in_line_length = first_word_length_counter(ptr);
+            ptr[first_word_in_line_length] = '\0';
             location = line_location(ptr);
             if (location == LABEL_DEFINITION) {
                 error_handler(ERROR_LABEL_CANNOT_BE_DEFINED_IN_ENTRY_COMMAND, am_version, line_counter);
@@ -160,7 +167,7 @@ int stage_1_process_file(const char *file_name, label_array *label_table, instru
                 continue;
             }
             for (i = 0; i < label_table->rep; i++) {
-                if (!strncmp(label_table->label_element[i].name, ptr, first_word_in_line_length)) {
+                if (!strcmp(label_table->label_element[i].name, ptr)) {
                     if(label_table -> label_element[i].characteristic == EXTERN) {
                         error_handler(ERROR_LABEL_IS_EXTERN, am_version, line_counter);
                         *error_flag = 1;
@@ -175,27 +182,22 @@ int stage_1_process_file(const char *file_name, label_array *label_table, instru
                 *error_flag = 1;
                 continue;
             }
-        } else if (location == INSTRCTION) {
+        } else if (location == INSTRUCTION) {
             if (label_flag == 1)
                 add_label_to_array(label_table, label_header, IC + STARTING_POINT_OF_MEMORY, IRRLEVANT);
-            command_in_line = which_command(ptr);
-            if(command_in_line == -1) {
+            command = which_command(ptr);
+            if(command == unknown_command) {
                 error_handler(ERROR_COMMAND_NOT_FOUND, am_version, line_counter);
                 *error_flag = 1;
             }
             else {
-                if(analyze_command(ptr, command_in_line, &L, word_in_binary, am_version, line_counter))
+                if(analyze_command(ptr, command, &L, word_in_binary, am_version, line_counter))
                     *error_flag = 1;
             }
             instruction_node = new_instruction_node(ptr, L, word_in_binary);
             instruction_node_add(instruction_image, instruction_node);
             IC += L;
             L = 0;
-        }
-        total_memory_size = IC + DC + STARTING_POINT_OF_MEMORY;
-        if(total_memory_size >= MAX_SIZE_OF_MEMORY) {
-            printf("%s\n", ERROR_MEMORY_LIMIT_REACHED);
-            exit(1);
         }
     }
 
@@ -211,7 +213,7 @@ int stage_1_process_file(const char *file_name, label_array *label_table, instru
             label_table->label_element[i].address += (IC + STARTING_POINT_OF_MEMORY);
     }
 
-    /*printLabelTable(label_table); //- testing
+   /*printLabelTable(label_table); //- testing
     printDataImage(data_image); //- testing
     printInstructionImage(instruction_image); //- testing
     printExternLabels(label_table); //- testing*/

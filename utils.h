@@ -8,16 +8,42 @@
 #include "output_handling.h"
 
 #define EXTERN_ADDRESS -1
-#define STARTING_POINT_OF_MEMORY 100
-#define LENGTH_OF_COMMA 1
 #define LENGTH_OF_NULL_TERMINATOR 1
-#define LENGTH_OF_ARE 3
+#define LENGTH_OF_COMMA 1
+#define LENGTH_OF_COLON 1
+#define MAX_LENGTH_OF_LINE 80
+#define MAX_LENGTH_OF_LABEL_HEADER 31
+#define MIN_LENGTH_OF_LABEL_BODY 1
+#define MAX_LENGTH_OF_LABEL_VALUE 50
 #define SIZE_OF_NUMBER_IN_BITS 12
-#define SIZE_OF_WORD_IN_OCTAL 5
 #define SIZE_OF_REGISTER_IN_BITS 15
+#define SIZE_OF_WORD_IN_OCTAL 5
+#define AMOUNT_OF_COMMANDS 16
+#define AMOUNT_OF_REGISTERS 8
+#define STARTING_POINT_OF_MEMORY 100
 #define MAX_POSSIBLE_NUMBER 2047
 #define MIN_POSSIBLE_NUMBER -2048
+#define MAX_SIZE_OF_MEMORY 4096
 
+typedef enum commands_names {
+    mov,
+    cmp,
+    add,
+    sub,
+    lea,
+    clr,
+    not,
+    inc,
+    dec,
+    jmp,
+    bne,
+    red,
+    prn,
+    jsr,
+    rts,
+    stop,
+    unknown_command
+} commands_names;
 
 typedef enum addressing_method {
     IMMEDIATE,
@@ -30,23 +56,23 @@ typedef enum addressing_method {
 typedef struct oprator_structure {
     char *name;
     char *word_in_binary;
-    enum addressing_method type;
+    addressing_method type;
 } operand;
 
-typedef enum code_structure {
+typedef enum line_characteristic {
     LABEL_DEFINITION, /*0*/
     DATA, /*1*/
     STRING, /*2*/
     ENTRY, /*3*/
     EXTERN, /*4*/
-    INSTRCTION, /*5*/
+    INSTRUCTION, /*5*/
     IRRLEVANT /*6*/
-} line_type;
+} line_characteristic;
 
 typedef struct label {
     char *name;
     int address;
-    line_type characteristic;
+    line_characteristic characteristic;
 } label;
 
 typedef struct label_array {

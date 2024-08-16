@@ -1,4 +1,4 @@
-REAllyLONGSymBOLsdlfkjsldfkjalkfjaslkfjlaskfjlaskjf: mov r1,#1
+REAllyLONGSymBOLsdlfkjsldfkjal;kfjas;lkfj;laskfj;laskjf: mov r1,#1
 cmp r1,#-1111111111
 add r1,#-1
 sub r1,#1

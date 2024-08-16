@@ -1,18 +1,38 @@
-MAIN: add r3, LIST
-LOOP: prn #48
-macr m_macr
-cmp r3, #-6
-bne END
-endmacr
-lea STR, r6
-inc r6
-mov *r6,K
-sub r1, r4
-m_macr
-dec K
-jmp LOOP
-END: stop
-STR: .string "abcd"
-LIST: .data 6, -9
-.data -100
-K: .data 31
+f: 
+; check operand kind 
+    cmp #5, r1
+    cmp #5
+    cmp
+    add *r5, f
+    add *r5, #-996
+    add *r5
+    add
+    lea f, *f
+    lea r3, #5
+    lea r3
+    lea
+    not r1
+    not #0
+    not
+    not r1, *r1
+    jmp f
+    jmp *r1
+    jmp r7
+    jmp #-97
+    jmp #-97, #3
+    stop
+    stop #5
+    stop f, *r1
+    red f
+    red #9
+    red #9, r1
+    red
+    prn r4
+    prn
+    prn r6, *r6
+
+    ; check of known identifiers
+    cmp fg, a
+    cmp ad, f
+    cmp f, ad
+

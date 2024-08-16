@@ -1,19 +1,19 @@
 #include "assembler_stage_2.h"
 
 
-
+/*
 void printLabels(const label_array *label_table) { // for testing
     int i;
     printf("\n");
     for (i = 0; i < label_table->rep; i++) {
         if (label_table->label_element[i].characteristic == ENTRY)
             printf("Label: %s, Characteristic: ENTRY\n", label_table->label_element[i].name);
-        if (label_table->label_element[i].characteristic == EXTERN)
+        else if (label_table->label_element[i].characteristic == EXTERN)
             printf("Label: %s, Characteristic: EXTERN\n", label_table->label_element[i].name);
         else
             printf("Label: %s, Characteristic: IRRLEVANT\n", label_table->label_element[i].name);
     }
-}
+}*/
 
 int stage_2_process_file(const char *file_name, const label_array *label_table, const instruction_image *instruction_image,
                          const data_image *data_image, int *error_flag) {
@@ -51,8 +51,9 @@ int stage_2_process_file(const char *file_name, const label_array *label_table, 
             non_space_ptr = skip_to_next_word(ptr, first_word_in_line_length);
             ptr = non_space_ptr;
             first_word_in_line_length = first_word_length_counter(ptr);
+            ptr[first_word_in_line_length] = '\0';
             for (i = 0; i < label_table->rep; i++) {
-                if (!strncmp(label_table->label_element[i].name, ptr, first_word_in_line_length)) {
+                if (!strcmp(label_table->label_element[i].name, ptr)) {
                     label_match_found = 1;
                     label_table->label_element[i].characteristic = ENTRY;
                     break;
@@ -62,14 +63,16 @@ int stage_2_process_file(const char *file_name, const label_array *label_table, 
                 error_handler(ERROR_LABEL_NOT_FOUND, am_version, line_counter);
                 *error_flag = 1;
             }
+
         }
         if (location == EXTERN) {
             extern_flag = 1;
             non_space_ptr = skip_to_next_word(ptr, first_word_in_line_length);
             ptr = non_space_ptr;
             first_word_in_line_length = first_word_length_counter(ptr);
+            ptr[first_word_in_line_length] = '\0';
             for (i = 0; i < label_table->rep; i++) {
-                if (!strncmp(label_table->label_element[i].name, ptr, first_word_in_line_length)) {
+                if (!strcmp(label_table->label_element[i].name, ptr)) {
                     if(label_table -> label_element[i].characteristic == ENTRY) {
                         error_handler(ERROR_LABEL_IS_ENTRY, am_version, line_counter);
                         *error_flag = 1;
@@ -77,7 +80,7 @@ int stage_2_process_file(const char *file_name, const label_array *label_table, 
                 }
             }
         }
-        if (location == INSTRCTION) {
+        if (location == INSTRUCTION) {
             command_in_line = which_command(ptr);
             parse_instruction_stage_2(ptr, command_in_line, &instruction_node->first_operand.name, &instruction_node->second_operand.name);
             reset_opernads_type(&instruction_node->first_operand, &instruction_node->second_operand);
@@ -146,14 +149,13 @@ int stage_2_process_file(const char *file_name, const label_array *label_table, 
 int validate_operands(const int command, const operand first_operand, const operand second_operand, const char *file_name, const int line_counter) {
     int is_error = 0;
 
-    if (command == 1) {}
-    else if (command <= 3) {
+    if (command == mov || command == add || command == sub) {
         if (second_operand.type == IMMEDIATE) {
             error_handler(ERROR_INVALID_OPERAND_TYPE_IN_SECOND_OPERAND, file_name, line_counter);
             is_error = 1;
         }
     }
-    if (command == 4) {
+    if (command == lea) {
         if (first_operand.type != LABEL_VALUE) {
             error_handler(ERROR_INVALID_OPERAND_TYPE_IN_FIRST_OPERAND, file_name, line_counter);
             is_error = 1;
@@ -163,7 +165,7 @@ int validate_operands(const int command, const operand first_operand, const oper
             is_error = 1;
         }
     }
-    if ((command >= 5 && command <= 8) || command == 11) {
+    if (command == clr || command == not || command == inc || command == dec || command == red) {
         if (first_operand.type == IMMEDIATE) {
             error_handler(ERROR_INVALID_OPERAND_TYPE_IN_FIRST_OPERAND, file_name, line_counter);
             is_error = 1;
@@ -173,7 +175,7 @@ int validate_operands(const int command, const operand first_operand, const oper
             is_error = 1;
         }
     }
-    if (command == 9 || command == 10 || command == 13) {
+    if (command == jmp || command == bne || command == jsr) {
         if (first_operand.type == IMMEDIATE || first_operand.type == REGISTER) {
             error_handler(ERROR_INVALID_OPERAND_TYPE_IN_FIRST_OPERAND, file_name, line_counter);
             is_error = 1;
@@ -183,13 +185,13 @@ int validate_operands(const int command, const operand first_operand, const oper
             is_error = 1;
         }
     }
-    if (command == 12) {
+    if (command == prn) {
         if (second_operand.type != UNKNOWN) {
             error_handler(ERROR_REQUIERED_COMMAND_DOES_NOT_SUPPORT_A_SECOND_OPERAND, file_name, line_counter);
             is_error = 1;
         }
     }
-    if (command == 14 || command == 15) {
+    if (command == rts || command == stop) {
         if (first_operand.type != UNKNOWN || second_operand.type != UNKNOWN) {
             error_handler(ERROR_REQUIERED_COMMAND_DOES_NOT_SUPPORT_OPERANDS, file_name, line_counter);
             is_error = 1;
@@ -316,6 +318,7 @@ int analyze_operand_stage_2(operand *operand, const label_array label_array) {
                 operand->type = REGISTER_PTR;
                 return 0;
             }
+        return 1;
         case 'r':
             if(which_register(operand_name) != -1) {
                 operand->type = REGISTER;

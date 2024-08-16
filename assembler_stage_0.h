@@ -1,7 +1,6 @@
 #ifndef ASSEMBLER_STAGE_0_H
 #define ASSEMBLER_STAGE_0_H
 
-#include "utils.h"
 #include "table_utils.h"
 
 #define MAX_LENGTH_OF_MACRO_HEADER 50

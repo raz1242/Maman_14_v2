@@ -40,12 +40,13 @@
 #define ERROR_REDUNDENT_CHARACTERS_AFTER_SECOND_OPERAND "Error: Redundant characters after second operand"
 
 /* Data Handling Errors */
-#define ERROR_MISSING_DATA_VALUE "Error: Missing data value"
+#define ERROR_MISSING_DATA_VALUE "Error: Missing data, No data entered"
 #define ERROR_INVALID_DATA_VALUE "Error: Invalid data value"
-#define ERROR_NUMBER_IS_OUT_OF_MACHINE_RANGE "Error: Number is out of machine range"
+#define ERROR_NUMBER_IS_OUT_OF_MACHINE_RANGE "Error: Number is out of machine's range"
 
 /* String Handling Errors */
 #define ERROR_STRING_MUST_START_WITH_QUOTATION_MARK "Error: String must start with quotation mark"
+#define ERROR_MISSING_CLOSING_QUOTATION_MARK "Error: Missing closing quotation mark"
 #define ERROR_NO_STRING_FOUND "Error: No string found"
 #define ERROR_MISSING_OPENING_QUOTATION_MARK "Error: Missing opening quotation mark"
 #define ERROR_INVALID_CHARATER_FOUND_OUTSIDE_OF_QUOTATION_MARKS "Error: Invalid character found outside of quotation marks"

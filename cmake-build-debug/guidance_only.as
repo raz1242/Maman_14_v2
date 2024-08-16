@@ -8,7 +8,7 @@
 buff2: .string ""
         
 
-buff1: .data 55, 69, -9845
+buff1: .data 55, 69, -2048
         .string "abccd"
 
 

@@ -57,7 +57,7 @@ instruction_node *new_instruction_node(const char *line, const int L, const char
     }
     memset(new_node->second_operand.word_in_binary, '\0', SIZE_OF_REGISTER_IN_BITS + LENGTH_OF_NULL_TERMINATOR);
     strncpy(new_node->word_command_in_binary, word_in_binary,SIZE_OF_REGISTER_IN_BITS + LENGTH_OF_NULL_TERMINATOR);
-    new_node->word_command_in_binary[15] = '\0';
+    new_node->word_command_in_binary[SIZE_OF_REGISTER_IN_BITS] = '\0';
     new_node->original_line = (char *) malloc(strlen(line) + LENGTH_OF_NULL_TERMINATOR); // for testing
     if (new_node->original_line == NULL) {
         printf("%s\n", ERROR_FAILED_TO_ALLOCATE_MEM);
@@ -507,7 +507,7 @@ label_array *label_array_allocator(const int size) {
  * @param label_characteristic The characteristic of the label.
  * @return Returns 0 on success, otherwise returns 1 if memory allocation fails.
  */
-void add_label_to_array(label_array *array, const char *name, const int address, const line_type label_characteristic) {
+void add_label_to_array(label_array *array, const char *name, const int address, const line_characteristic label_characteristic) {
     label *new_label;
     const int number_of_reps = (array->rep);
     int length_of_array = (array->length);

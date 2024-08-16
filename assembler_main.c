@@ -12,7 +12,7 @@ int main(const int argc, char *argv[]) {
     data_image *my_data_image;
     instruction_image *my_instruction_image;
     label_array* label_table;
-    printf("%o", 192    );
+
     /* Check that at least one file name was passed to the program */
     if (argc == 1) {
         printf("%s\n", ERROR_NO_FILE_PROVIDED);
@@ -24,11 +24,12 @@ int main(const int argc, char *argv[]) {
             return 1;
         }
         my_macro_name_image = macro_name_image_allocator();
+
         if(stage_0_process_file(argv[index], my_macro_name_image)) {
             printf("pre stage failed\n"); // for testing
-            return 1 ;
+            return 1;
         }
-            printf("pre stage success\n"); // for testing
+        printf("pre stage success\n"); // for testing
 
         label_table = label_array_allocator(MIN_LENGTH_OF_LABEL_BODY);
         my_data_image = data_image_allocator();

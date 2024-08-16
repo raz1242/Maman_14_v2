@@ -58,7 +58,7 @@ label_array *label_array_allocator(int size);
 
 /* Addition Functions */
 void macro_name_add(macro_name_image *macro_name_image, macro_name *new_node);
-void add_label_to_array(label_array *array, const char *name, int address, line_type label_characteristic);
+void add_label_to_array(label_array *array, const char *name, int address, line_characteristic label_characteristic);
 void instruction_node_add(instruction_image *instruction_image, instruction_node *new_node);
 void data_node_add(data_image *data_image, data_node *new_node);
 
