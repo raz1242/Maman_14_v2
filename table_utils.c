@@ -10,7 +10,7 @@ instruction_image *instruction_image_allocator() {
     instruction_image *new_instruction_image = malloc(sizeof(instruction_image));
     if (new_instruction_image == NULL) {
         printf("%s\n", ERROR_FAILED_TO_ALLOCATE_MEM);
-        exit(1);
+        exit(EXIT_FAILURE);
     }
     new_instruction_image->first = NULL;
     new_instruction_image->last = NULL;
@@ -31,33 +31,33 @@ instruction_node *new_instruction_node(const char *line, const int L, const char
     instruction_node *new_node = malloc(sizeof(instruction_node));
     if (new_node == NULL) {
         printf("%s\n", ERROR_FAILED_TO_ALLOCATE_MEM);
-        exit(1);
+        exit(EXIT_FAILURE);
     }
     new_node->word_command_in_binary = (char*)malloc(SIZE_OF_REGISTER_IN_BITS + LENGTH_OF_NULL_TERMINATOR);
     if (new_node->word_command_in_binary == NULL) {
         printf("%s\n", ERROR_FAILED_TO_ALLOCATE_MEM);
         free(new_node);
-        exit(1);
+        exit(EXIT_FAILURE);
     }
     new_node->first_operand.word_in_binary = (char*)malloc(SIZE_OF_REGISTER_IN_BITS + LENGTH_OF_NULL_TERMINATOR);
     if (new_node->first_operand.word_in_binary == NULL) {
         printf("%s\n", ERROR_FAILED_TO_ALLOCATE_MEM);
         free(new_node->word_command_in_binary);
         free(new_node);
-        exit(1);
+        exit(EXIT_FAILURE);
     }
-    memset(new_node->first_operand.word_in_binary, '\0', SIZE_OF_REGISTER_IN_BITS + LENGTH_OF_NULL_TERMINATOR);
+    memset(new_node->first_operand.word_in_binary, NULL_TERMINATOR, SIZE_OF_REGISTER_IN_BITS + LENGTH_OF_NULL_TERMINATOR);
     new_node->second_operand.word_in_binary = (char*)malloc(SIZE_OF_REGISTER_IN_BITS + LENGTH_OF_NULL_TERMINATOR);
     if (new_node->second_operand.word_in_binary == NULL) {
         printf("%s\n", ERROR_FAILED_TO_ALLOCATE_MEM);
         free(new_node->word_command_in_binary);
         free(new_node->first_operand.word_in_binary);
         free(new_node);
-        exit(1);
+        exit(EXIT_FAILURE);
     }
-    memset(new_node->second_operand.word_in_binary, '\0', SIZE_OF_REGISTER_IN_BITS + LENGTH_OF_NULL_TERMINATOR);
+    memset(new_node->second_operand.word_in_binary, NULL_TERMINATOR, SIZE_OF_REGISTER_IN_BITS + LENGTH_OF_NULL_TERMINATOR);
     strncpy(new_node->word_command_in_binary, word_in_binary,SIZE_OF_REGISTER_IN_BITS + LENGTH_OF_NULL_TERMINATOR);
-    new_node->word_command_in_binary[SIZE_OF_REGISTER_IN_BITS] = '\0';
+    new_node->word_command_in_binary[SIZE_OF_REGISTER_IN_BITS] = NULL_TERMINATOR;
     new_node->original_line = (char *)malloc(strlen(line) + LENGTH_OF_NULL_TERMINATOR); // for testing
     if (new_node->original_line == NULL) {
         printf("%s\n", ERROR_FAILED_TO_ALLOCATE_MEM);
@@ -65,7 +65,7 @@ instruction_node *new_instruction_node(const char *line, const int L, const char
         free(new_node->first_operand.word_in_binary);
         free(new_node->second_operand.word_in_binary);
         free(new_node);
-        exit(1);
+        exit(EXIT_FAILURE);
     }
     strcpy(new_node->original_line, line);
     new_node->length = L;
@@ -100,7 +100,7 @@ data_image *data_image_allocator() {
     data_image *new_data_image = malloc(sizeof(data_image));
     if (new_data_image == NULL) {
         printf("%s\n", ERROR_FAILED_TO_ALLOCATE_MEM);
-        exit(1);
+        exit(EXIT_FAILURE);
     }
     new_data_image->first = NULL;
     new_data_image->last = NULL;
@@ -122,12 +122,12 @@ data_node *new_data_node(const char *line, const int array_size, const int* data
     data_node *new_node = malloc(sizeof(data_node));
     if (new_node == NULL) {
         printf("%s\n", ERROR_FAILED_TO_ALLOCATE_MEM);
-        exit(1);
+        exit(EXIT_FAILURE);
     }
     new_node->char_in_ASCII = (int *)malloc(array_size * sizeof(int));
     if (new_node->char_in_ASCII == NULL) {
         printf("%s\n", ERROR_FAILED_TO_ALLOCATE_MEM);
-        exit(1);
+        exit(EXIT_FAILURE);
     }
     for (i = 0; i < array_size; i++)
         new_node->char_in_ASCII[i] = data[i];
@@ -137,7 +137,7 @@ data_node *new_data_node(const char *line, const int array_size, const int* data
         printf("%s\n", ERROR_FAILED_TO_ALLOCATE_MEM);
         free(new_node->char_in_ASCII);  // for testing
         free(new_node); // for testing purposes
-        exit(1); // for testing
+        exit(EXIT_FAILURE); // for testing
     } // for testing
     strcpy(new_node->original_line, line); // for testing
 
@@ -172,7 +172,7 @@ macro_name_image *macro_name_image_allocator() {
     macro_name_image *new_macro_name_image = malloc(sizeof(macro_name_image));
     if (new_macro_name_image == NULL) {
         printf("%s\n", ERROR_FAILED_TO_ALLOCATE_MEM);
-        exit(1);
+        exit(EXIT_FAILURE);
     }
     new_macro_name_image->first = NULL;
     new_macro_name_image->last = NULL;
@@ -191,13 +191,13 @@ macro_name *new_macro_name(const char* name) {
     macro_name *new_node = malloc(sizeof(macro_name));
     if (new_node == NULL) {
         printf("%s\n", ERROR_FAILED_TO_ALLOCATE_MEM);
-        exit(1);
+        exit(EXIT_FAILURE);
     }
     new_node->name = (char *)malloc(strlen(name) + LENGTH_OF_NULL_TERMINATOR);
     if (new_node->name == NULL) {
         printf("%s\n", ERROR_FAILED_TO_ALLOCATE_MEM);
         free(new_node);
-        exit(1);
+        exit(EXIT_FAILURE);
     }
     strcpy(new_node->name, name);
 
@@ -233,7 +233,7 @@ void convert_ascii_to_binary(data_node *data_node) {
     data_node->word_in_binary = malloc(data_node->length * sizeof(char *));
     if (data_node->word_in_binary == NULL) {
         printf("%s\n", ERROR_FAILED_TO_ALLOCATE_MEM);
-        exit(1);
+        exit(EXIT_FAILURE);
     }
     for (i = 0; i < data_node->length; i++) {
         memset(str, 0, SIZE_OF_REGISTER_IN_BITS + LENGTH_OF_NULL_TERMINATOR);
@@ -247,7 +247,7 @@ void convert_ascii_to_binary(data_node *data_node) {
         data_node->word_in_binary[i] = (char *)malloc(SIZE_OF_REGISTER_IN_BITS + LENGTH_OF_NULL_TERMINATOR);
         if (data_node->word_in_binary[i] == NULL) {
             printf("%s\n", ERROR_FAILED_TO_ALLOCATE_MEM);
-            exit(1);
+            exit(EXIT_FAILURE);
         }
         strcpy(data_node->word_in_binary[i], str);
     }
@@ -320,7 +320,7 @@ void ext_file_usher(const char *file_name, const instruction_image *instruction_
     file_inspector(ext_extension_file, file_EXT);
 
     while (instruction_node != NULL) {
-        if (instruction_node->first_operand.word_in_binary[0] != '\0' &&
+        if (instruction_node->first_operand.word_in_binary[0] != NULL_TERMINATOR &&
             (instruction_node->first_operand.word_in_binary[0] == '0' || instruction_node->first_operand.word_in_binary[0] == '1') &&
             strcmp(instruction_node->first_operand.word_in_binary, TARGET_BINARY) == 0) {
             label_length = strlen(instruction_node->first_operand.name);
@@ -329,7 +329,7 @@ void ext_file_usher(const char *file_name, const instruction_image *instruction_
             }
             fprintf(ext_extension_file, "%-*s %04d\n", max_label_length, instruction_node->first_operand.name, instruction_node->decimal_address_in_machine + 1);
         }
-        if (instruction_node->second_operand.word_in_binary[0] != '\0' &&
+        if (instruction_node->second_operand.word_in_binary[0] != NULL_TERMINATOR &&
             (instruction_node->second_operand.word_in_binary[0] == '0' || instruction_node->second_operand.word_in_binary[0] == '1') &&
             strcmp(instruction_node->second_operand.word_in_binary, TARGET_BINARY) == 0) {
             label_length = strlen(instruction_node->second_operand.name);
@@ -491,7 +491,7 @@ label_array *label_array_allocator(const int size) {
     array->label_element = (label *)malloc(size * sizeof(label));
     if (array->label_element == NULL) {
         printf("%s\n", ERROR_FAILED_TO_ALLOCATE_MEM);
-        exit(1);
+        exit(EXIT_FAILURE);
     }
     array->rep = 0;
     array->length = size;
@@ -520,7 +520,7 @@ void add_label_to_array(label_array *array, const char *name, const int address,
         new_label = realloc(array->label_element, length_of_array * sizeof(label));
         if (new_label == NULL) {
             printf("%s\n", ERROR_FAILED_TO_ALLOCATE_MEM);
-            exit(1);
+            exit(EXIT_FAILURE);
         }
         array->label_element = new_label;
         array->length = length_of_array; /* Update the length in the array structure*/
@@ -528,7 +528,7 @@ void add_label_to_array(label_array *array, const char *name, const int address,
     array->label_element[number_of_reps].name = malloc(strlen(name) + LENGTH_OF_NULL_TERMINATOR);
     if (array->label_element[number_of_reps].name == NULL) {
         printf("%s\n", ERROR_FAILED_TO_ALLOCATE_MEM);
-        exit(1);
+        exit(EXIT_FAILURE);
     }
     strcpy(array->label_element[number_of_reps].name, name);
     array->label_element[number_of_reps].address = address;
@@ -567,16 +567,16 @@ char* label_operand_to_binary(const operand operand, const label_array *label_ta
     char *part_operand_address_in_binary, *full_operand_address_in_binary = malloc(SIZE_OF_REGISTER_IN_BITS + LENGTH_OF_NULL_TERMINATOR);
     if (full_operand_address_in_binary == NULL) {
         printf("%s\n", ERROR_FAILED_TO_ALLOCATE_MEM);
-        exit(1);
+        exit(EXIT_FAILURE);
     }
-    memset(full_operand_address_in_binary, '\0', SIZE_OF_REGISTER_IN_BITS + LENGTH_OF_NULL_TERMINATOR);
+    memset(full_operand_address_in_binary, NULL_TERMINATOR, SIZE_OF_REGISTER_IN_BITS + LENGTH_OF_NULL_TERMINATOR);
     for(i = 0; i < label_table->rep; i++) {
         if (strcmp(operand.name, label_table->label_element[i].name) == 0) {
             operand_address = label_table->label_element[i].address;
             break;
         }
     }
-    if (operand_address == -1) {
+    if (operand_address == EXTERN_ADDRESS) {
         /* speical case for external type label */
         operand_address = 0;
         part_operand_address_in_binary = decimal_to_binary(operand_address);

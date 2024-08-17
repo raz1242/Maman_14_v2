@@ -1,12 +1,24 @@
 #include "assembler_stage_2.h"
 
-
+/**
+ * Processes the given file in the second stage of the assembler.
+ *
+ * This function reads the file, processes each line, and updates the instruction and data images.
+ * It also handles labels, entries, and externs, and generates the necessary output files.
+ *
+ * @param file_name The name of the file to process.
+ * @param label_table A pointer to the array of labels.
+ * @param instruction_image A pointer to the instruction image.
+ * @param data_image A pointer to the data image.
+ * @param error_flag A pointer to an integer that will be set to 1 if an error occurs, otherwise 0.
+ * @return Returns 0 on success, otherwise returns 1 if an error occurs.
+ */
 int stage_2_process_file(const char *file_name, const label_array *label_table, const instruction_image *instruction_image,
                          const data_image *data_image, int *error_flag) {
-    int i, IC = 0, DC = 0, location, first_word_in_line_length, command_in_line, label_match_found, line_counter = 0, extern_flag = 0
+    int i, IC = 0, DC = 0, ptr_location, first_word_in_line_length, command_in_line, label_match_found, line_counter = 0, extern_flag = 0
             , entry_flag = 0;
-    char line[MAX_LEGAL_LENGTH_OF_LINE], label_header[MAX_LENGTH_OF_LABEL_HEADER + LENGTH_OF_NULL_TERMINATOR];
-    char *ptr = NULL, *non_space_ptr = NULL, *first_operand_in_binary = NULL, *second_operand_in_binary = NULL;
+    char line[MAX_LEGAL_LENGTH_OF_LINE];
+    char *ptr_in_line = NULL, *first_operand_in_binary = NULL, *second_operand_in_binary = NULL;
     instruction_node *instruction_node = instruction_image->first;
     data_node *data_node = data_image->first;
     char *am_version = file_name_extender(file_name, ".am");
@@ -22,43 +34,44 @@ int stage_2_process_file(const char *file_name, const label_array *label_table, 
     while (fgets(line, MAX_LEGAL_LENGTH_OF_LINE + LENGTH_OF_NULL_TERMINATOR, am_extension_file)) {
         line_counter++;
         label_match_found = 0;
-        non_space_ptr = skip_whitespace(line);
-        ptr = non_space_ptr;
-        first_word_in_line_length = first_word_length_counter(ptr);
-        location = line_location(ptr);
-        if (location == LABEL_DEFINITION) {
-            strncpy(label_header, ptr, first_word_in_line_length);
-            non_space_ptr = skip_to_next_word(ptr, first_word_in_line_length + LENGTH_OF_COLON);
-            ptr = non_space_ptr;
-            first_word_in_line_length = first_word_length_counter(ptr);
-            location = line_location(ptr);
+        ptr_in_line = skip_whitespace(line);
+        first_word_in_line_length = first_word_length_counter(ptr_in_line);
+        ptr_location = line_location(ptr_in_line);
+        if (ptr_location == LABEL_DEFINITION) {
+            ptr_in_line = skip_to_next_word(ptr_in_line, first_word_in_line_length + LENGTH_OF_COLON); /* skipping the label header */
+            first_word_in_line_length = first_word_length_counter(ptr_in_line);
+            ptr_location = line_location(ptr_in_line); /* checking the location of the first word after the label */
         }
-        if (location == ENTRY) {
-            entry_flag = 1;
-            non_space_ptr = skip_to_next_word(ptr, first_word_in_line_length);
-            ptr = non_space_ptr;
-            first_word_in_line_length = first_word_length_counter(ptr);
-            ptr[first_word_in_line_length] = '\0';
-            for (i = 0; i < label_table->rep; i++) {
-                if (!strcmp(label_table->label_element[i].name, ptr)) {
+        if (ptr_location == ENTRY) {
+            entry_flag = 1; /* notify that there is an entry in the file */
+            ptr_in_line = skip_to_next_word(ptr_in_line, strlen(".entry")); /* skip the ".entry" command */
+            if(ptr_in_line == NULL) {
+                continue;
+            }
+            first_word_in_line_length = first_word_length_counter(ptr_in_line);
+            ptr_in_line[first_word_in_line_length] = NULL_TERMINATOR;
+            for (i = 0; i < label_table->rep; i++) {/* checking if the label is in the label table */
+                if (!strcmp(label_table->label_element[i].name, ptr_in_line)) {
                     label_match_found = 1;
                     label_table->label_element[i].characteristic = ENTRY;
                     break;
                 }
             }
-            if (!label_match_found) {
+            if (!label_match_found) { /* if the label is not in the label table, sends error */
                 error_handler(ERROR_LABEL_NOT_FOUND, am_version, line_counter);
                 *error_flag = 1;
             }
         }
-        if (location == EXTERN) {
-            extern_flag = 1;
-            non_space_ptr = skip_to_next_word(ptr, first_word_in_line_length);
-            ptr = non_space_ptr;
-            first_word_in_line_length = first_word_length_counter(ptr);
-            ptr[first_word_in_line_length] = '\0';
-            for (i = 0; i < label_table->rep; i++) {
-                if (!strcmp(label_table->label_element[i].name, ptr)) {
+        if (ptr_location == EXTERN) {
+            extern_flag = 1; /* notify that there is an extern in the file */
+            ptr_in_line = skip_to_next_word(ptr_in_line, strlen(".extern")); /* skip the ".extern" command */
+            if(ptr_in_line == NULL) {
+                continue;
+            }
+            first_word_in_line_length = first_word_length_counter(ptr_in_line);
+            ptr_in_line[first_word_in_line_length] = NULL_TERMINATOR;
+            for (i = 0; i < label_table->rep; i++) { /* check if the label is already defined as an entry */
+                if (!strcmp(label_table->label_element[i].name, ptr_in_line)) {
                     if (label_table -> label_element[i].characteristic == ENTRY) {
                         error_handler(ERROR_LABEL_IS_ENTRY, am_version, line_counter);
                         *error_flag = 1;
@@ -66,64 +79,64 @@ int stage_2_process_file(const char *file_name, const label_array *label_table, 
                 }
             }
         }
-        if (location == INSTRUCTION) {
-            command_in_line = which_command(ptr);
-            parse_instruction_stage_2(ptr, command_in_line, &instruction_node->first_operand.name, &instruction_node->second_operand.name);
-            reset_opernads_type(&instruction_node->first_operand, &instruction_node->second_operand);
-            if (instruction_node->first_operand.name && strcmp(instruction_node->first_operand.name, "") != 0)
-                if (analyze_operand_stage_2(&instruction_node->first_operand, *label_table)) {
+        if (ptr_location == INSTRUCTION) {
+            command_in_line = which_command(ptr_in_line); /* check which command is in the line */
+            parse_instruction_stage_2(ptr_in_line, command_in_line, &instruction_node->first_operand.name, &instruction_node->second_operand.name);
+            reset_opernads_type(&instruction_node->first_operand, &instruction_node->second_operand); /* reset the operands type */
+            if (instruction_node->first_operand.name && strcmp(instruction_node->first_operand.name, "") != 0) /* if there is a first operand */
+                if (analyze_operand_stage_2(&instruction_node->first_operand, *label_table)) { /* analyze the first operand */
                     error_handler(ERROR_INVALID_FIRST_OPERAND, am_version, line_counter);
                     *error_flag = 1;
                 }
-            if (instruction_node->second_operand.name && strcmp(instruction_node->second_operand.name, "") != 0)
-                if (analyze_operand_stage_2(&instruction_node->second_operand, *label_table)){
+            if (instruction_node->second_operand.name && strcmp(instruction_node->second_operand.name, "") != 0) /* if there is a second operand */
+                if (analyze_operand_stage_2(&instruction_node->second_operand, *label_table)){ /* analyze the second operand */
                     error_handler(ERROR_INVALID_SECOND_OPERAND, am_version, line_counter);
                     *error_flag = 1;
                 }
-            validate_operands(command_in_line, instruction_node->first_operand, instruction_node->second_operand, am_version, line_counter);
-
+            validate_operands(command_in_line, instruction_node->first_operand, instruction_node->second_operand, am_version, line_counter); /* validate the operands types fit command requirements*/
             if (instruction_node->length >= 2) {
-                convert_operands_to_binary(instruction_node->first_operand, instruction_node->second_operand, &first_operand_in_binary, &second_operand_in_binary, label_table);
-                if (instruction_node->first_operand.type != UNKNOWN && first_operand_in_binary) {
-                    strcpy(instruction_node->first_operand.word_in_binary, first_operand_in_binary);
+                convert_operands_to_binary(instruction_node->first_operand, instruction_node->second_operand, &first_operand_in_binary, &second_operand_in_binary, label_table); /* convert the operands to binary */
+
+                if (instruction_node->first_operand.type != UNKNOWN && first_operand_in_binary) { /* if the first operand is not unknown and the binary is not null */
+                    strcpy(instruction_node->first_operand.word_in_binary, first_operand_in_binary); /* copy the binary to the instruction node */
                     free(first_operand_in_binary);
                 }
             }
-            else if (instruction_node->length == 3) {
-                if (instruction_node->second_operand.type != UNKNOWN && second_operand_in_binary) {
-                    strcpy(instruction_node->second_operand.word_in_binary, second_operand_in_binary);
+            if (instruction_node->length == 3) {
+                if (instruction_node->second_operand.type != UNKNOWN && second_operand_in_binary) { /* if the second operand is not unknown and the binary is not null */
+                    strcpy(instruction_node->second_operand.word_in_binary, second_operand_in_binary); /* copy the binary to the instruction node */
                     free(second_operand_in_binary);
                 }
             }
 
-            instruction_node->decimal_address_in_machine = IC + STARTING_POINT_OF_MEMORY;
-            IC += instruction_node->length;
-            if (instruction_node != instruction_image->last && instruction_node->next_node != NULL)
+            instruction_node->decimal_address_in_machine = IC + STARTING_POINT_OF_MEMORY; /* set the decimal address in the machine */
+            IC += instruction_node->length; /* increase the IC */
+            if (instruction_node != instruction_image->last && instruction_node->next_node != NULL) /* if the instruction node is not the last node */
                 instruction_node = instruction_node->next_node;
         }
     }
     while(data_node != NULL) { /* converting all ascii data inside data_image into binary */
         convert_ascii_to_binary(data_node);
-        DC += data_node->length;
+        DC += data_node->length; /* increase the DC */
         data_node = data_node->next_node;
     }
 
     fclose(am_extension_file);
     free(am_version);
     am_version = NULL;
-    if (*error_flag)
+    if (*error_flag) /* if there is an error in the file, stops here */
         return 1;
 
-    if (entry_flag)
+    if (entry_flag) /* if there is an entry in the file */
         ent_file_usher(file_name, label_table);
-    if (extern_flag)
+    if (extern_flag) /* if there is an extern in the file */
         ext_file_usher(file_name, instruction_image);
     ob_file_usher(file_name, data_image, instruction_image, IC, DC);
     return 0;
 }
 
 /**
- * Validates the operands for a given command.
+ * Validates the operands types for the given command.
  *
  * @param command The command index in the commands_list.
  * @param first_operand The first operand to validate.
@@ -203,33 +216,34 @@ int parse_instruction_stage_2(char *input_ptr, const int command, char **source,
     *dest = NULL;
 
     if (command == stop)
-        command_length = STOP_COMMAND_LENGTH;
+        command_length = STOP_COMMAND_LENGTH; /* stop command has a different length */
     else
-        command_length = OTHER_COMMAND_LENGTH;
+        command_length = OTHER_COMMAND_LENGTH; /*all other commands have the same length */
 
-    input_ptr = skip_to_next_word(input_ptr, command_length);
-    if (command == rts || command == stop) {
+    input_ptr = skip_to_next_word(input_ptr, command_length); /* skip the command */
+    if (command == rts || command == stop) {/* if the command is rts or stop, there are no operands */
         return 0;
     }
-    if (input_ptr == NULL) {
+    if (input_ptr == NULL) { /* if there are no operands */
         return 1;
     }
     first_operand_length = operand_length_counter(input_ptr);
     first_operand_name = (char *)malloc(first_operand_length + LENGTH_OF_NULL_TERMINATOR);
     if (first_operand_name == NULL) {
         printf("%s\n", ERROR_FAILED_TO_ALLOCATE_MEM);
-        exit(1);
+        exit(EXIT_FAILURE);
     }
     strncpy(first_operand_name, input_ptr, first_operand_length);
-    first_operand_name[first_operand_length] = '\0';
-    fflush(stdout);
+    first_operand_name[first_operand_length] = NULL_TERMINATOR;
     if (command == mov || command == cmp || command == add || command == sub || command == lea) {
         input_ptr = skip_to_next_word(input_ptr, first_operand_length);
-        if (input_ptr != NULL) {
-            if (strncmp(input_ptr, ",", 1) == 0)
-                input_ptr = skip_whitespace(++input_ptr);
+        if(is_end_of_line(input_ptr)) { /* if there is no comma after first operand */
+            free(first_operand_name);
+            return 1;
         }
-        else {
+        if (strncmp(input_ptr, ",", 1) == 0)
+            input_ptr = skip_whitespace(input_ptr + LENGTH_OF_COMMA); /* skip the comma */
+        if(is_end_of_line(input_ptr)) { /* if there is no second operand */
             free(first_operand_name);
             return 1;
         }
@@ -238,10 +252,10 @@ int parse_instruction_stage_2(char *input_ptr, const int command, char **source,
         if (second_operand_name == NULL) {
             printf("%s\n", ERROR_FAILED_TO_ALLOCATE_MEM);
             free(first_operand_name);
-            exit(1);
+            exit(EXIT_FAILURE);
         }
         strncpy(second_operand_name, input_ptr, second_operand_length);
-        second_operand_name[second_operand_length] = '\0';
+        second_operand_name[second_operand_length] = NULL_TERMINATOR;
     }
     *source = (char *)malloc(first_operand_length + LENGTH_OF_NULL_TERMINATOR);
     if (*source == NULL) {
@@ -252,7 +266,7 @@ int parse_instruction_stage_2(char *input_ptr, const int command, char **source,
             free(second_operand_name);
             second_operand_name = NULL;
         }
-        exit(1);
+        exit(EXIT_FAILURE);
     }
     strcpy(*source, first_operand_name);
     free(first_operand_name);
@@ -265,7 +279,7 @@ int parse_instruction_stage_2(char *input_ptr, const int command, char **source,
             free(*source);
             free(second_operand_name);
             second_operand_name = NULL;
-            exit(1);
+            exit(EXIT_FAILURE);
         }
         strcpy(*dest, second_operand_name);
         free(second_operand_name);
@@ -288,12 +302,12 @@ int analyze_operand_stage_2(operand *operand, const label_array label_array) {
     operand->type = UNKNOWN;
     switch (operand_name[0]) {
         case '#':
-            if (!(operand_name[1] == '\0' || isdigit(operand_name[1]) || operand_name[1] == '-' || operand_name[1] == '+')) {
+            if (!(operand_name[1] == NULL_TERMINATOR || isdigit(operand_name[1]) || operand_name[1] == MINUS_SIGN || operand_name[1] == PLUS_SIGN)) { /* check if the immediate operand is valid */
                 operand->type = UNKNOWN;
                 return 1;
             }
-        for(i = 2; operand_name[i] != '\0'; i++) {
-            if (!isdigit(operand_name[i])) {
+        for(i = 2; operand_name[i] != NULL_TERMINATOR; i++) {
+            if (!isdigit(operand_name[i])) {/* check if the immediate operand is valid */
                 operand->type = UNKNOWN;
                 return 1;
             }
@@ -301,18 +315,18 @@ int analyze_operand_stage_2(operand *operand, const label_array label_array) {
         operand->type = IMMEDIATE;
         return 0;
         case '*':
-            if (which_register(operand_name) != -1) {
+            if (which_register(operand_name) != NOT_A_REGISTER) { /* check if the register pointer operand is valid */
                 operand->type = REGISTER_PTR;
                 return 0;
             }
         return 1;
         case 'r':
-            if (which_register(operand_name) != -1) {
+            if (which_register(operand_name) != NOT_A_REGISTER) { /* check if the register operand is valid */
                 operand->type = REGISTER;
                 return 0;
             }
         default: {
-            if (is_label(&label_array, operand_name)) {
+            if (is_label(&label_array, operand_name)) { /* check if the label operand is valid */
                 operand->type = LABEL_VALUE;
                 return 0;
             }

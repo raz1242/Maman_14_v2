@@ -28,7 +28,7 @@ startLabel:  mov r1, *r2
             stop
 
 stringOne:  .string "Initial string test."
-dataOne:    .data 1, -1, 5, -5
+dataOne:    .data 1, -1, 3767, -3767
 
 
 .entry funcCall
@@ -140,7 +140,7 @@ funcThree: dec r2
               jmp loopLabel
               prn r6
 
-labelTwo:     .data 1, -1, 2, -3, 4
+labelTwo:     .data 5500, -5600, 5700, -5800, 5900
 
 .extern externalLabel6
 .entry funcTwo

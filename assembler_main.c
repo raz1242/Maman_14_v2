@@ -13,11 +13,11 @@ int main(const int argc, char *argv[]) {
     /* Check that at least one file name was passed to the program */
     if (argc == 1) {
         printf("%s\n", ERROR_NO_FILE_PROVIDED);
-        exit(1);
+        exit(EXIT_FAILURE);
     }
     for (index = 1; index < argc; index++) {
         error_flag = 0;
-        if (strlen(argv[index]) > MAX_LENGTH_OF_FILE_NAME) {
+        if (strlen(argv[index]) > MAX_LENGTH_OF_FILE_NAME) { /* Check if the file name is too long */
             printf("%s\n", ERROR_FILE_NAME_IS_TOO_LONG);
             return 1;
         }
@@ -39,12 +39,12 @@ int main(const int argc, char *argv[]) {
         else
             printf("stage 1 success\n"); // for testing
 
-        free_macro_name_image(my_macro_name_image);
+        free_macro_name_image(my_macro_name_image); /* No longer needed */
 
         if (stage_2_process_file(argv[index], label_table, my_instruction_image, my_data_image, &error_flag))
             printf("stage 2 failed\n"); // for testing
         else
-            printf("All stages completed successfully\n");
+            printf("All stages completed successfully.\n");
 
         free_label_array(label_table);
         free_instruction_image(my_instruction_image);

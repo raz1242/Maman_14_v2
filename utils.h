@@ -8,6 +8,9 @@
 #include "output_handling.h"
 
 #define EXTERN_ADDRESS -1
+#define UNKNOWN_ADDRESS -2
+#define UNKNOWN_LOCATION -1
+#define NOT_A_REGISTER -1
 #define LENGTH_OF_NULL_TERMINATOR 1
 #define LENGTH_OF_COMMA 1
 #define LENGTH_OF_COLON 1
@@ -22,7 +25,7 @@
 #define SIZE_OF_NUMBER_IN_BITS 12
 #define SIZE_OF_REGISTER_IN_BITS 15
 #define SIZE_OF_WORD_IN_OCTAL 5
-#define AMOUNT_OF_COMMANDS 16
+#define COMMANDS_LIST_LENGTH 16
 #define AMOUNT_OF_REGISTERS 8
 #define STARTING_POINT_OF_MEMORY 100
 #define MAX_POSSIBLE_NUMBER_IN_12_BITS 2047
@@ -30,6 +33,19 @@
 #define MAX_POSSIBLE_NUMBER_IN_15_BITS 16383
 #define MIN_POSSIBLE_NUMBER_IN_15_BITS -16384
 #define MAX_SIZE_OF_MEMORY 4096
+#define NULL_TERMINATOR '\0'
+#define NEW_LINE '\n'
+#define CARRIAGE_RETURN '\r'
+#define TAB '\t'
+#define SPACE ' '
+#define COMMA ','
+#define COLON ':'
+#define SEMI_COLON ';'
+#define QUOTATION_MARK '"'
+#define PLUS_SIGN '+'
+#define MINUS_SIGN '-'
+
+
 
 typedef enum commands_names {
     mov,
@@ -112,9 +128,11 @@ void free_label_array(label_array *array);
 void reset_opernads_type(operand *first_operand, operand *second_operand);
 int is_immidiate_out_of_bounds(operand operand);
 int line_location(char *str);
-int is_command(const char* command);
-int which_command(const char* command);
+int is_command(const char *command);
+int which_command(const char *command);
 int analyze_command(char *ptr, int command, int *L, char *word_in_binary, const char *file_name, int line_counter);
 int analyze_operand(operand *operand);
 int is_line_length_overlimit(const char *line);
+int is_location_valid(int location, int line_counter, const char *file_name, int* error_flag);
+
 #endif /* UTILS_H */

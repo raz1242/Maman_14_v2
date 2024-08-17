@@ -3,8 +3,7 @@
 
 #include "utils.h"
 
-#define EXTERN_ADDRESS -1
-#define UNKNOWN_ADDRESS -2
+
 
 typedef struct macro_name {
     char* name;

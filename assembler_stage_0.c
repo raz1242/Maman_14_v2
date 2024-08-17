@@ -1,7 +1,5 @@
 #include "assembler_stage_0.h"
 
-#include "assembler_stage_1.h"
-
 /**
  * the function receives a file name and processes it to create a .am file with the macros expanded
  * @param file_name - the name of the file to process
@@ -9,23 +7,23 @@
  * @return 1 if the file was processed successfully, 0 otherwise
  */
 int stage_0_process_file(const char *file_name, macro_name_image *my_macro_name_image) {
-    int i, is_inside_macro = 0, first_word_of_line_length, macro_body_length = 0, macro_body_allocated_size = MIN_LENGTH_OF_MACRO_BODY, ptr_location, error_flag = 0, match_found = 0, line_counter = 0;
+    int i, is_inside_macro = 0, first_word_in_line_length, macro_body_length = 0, macro_body_allocated_size = MIN_LENGTH_OF_MACRO_BODY, ptr_location, error_flag = 0, match_found = 0, line_counter = 0;
     macro_array macro_array;
     macro_name *macro_name;
     char macro_header[MAX_LENGTH_OF_MACRO_HEADER], line[MAX_ILLEGAL_LENGTH_OF_LINE];
-    char *non_space_line, *ptr_line, *macro_body, *output_buffer = NULL;
+    char *ptr_in_line, *macro_body, *output_buffer = NULL;
     char *as_version = file_name_extender(file_name, ".as"), *am_version = NULL;
     FILE *as_extension_file = fopen(as_version, "r"), *am_extension_file = NULL;
 
-    if (file_inspector(as_extension_file, as_version)) {
+    if (file_inspector(as_extension_file, as_version)) { /*check if the file is valid*/
         free(as_version);
         return 1;
     }
-    macro_header[0] = '\0',
+    macro_header[0] = NULL_TERMINATOR,
     macro_body = malloc(MIN_LENGTH_OF_MACRO_BODY);
     if (macro_body == NULL) {
         printf("%s\n", ERROR_FAILED_TO_ALLOCATE_MEM);
-        exit(1);
+        exit(EXIT_FAILURE);
     }
     macro_array_allocator(&macro_array, MIN_LENGTH_OF_MACRO_BODY);
 
@@ -36,28 +34,24 @@ int stage_0_process_file(const char *file_name, macro_name_image *my_macro_name_
             error_flag = 1;
             continue;
         }
-        if (strncmp(line, ";", 1)==0 || strncmp(line, "\n", 1) == 0)
+        ptr_in_line = skip_whitespace(line);
+        if(is_end_of_line(ptr_in_line) || *ptr_in_line == SEMI_COLON) /*skip comments and empty lines*/
             continue;
-        non_space_line = skip_whitespace(line);
-        if (non_space_line == NULL || *non_space_line == '\n' || *non_space_line == '\r')
-            continue;
-        ptr_line = non_space_line;
-        first_word_of_line_length = first_word_length_counter(non_space_line);
-        ptr_location = macro_location(non_space_line, is_inside_macro, first_word_of_line_length);
+        first_word_in_line_length = first_word_length_counter(ptr_in_line);
+        ptr_location = macro_location(ptr_in_line, is_inside_macro, first_word_in_line_length); /*check the type of content is inside the line*/
 
         if (ptr_location == HEADER) {
             is_inside_macro = 1;
-            non_space_line = skip_to_next_word(non_space_line, first_word_of_line_length);
-            ptr_line = non_space_line;
-            first_word_of_line_length = first_word_length_counter(ptr_line);
-            strncpy(macro_header, non_space_line, first_word_of_line_length);
-            non_space_line = skip_to_next_word(non_space_line, first_word_of_line_length);
-            if (*non_space_line != '\n' && *non_space_line != '\r') { /*check if there're redundant characters after the macro name set up*/
+            ptr_in_line = skip_to_next_word(ptr_in_line, first_word_in_line_length); /*skip the macro start command*/
+            first_word_in_line_length = first_word_length_counter(ptr_in_line);
+            strncpy(macro_header, ptr_in_line, first_word_in_line_length);
+            ptr_in_line = skip_to_next_word(ptr_in_line, first_word_in_line_length); /*skip the macro name*/
+            if (!is_end_of_line(ptr_in_line)) { /*check if there are redundant characters after the macro name set up*/
                 error_handler(ERROR_REDUNDANT_CHARACTERS_AFTER_MACRO_NAME, as_version, line_counter);
                 error_flag = 1;
             }
-            macro_header[first_word_of_line_length] = '\0';
-            if (is_reserved_word(macro_header, first_word_of_line_length)) { /*check if the macro name is a reserved word*/
+            macro_header[first_word_in_line_length] = NULL_TERMINATOR;
+            if (is_reserved_word(macro_header, first_word_in_line_length)) { /*check if the macro name is a reserved word*/
                 error_handler(ERROR_MACRO_NAME_IS_RESERVED_WORD, as_version, line_counter);
                 error_flag = 1;
             }
@@ -66,40 +60,40 @@ int stage_0_process_file(const char *file_name, macro_name_image *my_macro_name_
                 error_flag = 1;
             }
         } else if (ptr_location == BODY) {
-            add_line_to_macro_body(&macro_body, non_space_line, &macro_body_length, &macro_body_allocated_size);
+            add_line_to_macro_body(&macro_body, ptr_in_line, &macro_body_length, &macro_body_allocated_size);
         } else if (ptr_location == END) {
-            non_space_line = skip_to_next_word(ptr_line, first_word_of_line_length);
-            if (*non_space_line != '\n' && *non_space_line != '\r') { /*check if there're redundant characters after the end of the macro*/
+            ptr_in_line = skip_to_next_word(ptr_in_line, first_word_in_line_length); /*skip the endmacr command*/
+            if (!is_end_of_line(ptr_in_line)) { /*check if there are redundant characters after the endmacr*/
                 error_handler(ERROR_REDUNDANT_CHARACTERS_AFTER_ENDMACRO, as_version, line_counter);
                 error_flag = 1;
             }
-            macro_array_add(&macro_array, macro_header, macro_body);
+            macro_array_add(&macro_array, macro_header, macro_body); /*add the macro to the macro array*/
             macro_body_length = 0;
-            macro_body_allocated_size = MIN_LENGTH_OF_MACRO_BODY;
-            memset(macro_body, 0, macro_body_length);
+            macro_body_allocated_size = MIN_LENGTH_OF_MACRO_BODY; /*reset the macro body length and allocated size*/
+            memset(macro_body, NULL_TERMINATOR, macro_body_length);
             is_inside_macro = 0;
         } else /* REGULAR */{
             if (error_flag)
                 continue;
-            for (i = 0; i < macro_array.rep; i++) {
-                if (strncmp(non_space_line, macro_array.macro_element[i].name, first_word_of_line_length) == 0) {
-                    if (is_end_of_line(non_space_line + first_word_of_line_length + LENGTH_OF_NULL_TERMINATOR)) {
+            for (i = 0; i < macro_array.rep; i++) { /*check if the line is calling a macro and expand it*/
+                if (strncmp(ptr_in_line, macro_array.macro_element[i].name, first_word_in_line_length) == 0) {
+                    if (is_end_of_line(ptr_in_line + first_word_in_line_length + LENGTH_OF_NULL_TERMINATOR)) {
                         match_found = 1;
-                        add_to_macro_buffer(&output_buffer, macro_array.macro_element[i].body);
+                        add_to_macro_buffer(&output_buffer, macro_array.macro_element[i].body); /*add the macro body to the output buffer*/
                         break;
                     }
                 }
             }
             if (!match_found)
-                add_to_macro_buffer(&output_buffer, line);
-            match_found = 0;
+                add_to_macro_buffer(&output_buffer, line); /*if the line is not a macro call, add it to the output buffer*/
+            match_found = 0; /*reset the match flag*/
         }
     }
     fclose(as_extension_file);
     free(macro_body);
     free(as_version);
 
-    for (i = 0; i < macro_array.rep; i++) {
+    for (i = 0; i < macro_array.rep; i++) { /*add the macro names to the macro name image, to use in later stages*/
         macro_name = new_macro_name(macro_array.macro_element[i].name);
         macro_name_add(my_macro_name_image, macro_name);
     }
@@ -133,7 +127,7 @@ void macro_array_allocator(macro_array *array, const int size) {
     array->macro_element = malloc(size * sizeof(macro));
     if (array->macro_element == NULL) {
         printf("%s\n", ERROR_FAILED_TO_ALLOCATE_MEM);
-        exit(1);
+        exit(EXIT_FAILURE);
     }
     array->rep = 0;
     array->length = size;
@@ -152,14 +146,14 @@ void macro_array_allocator(macro_array *array, const int size) {
 int macro_location(const char *str, const int flag, const int length) {
     const int COMMAND_LENGTH = strlen("macr");
     if (str && str[COMMAND_LENGTH]) {
-        if (str[COMMAND_LENGTH] == ' ' && strncmp(str, "macr", COMMAND_LENGTH) == 0)
+        if (str[COMMAND_LENGTH] == SPACE && strncmp(str, "macr", COMMAND_LENGTH) == 0)
             return HEADER;
     }
     if (flag && strncmp(str, "endmacr", length) != 0)
         return BODY;
     if (flag && strncmp(str, "endmacr", length) == 0)
         return END;
-    return REGULAR;
+    return REGULAR; /* if none of the above, it's a regular line */
 }
 
 /**
@@ -171,15 +165,15 @@ int macro_location(const char *str, const int flag, const int length) {
  */
 int macro_array_add(macro_array *array, const char *name, const char *body) {
     macro *new_array;
-    const int number_of_reps = (array->rep);
-    int length_of_array = (array->length);
+    const int number_of_reps = (array->rep); /* number of repetitions */
+    int length_of_array = (array->length); /* length of the array */
 
     if (number_of_reps == length_of_array) {
         length_of_array = length_of_array * 2;
         new_array = realloc(array->macro_element, length_of_array * sizeof(macro));
         if (new_array == NULL) {
             printf("%s\n", ERROR_FAILED_TO_ALLOCATE_MEM);
-            exit(1);
+            exit(EXIT_FAILURE);
         }
         array->macro_element = new_array;
         array->length = length_of_array;
@@ -188,13 +182,13 @@ int macro_array_add(macro_array *array, const char *name, const char *body) {
     array->macro_element[number_of_reps].name = malloc(strlen(name) + LENGTH_OF_NULL_TERMINATOR);
     if (array->macro_element[number_of_reps].name == NULL) {
         printf("%s\n", ERROR_FAILED_TO_ALLOCATE_MEM);
-        exit(1);
+        exit(EXIT_FAILURE);
     }
     array->macro_element[number_of_reps].body = malloc(strlen(body) + LENGTH_OF_NULL_TERMINATOR);
     if (array->macro_element[number_of_reps].body == NULL) {
         printf("%s\n", ERROR_FAILED_TO_ALLOCATE_MEM);
         free(array->macro_element[number_of_reps].name);
-        exit(1);
+        exit(EXIT_FAILURE);
     }
 
     strcpy(array->macro_element[number_of_reps].name, name);
@@ -230,19 +224,18 @@ void add_line_to_macro_body(char **macro_body, const char *line, int *current_le
     const int line_length = strlen(line);
     char *new_body;
 
-    if (*current_length + line_length + LENGTH_OF_NULL_TERMINATOR > *allocated_size) {
+    if (*current_length + line_length + LENGTH_OF_NULL_TERMINATOR > *allocated_size) { /*reallocating the memory if needed*/
         *allocated_size += line_length;
         new_body = realloc(*macro_body, *allocated_size);
         if (new_body == NULL) {
             printf("%s\n", ERROR_FAILED_TO_REALLOC_MEM);
             free(*macro_body);
-            exit(1);
+            exit(EXIT_FAILURE);
         }
         *macro_body = new_body;
     }
-
-    strcpy(*macro_body + *current_length, line);
-    *current_length += line_length;
+    strcpy(*macro_body + *current_length, line); /*adding the line to the macro body*/
+    *current_length += line_length; /*updating the current length of the macro body*/
 }
 
 /**
@@ -253,20 +246,20 @@ void add_line_to_macro_body(char **macro_body, const char *line, int *current_le
  */
 void add_to_macro_buffer(char **buffer, const char *content) {
     int new_size;
-    if (*buffer == NULL) {
+    if (*buffer == NULL) { /*allocating memory for the buffer if it's empty*/
         new_size = strlen(content);
         *buffer = malloc(new_size + LENGTH_OF_NULL_TERMINATOR);
         if (*buffer == NULL) {
             printf("%s\n", ERROR_FAILED_TO_ALLOCATE_MEM);
-            exit(1);
+            exit(EXIT_FAILURE);
         }
         strcpy(*buffer, content);
-    } else {
+    } else { /* else, reallocating the memory and adding the content to the buffer*/
         new_size = strlen(*buffer) + strlen(content);
         *buffer = realloc(*buffer, new_size + LENGTH_OF_NULL_TERMINATOR);
         if (*buffer == NULL) {
             printf("%s\n", ERROR_FAILED_TO_REALLOC_MEM);
-            exit(1);
+            exit(EXIT_FAILURE);
         }
         strcat(*buffer, content);
     }
@@ -282,7 +275,7 @@ void add_to_macro_buffer(char **buffer, const char *content) {
  * @param name The name of the macro to check for duplicates.
  * @return 1 if the macro name is a duplicate, 0 otherwise.
  */
-int is_duplicate_macro_name (const macro_array *array, const char *name){
+int is_duplicate_macro_name(const macro_array *array, const char *name){
     int i;
     for(i = 0; i < array->rep; i++){
         if (strcmp(array->macro_element[i].name, name) == 0)

@@ -1,0 +1,6 @@
+g
+hello hello
+main: dec x
+inc *r1
+main: dec x
+inc *r1

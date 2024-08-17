@@ -1,14 +1,12 @@
 #include "utils.h"
 
-#include "assembler_stage_2.h"
-
 const char *reserved_words[] = {
     "mov", "cmp", "add", "sub", "lea", "clr", "not", "inc", "dec",
     "jmp", "bne", "red", "prn", "jsr", "rts", "stop",
     ".data", ".string", ".entry", ".extern", "macr", "endmacr", "r0", "r1", "r2", "r3", "r4", "r5", "r6", "r7"
 };
 
-char *commands_list[AMOUNT_OF_COMMANDS] = {
+char *commands_list[COMMANDS_LIST_LENGTH] = {
     "mov", "cmp", "add", "sub", "lea", "clr", "not", "inc",
     "dec", "jmp", "bne", "red", "prn", "jsr", "rts", "stop"
 };
@@ -28,7 +26,7 @@ char *file_name_extender(const char *str, const char *type) {
     char *file_type = malloc(strlen(str) + strlen(type) + LENGTH_OF_NULL_TERMINATOR);
     if (file_type == NULL) {
         printf("%s\n", ERROR_FAILED_TO_ALLOCATE_MEM);
-        exit(1);
+        exit(EXIT_FAILURE);
     }
     strcpy(file_type, str);
     strcat(file_type, type);
@@ -60,12 +58,12 @@ char *skip_whitespace(char *str) {
     if (str == NULL) {
         return NULL;
     }
-    while (isspace(*str) || *str == '\t') {
-        if (*str == '\n' || *str == '\r')
+    while (isspace(*str) || *str == NEW_LINE) {
+        if (*str == NEW_LINE || *str == CARRIAGE_RETURN)
             return str;
         str++;
     }
-    if (*str == '\0') {
+    if (*str == NULL_TERMINATOR) {
         return NULL;
     }
     return str;
@@ -132,6 +130,8 @@ int operand_length_counter(const char *str) {
 int is_reserved_word(char *word, const int length) {
     int i, size;
 
+    if(length == 0)
+        return 0;
     size = sizeof(reserved_words) / sizeof(reserved_words[0]);
     for (i = 0; i < size; i++) {
         if (strncmp(word, reserved_words[i], length) == 0 && is_end_of_line(word + length)) {
@@ -150,7 +150,7 @@ int is_reserved_word(char *word, const int length) {
 int is_end_of_line(char *str) {
     const char *new_str = skip_whitespace(str);
 
-    if (new_str == NULL || *new_str == '\n' || *new_str == '\r')
+    if (new_str == NULL || *new_str == NEW_LINE || *new_str == CARRIAGE_RETURN)
         return 1;
     return 0;
 }
@@ -168,34 +168,37 @@ int is_end_of_line(char *str) {
  */
 int parse_dot_data(const char *input, int **array, int *size, int *DC, const char *file_name, const int line_counter) {
     const int DATA_COMMAND_LENGTH = strlen(".data ");
-    const char *dataStart = NULL;
+    char *ptr = NULL;
     int index = 0, commaFlag = 0, numberFlag = 0, current_number;
-    char *ptr;
 
-    *size = 0;
+    *size = 0; /* Initialize the size of the array */
     *array = NULL;  /* Initialize as NULL for realloc */
-    dataStart = strstr(input, ".data ");
+    ptr = strstr(input, ".data ");
 
-    if (dataStart)
-        dataStart += DATA_COMMAND_LENGTH;
-    else {
+    if (ptr)
+        ptr = skip_to_next_word(ptr, DATA_COMMAND_LENGTH);
+    else
+        return 1;
+
+    if(ptr == NULL) { /* No data entered */
+        error_handler(ERROR_MISSING_DATA_VALUE, file_name, line_counter);
+        free(*array);
         return 1;
     }
 
-    ptr = (char *)dataStart;
-    while (*ptr) {
-        if (*ptr != '-' && *ptr != '+' && !isdigit(*ptr) && *ptr != ',' && *ptr != '\n' && *ptr != '\r' && !isspace(*ptr)) {
+    while (*ptr) { /* Parse the data values */
+        if(*ptr != MINUS_SIGN && *ptr != PLUS_SIGN && !isdigit(*ptr) && *ptr != COMMA && !is_end_of_line(ptr) && !isspace(*ptr)) {
             error_handler(ERROR_INVALID_DATA_VALUE, file_name, line_counter);
             free(*array);
             return 1;
         }
-        if (numberFlag == 1 && !isspace(*ptr) && *ptr != ',' && *ptr != '\n' && *ptr != '\r') {
+        if (numberFlag == 1 && !isspace(*ptr) && *ptr != COMMA && is_end_of_line(ptr)) {
             error_handler(ERROR_INVALID_DATA_VALUE, file_name, line_counter);
             free(*array);
             return 1;
         }
-        if (*ptr == '\n' || *ptr == '\r' || *ptr == '\0') {
-            if (commaFlag == 1) {
+        if (is_end_of_line(ptr)) {
+            if (commaFlag == 1) { /* No valid data found after comma */
                 error_handler(ERROR_MISSING_DATA_VALUE, file_name, line_counter);
                 free(*array);
                 return 1;
@@ -207,31 +210,31 @@ int parse_dot_data(const char *input, int **array, int *size, int *DC, const cha
             }
             break;
         }
-        if (isspace(*ptr)) {
+        if (isspace(*ptr)) { /* Skip any additional spaces */
             ptr++;
             continue;
         }
-        if (commaFlag == 1 && *ptr == ',') {
+        if (commaFlag == 1 && *ptr == COMMA) {
             error_handler(ERROR_MULTIPLE_COMMA_FOUND, file_name, line_counter);
             free(*array);
             return 1;
         }
-        if (*ptr == ',') {
+        if (*ptr == COMMA) {
             commaFlag = 1;
             numberFlag = 0;
             ptr++;
             continue;
         }
-        if (isdigit(*ptr) || ((*ptr == '-' || *ptr == '+') && isdigit(*(ptr + 1)))) {
+        if (isdigit(*ptr) || ((*ptr == MINUS_SIGN || *ptr == PLUS_SIGN) && isdigit(*(ptr + 1)))) { /* Check if the character is a digit */
             current_number = strtol(ptr, &ptr, 10);
-            if (current_number > MAX_POSSIBLE_NUMBER_IN_15_BITS || current_number < MIN_POSSIBLE_NUMBER_IN_15_BITS) {
+            if (current_number > MAX_POSSIBLE_NUMBER_IN_15_BITS || current_number < MIN_POSSIBLE_NUMBER_IN_15_BITS)/* Check if the number is within the machine range */
                 error_handler(ERROR_NUMBER_IS_OUT_OF_MACHINE_RANGE, file_name, line_counter);
-            } else {
+            else {
                 int *temp_array = realloc(*array, (index + LENGTH_OF_NULL_TERMINATOR) * sizeof(int));
                 if (temp_array == NULL) {
                     printf("%s\n", ERROR_FAILED_TO_ALLOCATE_MEM);
                     free(*array);
-                    exit(1);
+                    exit(EXIT_FAILURE);
                 }
                 *array = temp_array;
                 (*array)[index++] = current_number;
@@ -273,11 +276,11 @@ int parse_dot_string(const char *input, int **array, int *size, int *DC, const c
         return 1;
     }
 
-    while (*string_start == ' ' || *string_start == '\t') {/*skips any additional spaces or tabs*/
+    while (*string_start == SPACE || *string_start == NEW_LINE) {/*skips any additional spaces or tabs*/
         string_start++;
     }
 
-    if (*string_start != '"') { /* check if opening quotation mark is missing */
+    if (*string_start != QUOTATION_MARK) { /* check if opening quotation mark is missing */
         error_handler(ERROR_MISSING_OPENING_QUOTATION_MARK, file_name, line_counter);
         *array = NULL;
         *size = 0;
@@ -285,12 +288,12 @@ int parse_dot_string(const char *input, int **array, int *size, int *DC, const c
     }
     string_start++; /* Skip the opening quotation mark */
     ptr = (char *)string_start;
-    while (*ptr && *ptr != '"') {
+    while (!is_end_of_line(ptr) && *ptr != QUOTATION_MARK) {
         count++;
         ptr++;
     }
 
-    if (*ptr != '"') { /* closing quotation mark is missing*/
+    if (*ptr != QUOTATION_MARK) { /* closing quotation mark is missing*/
         error_handler(ERROR_MISSING_CLOSING_QUOTATION_MARK, file_name, line_counter);
         *array = NULL;
         *size = 0;
@@ -299,8 +302,8 @@ int parse_dot_string(const char *input, int **array, int *size, int *DC, const c
 
     ptr++; /* Skip the closing quotation mark */
 
-    while (*ptr != '\n' && *ptr != '\r') { /* Check for redundant characters after the closing quotation mark */
-        if (*ptr != ' ' && *ptr != '\t') {
+    while (is_end_of_line(ptr) == 0) { /* Check for redundant characters after the closing quotation mark */ // need to debug
+        if (*ptr != SPACE && *ptr != NEW_LINE) {
             error_handler(ERROR_INVALID_CHARACTER_FOUND_OUTSIDE_OF_QUOTATION_MARKS, file_name, line_counter);
             is_error = 1;
             break;
@@ -312,19 +315,19 @@ int parse_dot_string(const char *input, int **array, int *size, int *DC, const c
     if (*array == NULL) {
         printf("%s\n", ERROR_FAILED_TO_ALLOCATE_MEM);
         *size = 0;
-        exit(1);
+        exit(EXIT_FAILURE);
     }
 
     ptr = (char *)string_start;
-    for (index = 0; index < count; index++) {
+    for (index = 0; index < count; index++) { /* Copy the characters to the array */
         (*array)[index] = (int)*ptr;
         (*DC)++;
         ptr++;
     }
 
     (*array)[index] = 0; /* Null terminator */
-    (*DC)++;
-    *size = ++count;
+    (*DC)++; /* Increment the data counter */
+    *size = ++count; /* Set the size of the array */
 
     return is_error;
 }
@@ -356,18 +359,19 @@ int parse_instruction(char *input_ptr, const int command, char **source, char **
     input_ptr = skip_to_next_word(input_ptr, command_length);
 
     if (command == rts || command == stop) {
-        if (*input_ptr != '\n' && *input_ptr != '\r') { /* redundent characters after stop or rts command */
-            error_handler(ERROR_REDUNDENT_CHARACTERS_AFTER_COMMAND, file_name, line_counter);
+        if (!is_end_of_line(input_ptr)) { /* redundant characters after stop or rts command */
+            error_handler(ERROR_REDUNDANT_CHARACTERS_AFTER_COMMAND, file_name, line_counter);
             return 1;
         }
         return 0;
     }
-    if (*input_ptr == '\n' || *input_ptr == '\r') { /* lacks the first operand */
+
+    if (is_end_of_line(input_ptr)) { /* lacks the first operand */
         error_handler(ERROR_MISSING_FIRST_OPERAND, file_name, line_counter);
         return 1;
     }
     if (strncmp(input_ptr, ",", 1) == 0) { /* lacks the first operand */
-        error_handler(ERROR_REDUNDENT_COMMA_AFTER_COMMAND, file_name, line_counter);
+        error_handler(ERROR_REDUNDANT_COMMA_AFTER_COMMAND, file_name, line_counter);
         return 1;
     }
     if (!isalpha(*input_ptr) && !isdigit(*input_ptr) && *input_ptr != '#' && *input_ptr != '*') { /* invalid first operand */
@@ -378,28 +382,28 @@ int parse_instruction(char *input_ptr, const int command, char **source, char **
     first_operand_name = (char *)malloc(first_operand_length + LENGTH_OF_NULL_TERMINATOR);
     if (first_operand_name == NULL) {
         printf("%s\n", ERROR_FAILED_TO_ALLOCATE_MEM);
-        exit(1);
+        exit(EXIT_FAILURE);
     }
     strncpy(first_operand_name, input_ptr, first_operand_length);
-    first_operand_name[first_operand_length] = '\0';
+    first_operand_name[first_operand_length] = NULL_TERMINATOR;
 
     if (command == mov || command == cmp || command == add || command == sub || command == lea) {
         input_ptr = skip_to_next_word(input_ptr, first_operand_length);
+        if(is_end_of_line(input_ptr)) { /* missing a comma after first operand */
+            error_handler(ERROR_MISSING_A_COMMA, file_name, line_counter);
+            free(first_operand_name);
+            return 1;
+        }
         if (strncmp(input_ptr, ",", 1) == 0) {
             input_ptr = skip_to_next_word(input_ptr, LENGTH_OF_COMMA);
         }
-        else { /* missing a comma between the two operands */
-            error_handler(ERROR_MISSING_A_COMMA, file_name, line_counter);
+        if (is_end_of_line(input_ptr)) { /* lacks the second operand */
+            error_handler(ERROR_MISSING_SECOND_OPERAND, file_name, line_counter);
             free(first_operand_name);
             return 1;
         }
         if (strncmp(input_ptr, ",", 1) == 0) { /* too many commas */
             error_handler(ERROR_TOO_MANY_COMMAS, file_name, line_counter);
-            free(first_operand_name);
-            return 1;
-        }
-        if (*input_ptr == '\n' || *input_ptr == '\r') { /* lacks the second operand */
-            error_handler(ERROR_MISSING_SECOND_OPERAND, file_name, line_counter);
             free(first_operand_name);
             return 1;
         }
@@ -414,20 +418,20 @@ int parse_instruction(char *input_ptr, const int command, char **source, char **
         if (second_operand_name == NULL) {
             printf("%s\n", ERROR_FAILED_TO_ALLOCATE_MEM);
             free(first_operand_name);
-            exit(1);
+            exit(EXIT_FAILURE);
         }
         strncpy(second_operand_name, input_ptr, second_operand_length);
-        second_operand_name[second_operand_length] = '\0';
+        second_operand_name[second_operand_length] = NULL_TERMINATOR;
 
         input_ptr = skip_to_next_word(input_ptr, second_operand_length);
-        if (input_ptr && *input_ptr != '\n' && *input_ptr != '\r') { /* redundent chraters after seond operand*/
-            error_handler(ERROR_REDUNDENT_CHARACTERS_AFTER_SECOND_OPERAND, file_name, line_counter);
+        if (!is_end_of_line(input_ptr)) { /* redundant chraters after seond operand*/
+            error_handler(ERROR_REDUNDANT_CHARACTERS_AFTER_SECOND_OPERAND, file_name, line_counter);
         }
     }
     if (command == clr || command == not || command == inc || command == dec || command == jmp || command == bne || command == red || command == prn || command == jsr) {
-        input_ptr = skip_to_next_word(input_ptr, first_operand_length);
-        if (input_ptr && *input_ptr != '\n' && *input_ptr != '\r' && *input_ptr != '\0') { /* redundent charaters after first operand*/
-            error_handler(ERROR_REDUNDENT_CHARACTERS_AFTER_FIRST_OPERAND, file_name, line_counter);
+        input_ptr = skip_to_next_word(input_ptr, first_operand_length); /* skip the first operand */
+        if (!is_end_of_line(input_ptr)) { /* redundant charaters after first operand*/
+            error_handler(ERROR_REDUNDANT_CHARACTERS_AFTER_FIRST_OPERAND, file_name, line_counter);
             free(first_operand_name);
             free(second_operand_name);
             return 1;
@@ -440,7 +444,7 @@ int parse_instruction(char *input_ptr, const int command, char **source, char **
         free(first_operand_name);
         if (second_operand_name)
             free(second_operand_name);
-        exit(1);
+        exit(EXIT_FAILURE);
     }
     strncpy(*source, first_operand_name, first_operand_length + LENGTH_OF_NULL_TERMINATOR);
     free(first_operand_name);
@@ -452,12 +456,11 @@ int parse_instruction(char *input_ptr, const int command, char **source, char **
             printf("%s\n", ERROR_FAILED_TO_ALLOCATE_MEM);
             free(*source);
             free(second_operand_name);
-            exit(1);
+            exit(EXIT_FAILURE);
         }
         strncpy(*dest, second_operand_name, second_operand_length + LENGTH_OF_NULL_TERMINATOR);
         free(second_operand_name);
         second_operand_name = NULL;
-
     }
     return 0;
 }
@@ -469,16 +472,16 @@ int parse_instruction(char *input_ptr, const int command, char **source, char **
  * @return The index of the register in the register list if found, otherwise returns -1.
  */
 int which_register(const char* operand_name) {
+    const int size_of_array = sizeof(register_list) / sizeof(register_list[0]); /* size of the register list */
     int i;
-    const int size_of_array = sizeof(register_list) / sizeof(register_list[0]);
 
-    if (operand_name[0] == '*')
+    if (operand_name[0] == '*') /* skip the '*' character */
         operand_name++;
-    for(i = 0; i < size_of_array; i++) {
+    for(i = 0; i < size_of_array; i++) { /* check if the operand is a register */
         if (strcmp(operand_name, register_list[i]) == 0)
-            return i;
+            return i; /* return the index of the register */
     }
-    return -1;
+    return NOT_A_REGISTER;
 }
 
 /**
@@ -495,9 +498,9 @@ char *command_to_binary(const int command, const operand first_operand, const op
     str = (char *)malloc(SIZE_OF_REGISTER_IN_BITS* sizeof(char) + LENGTH_OF_NULL_TERMINATOR);
     if (str == NULL) {
         printf("%s\n", ERROR_FAILED_TO_ALLOCATE_MEM);
-        exit(1);
+        exit(EXIT_FAILURE);
     }
-    str[0] = '\0';
+    str[0] = NULL_TERMINATOR;
     switch (command) {
         case mov:
             strcpy(str, "0000");
@@ -584,7 +587,7 @@ char *command_to_binary(const int command, const operand first_operand, const op
         default:
             break;
     }
-    strcat(str, "100");
+    strcat(str, "100"); /* Add the A.R.E bits */
     return str;
 }
 
@@ -600,17 +603,17 @@ char* immediate_operand_to_binary(const operand operand) {
     char *operand_number_in_binary = malloc(SIZE_OF_REGISTER_IN_BITS + LENGTH_OF_NULL_TERMINATOR);
     if (operand_number_in_binary == NULL) {
         printf("%s\n", ERROR_FAILED_TO_ALLOCATE_MEM);
-        exit(1);
+        exit(EXIT_FAILURE);
     }
-    memset(operand_number_in_binary, '\0', SIZE_OF_REGISTER_IN_BITS + LENGTH_OF_NULL_TERMINATOR);
+    memset(operand_number_in_binary, NULL_TERMINATOR, SIZE_OF_REGISTER_IN_BITS + LENGTH_OF_NULL_TERMINATOR);
     operand_name = malloc(strlen(operand.name) + LENGTH_OF_NULL_TERMINATOR);
     if (operand_name == NULL) {
         printf("%s\n", ERROR_FAILED_TO_ALLOCATE_MEM);
-        exit(1);
+        exit(EXIT_FAILURE);
     }
     strcpy(operand_name, operand.name);
     operand_name = skip_whitespace(++operand_name);
-    if (isdigit(operand_name[0]) || ((*operand_name == '-' || *operand_name == '+') && isdigit(*(operand_name + 1)))) {
+    if (isdigit(operand_name[0]) || ((*operand_name == MINUS_SIGN || *operand_name == PLUS_SIGN) && isdigit(*(operand_name + 1)))) {
         binary_representation = decimal_to_binary(atoi(operand_name));
         strcpy(operand_number_in_binary, binary_representation);
         strcat(operand_number_in_binary, "100");
@@ -634,9 +637,9 @@ char* register_operand_to_binary(const operand first_operand, const operand seco
     char *first_operand_binary, *second_operand_binary, *operand_number_in_binary = malloc(SIZE_OF_REGISTER_IN_BITS + LENGTH_OF_NULL_TERMINATOR);
     if (operand_number_in_binary == NULL) {
         printf("%s\n", ERROR_FAILED_TO_ALLOCATE_MEM);
-        exit(1);
+        exit(EXIT_FAILURE);
     }
-    memset(operand_number_in_binary, '\0', SIZE_OF_REGISTER_IN_BITS + LENGTH_OF_NULL_TERMINATOR);
+    memset(operand_number_in_binary, NULL_TERMINATOR, SIZE_OF_REGISTER_IN_BITS + LENGTH_OF_NULL_TERMINATOR);
     strcat(operand_number_in_binary, "000000");
     if (second_operand.type == UNKNOWN) {
         first_operand_binary = register_name_to_binary(first_operand.name);
@@ -681,9 +684,9 @@ char* register_name_to_binary(const char* register_name) {
     char* register_number_in_binary = malloc(SIZE_OF_REGISTER_IN_BITS + LENGTH_OF_NULL_TERMINATOR);
     if (register_number_in_binary == NULL) {
         printf("%s\n", ERROR_FAILED_TO_ALLOCATE_MEM);
-        exit(1);
+        exit(EXIT_FAILURE);
     }
-    memset(register_number_in_binary, '\0', SIZE_OF_REGISTER_IN_BITS + LENGTH_OF_NULL_TERMINATOR);
+    memset(register_number_in_binary, NULL_TERMINATOR, SIZE_OF_REGISTER_IN_BITS + LENGTH_OF_NULL_TERMINATOR);
     if (strncmp(register_name, "*", 1) == 0)
         register_name++;
     if (strcmp(register_name, "r0") == 0) {
@@ -726,7 +729,7 @@ char* register_name_to_binary(const char* register_name) {
  * @param line_counter The line number in the file where the error occurred.
  */
 void error_handler(const char *error_message, const char *file_name, const int line_counter) {
-    printf("%s in file %s at line %d\n", error_message, file_name, line_counter);
+    printf("Error in file %s at line %d: %s.\n", file_name, line_counter, error_message);
 }
 
 /**
@@ -742,9 +745,9 @@ char* decimal_to_binary(const int integer) {
     char* binary_string = malloc(SIZE_OF_NUMBER_IN_BITS + LENGTH_OF_NULL_TERMINATOR);
     if (binary_string == NULL) {
         printf("%s\n", ERROR_FAILED_TO_ALLOCATE_MEM);
-        exit(1);
+        exit(EXIT_FAILURE);
     }
-    binary_string[SIZE_OF_NUMBER_IN_BITS] = '\0';
+    binary_string[SIZE_OF_NUMBER_IN_BITS] = NULL_TERMINATOR;
     mask = 1 << (SIZE_OF_NUMBER_IN_BITS - 1);
     for(i = 0; i < SIZE_OF_NUMBER_IN_BITS; i++) {
         if (integer & mask)
@@ -775,10 +778,10 @@ char* binary_to_octal(const char *binary_str) {
     octal_str = malloc(SIZE_OF_WORD_IN_OCTAL + LENGTH_OF_NULL_TERMINATOR);
     if (octal_str == NULL) {
         printf("%s\n", ERROR_FAILED_TO_ALLOCATE_MEM);
-        exit(1);
+        exit(EXIT_FAILURE);
     }
 
-    octal_str[SIZE_OF_WORD_IN_OCTAL] = '\0';
+    octal_str[SIZE_OF_WORD_IN_OCTAL] = NULL_TERMINATOR;
     for (i = 0; i < SIZE_OF_WORD_IN_OCTAL; i++) {
         value = 0;
         for (j = 0; j < 3; j++)
@@ -824,12 +827,10 @@ void reset_opernads_type( operand *first_operand, operand *second_operand) {
 int is_immidiate_out_of_bounds(const operand operand) {
     const char *operand_name = operand.name;
     operand_name++;
-    if (operand_name[0] == '+' || operand_name[0] == '-') {
+    if (operand_name[0] == PLUS_SIGN || operand_name[0] == MINUS_SIGN)
         operand_name++;
-    }
-    if (atoi(operand_name) > MAX_POSSIBLE_NUMBER_IN_12_BITS || atoi(operand_name) < MIN_POSSIBLE_NUMBER_IN_12_BITS) {
+    if (atoi(operand_name) > MAX_POSSIBLE_NUMBER_IN_12_BITS || atoi(operand_name) < MIN_POSSIBLE_NUMBER_IN_12_BITS)
         return 1;
-    }
 
     return 0;
 }
@@ -866,7 +867,7 @@ int line_location(char *str) {
         if (is_command(ptr_to_firstWord))
             return INSTRUCTION;
     }
-    return -1;
+    return UNKNOWN_LOCATION;
 }
 
 /**
@@ -878,8 +879,8 @@ int line_location(char *str) {
 int is_command(const char *command) {
     int i;
 
-    for (i = 0; i < AMOUNT_OF_COMMANDS; i++) {
-        if (strcmp(command, commands_list[i]) == 1)
+    for (i = 0; i < COMMANDS_LIST_LENGTH; i++) {
+        if (strncmp(command, commands_list[i], strlen(commands_list[i])) == 0)
             return 1;
     }
     return 0;
@@ -894,12 +895,9 @@ int is_command(const char *command) {
  */
 int which_command(const char *command) {
     int i;
-    int str_length = 0;
+    const int str_length = first_word_length_counter(command);
 
-    for (i = 0; (command[i] && command[i] != ' ' && command[i] != '\t' && command[i] != ',' && command[i] != '\n' && command[i] != '\r'); i++) {
-        str_length++;
-    }
-    for (i = 0; i < AMOUNT_OF_COMMANDS; i++) {
+    for (i = 0; i < COMMANDS_LIST_LENGTH; i++) {
         if (strlen(commands_list[i]) == str_length && !strncmp(commands_list[i], command, str_length)) {
             return i;
         }
@@ -924,7 +922,7 @@ int analyze_command(char *ptr, const int command, int *L, char *word_in_binary, 
     char *first_operand_name = NULL, *second_operand_name = NULL, *command_in_binary;
     operand first_operand, second_operand;
 
-    if (parse_instruction(ptr, command, &first_operand_name, &second_operand_name, file_name, line_counter))
+    if (parse_instruction(ptr, command, &first_operand_name, &second_operand_name, file_name, line_counter)) /* parse the operands */
         is_error = 1;
 
     if (first_operand_name) {
@@ -934,7 +932,7 @@ int analyze_command(char *ptr, const int command, int *L, char *word_in_binary, 
         } else {
             printf("%s\n", ERROR_FAILED_TO_ALLOCATE_MEM);
             free(first_operand_name);
-            exit(1);
+            exit(EXIT_FAILURE);
         }
     }
 
@@ -946,12 +944,12 @@ int analyze_command(char *ptr, const int command, int *L, char *word_in_binary, 
             printf("%s\n", ERROR_FAILED_TO_ALLOCATE_MEM);
             free(first_operand_name);
             free(second_operand_name);
-            exit(1);
+            exit(EXIT_FAILURE);
         }
     }
 
-    first_operand.type = UNKNOWN;
-    second_operand.type = UNKNOWN;
+    first_operand.type = UNKNOWN; /* reset the type of the operands */
+    second_operand.type = UNKNOWN; /* reset the type of the operands */
     if (command != unknown_command) {
         (*L)++;
         if (command != rts && command != stop) {
@@ -1035,11 +1033,11 @@ int analyze_operand(operand *operand) {
     operand->type = UNKNOWN;
     switch (operand_name[0]) {
         case '#':
-            if (!(operand_name[1] == '\0' || isdigit(operand_name[1]) || operand_name[1] == '-' || operand_name[1] == '+')) {
+            if (!(operand_name[1] == NULL_TERMINATOR || isdigit(operand_name[1]) || operand_name[1] == MINUS_SIGN || operand_name[1] == PLUS_SIGN)) { /* check if the operand is a number or plus or minus sign*/
                 operand->type = UNKNOWN;
                 return 1;
             }
-            for(i = 2; operand_name[i] != '\0'; i++) {
+            for(i = 2; operand_name[i] != NULL_TERMINATOR; i++) { /* check if the operand is a number */
                 if (!isdigit(operand_name[i])) {
                     operand->type = UNKNOWN;
                     return 1;
@@ -1048,13 +1046,13 @@ int analyze_operand(operand *operand) {
             operand->type = IMMEDIATE;
         return 0;
         case '*':
-            if (which_register(operand_name) != -1) {
+            if (which_register(operand_name) != NOT_A_REGISTER) {
                 operand->type = REGISTER_PTR;
                 return 0;
             }
         return 1;
         case 'r':
-            if (which_register(operand_name) != -1) {
+            if (which_register(operand_name) != NOT_A_REGISTER) {
                 operand->type = REGISTER;
                 return 0;
             }
@@ -1085,10 +1083,19 @@ int is_line_length_overlimit(const char *line) {
         return 1;
     }
     if (strlen(line) == MAX_LEGAL_LENGTH_OF_LINE + LENGTH_OF_NULL_TERMINATOR) {
-        if (line[MAX_LEGAL_LENGTH_OF_LINE] != '\n') {
+        if (line[MAX_LEGAL_LENGTH_OF_LINE] != NEW_LINE) {
             return 1;
         }
         return 0;
     }
     return 0;
+}
+
+int is_location_valid(const int location, const int line_counter, const char *file_name, int* error_flag) {
+    if(location == UNKNOWN_LOCATION) {
+        error_handler(ERROR_UNKNOWN_COMMAND, file_name, line_counter);
+        *error_flag = 1;
+        return 0;
+    }
+    return 1;
 }

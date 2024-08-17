@@ -1,7 +1,3 @@
-lea f, *f
-MAIN: add r3, LIST
-LOOP: prn #48
-;
-	;
-		;
-	LIST: .data 6, -9
+;LOOP: prn #48
+;.extern LOOP
+.string  "
