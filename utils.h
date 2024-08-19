@@ -45,7 +45,10 @@
 #define PLUS_SIGN '+'
 #define MINUS_SIGN '-'
 
-
+typedef enum boolean {
+    FALSE,
+    TRUE
+} boolean;
 
 typedef enum commands_names {
     mov,
@@ -91,48 +94,51 @@ typedef enum line_characteristic {
     IRRLEVANT
 } line_characteristic;
 
-typedef struct label {
-    char *name;
-    int address;
-    line_characteristic characteristic;
-} label;
-
-typedef struct label_array {
-    label *label_element;
-    int rep;
-    int length;
-} label_array;
 
 /* Declarations */
+/* File Handling */
 char *file_name_extender(const char *str, const char *type);
 int file_inspector(const FILE *file, const char *file_name);
+
+/* String Manipulation */
 char *skip_whitespace(char *str);
 char *skip_to_next_word(char *str, int length);
+
+/* Length Counters */
 int first_word_length_counter(const char *str);
 int operand_length_counter(const char *str);
-int is_reserved_word(char *word, int length);
-int is_end_of_line(char *str);
+
+/* Parsing */
 int parse_dot_data(const char *input, int **array, int *size, int *DC, const char *file_name, int line_counter);
 int parse_dot_string(const char *input, int **array, int *size, int *DC, const char *file_name, int line_counter);
-int parse_instruction(char *input_ptr, int command, char **source, char **dest, const char *file_name,
-                      int line_counter);
-int which_register(const char *operand_name);
-char *command_to_binary(int command, operand first_operand, operand second_operand);
-void error_handler(const char *error_message, const char *file_name, int line_counter);
-char *decimal_to_binary(int integer);
-char *immediate_operand_to_binary(operand operand);
-char *register_name_to_binary(const char *register_name);
-char *register_operand_to_binary(operand first_operand, operand second_operand);
-char *binary_to_octal(const char *binary_str);
-void free_label_array(label_array *array);
-void reset_opernads_type(operand *first_operand, operand *second_operand);
-int is_immidiate_out_of_bounds(operand operand);
-int line_location(char *str);
+int parse_instruction(char *input_ptr, int command, char **source, char **dest, const char *file_name, int line_counter);
+
+/* Command Analysis */
 int is_command(const char *command);
 int which_command(const char *command);
 int analyze_command(char *ptr, int command, int *L, char *word_in_binary, const char *file_name, int line_counter);
+
+/* Operand Analysis */
 int analyze_operand(operand *operand);
+int which_register(const char *operand_name);
+char *immediate_operand_to_binary(operand operand);
+int is_immidiate_out_of_bounds(operand operand);
+
+/* Binary Conversion */
+char *decimal_to_binary(int integer);
+char *command_to_binary(int command, operand first_operand, operand second_operand);
+char *register_name_to_binary(const char *register_name);
+char *register_operand_to_binary(operand first_operand, operand second_operand);
+char *binary_to_octal(const char *binary_str);
+
+/* Utility Functions */
+void error_handler(const char *error_message, const char *file_name, int line_counter);
+void reset_opernads_type(operand *first_operand, operand *second_operand);
+int is_reserved_word(char *word, int length);
+int is_end_of_line(char *str);
+int line_location(char *str);
 int is_line_length_overlimit(const char *line);
-int is_location_valid(int location, int line_counter, const char *file_name, int* error_flag);
+int is_location_valid(int location, int line_counter, const char *file_name, int *error_flag);
+
 
 #endif /* UTILS_H */

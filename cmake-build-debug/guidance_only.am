@@ -1,6 +1,0 @@
-.entry buff1
-.entry buff2
-.string "[]ffd"
-buff2: .string ""
-buff1: .data 55, 69, -2048
-        .string "abccd"

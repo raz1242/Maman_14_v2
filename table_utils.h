@@ -15,8 +15,20 @@ typedef struct {
     macro_name *last;
 } macro_name_image;
 
+typedef struct label {
+    char *name;
+    int address;
+    line_characteristic characteristic;
+} label;
+
+typedef struct label_array {
+    label *label_element;
+    int rep;
+    int length;
+} label_array;
+
 typedef struct data_node {
-    char* original_line; // need to remove, only for debugging
+    char* original_line;
     int* char_in_ASCII;
     char** word_in_binary;
     int length;
@@ -30,7 +42,7 @@ typedef struct {
 } data_image;
 
 typedef struct instruction_node{
-    char* original_line; // need to remove, only for debugging
+    char* original_line;
     char* word_command_in_binary;
     int decimal_address_in_machine;
     operand first_operand;
@@ -47,13 +59,13 @@ typedef struct {
 
 /*Declarations*/
 /* Allocation and Initialization Functions */
+macro_name_image *macro_name_image_allocator();
+macro_name *new_macro_name(const char* name);
+label_array *label_array_allocator();
 instruction_image *instruction_image_allocator();
 instruction_node *new_instruction_node(const char *line, int L, const char* word_in_binary);
 data_image *data_image_allocator();
 data_node *new_data_node(const char *line, int array_size, const int *data);
-macro_name_image *macro_name_image_allocator();
-macro_name *new_macro_name(const char* name);
-label_array *label_array_allocator(int size);
 
 /* Addition Functions */
 void macro_name_add(macro_name_image *macro_name_image, macro_name *new_node);
@@ -75,6 +87,7 @@ void ent_file_usher(const char *file_name, const label_array *label_table);
 int is_label(const label_array *label_table, const char *name);
 
 /* free Functions */
+void free_label_array(label_array *array);
 void free_data_node(data_node *node);
 void free_data_image(data_image *image);
 void free_operand(const operand *operand);

@@ -25,27 +25,34 @@ int stage_1_process_file(const char *file_name, label_array *label_table, instru
     char *am_version = file_name_extender(file_name, ".am");
     FILE *am_extension_file = fopen(am_version, "r");
     if (am_extension_file == NULL) {
-        printf("Error opening file\n");
+        printf("%s\n", ERROR_FAILED_TO_OPEN_FILE);
         free(am_version);
         am_version = NULL;
-        return 1;
+        return EXIT_FAILURE;
     }
 
     label_header[0] = NULL_TERMINATOR;
-    while (fgets(line, MAX_LEGAL_LENGTH_OF_LINE + LENGTH_OF_NULL_TERMINATOR, am_extension_file)) {
-        total_memory_size = IC + DC + STARTING_POINT_OF_MEMORY;// divide into two stages, output will be on the second stage
+    while (fgets(line, MAX_ILLEGAL_LENGTH_OF_LINE, am_extension_file)) {
+        total_memory_size = IC + DC + STARTING_POINT_OF_MEMORY; /* calculate the total memory size */
         if (total_memory_size >= MAX_SIZE_OF_MEMORY) {
-            printf("%s\n", ERROR_MEMORY_LIMIT_REACHED);
-            exit(EXIT_FAILURE);
+            /* check if the memory usage surpassed memory size */
+            *error_flag = TRUE;
+            break;
         }
         line_counter++;
-        label_flag = 0;
+        if (is_line_length_overlimit(line)){ /*check if the line is longer than the max of 80 characters*/
+            error_handler(ERROR_LINE_TOO_LONG, am_version, line_counter);
+            *error_flag = TRUE;
+            continue;
+        }
+
+        label_flag = FALSE;
         memset(label_header, NULL_TERMINATOR, sizeof(label_header));
         memset(word_in_binary, NULL_TERMINATOR, sizeof(word_in_binary));
         ptr_in_line = skip_whitespace(line);
         if (ptr_in_line[0] == SEMI_COLON) { /* if the line is a comment */
             error_handler(ERROR_COMMENT_NOT_AT_THE_BEGINNING_OF_THE_LINE, am_version, line_counter);
-            *error_flag = 1;
+            *error_flag = TRUE;
             continue;
         }
         first_word_in_line_length = first_word_length_counter(ptr_in_line);
@@ -54,14 +61,14 @@ int stage_1_process_file(const char *file_name, label_array *label_table, instru
             continue;
 
         if (ptr_location == LABEL_DEFINITION) {
-            label_flag = 1;
+            label_flag = TRUE;
             macro_name = macro_name_image->first;
             strncpy(label_header, ptr_in_line, first_word_in_line_length); /* copy the label name to the label_header */
             validate_label_name(label_header, label_table, macro_name, am_version, line_counter, error_flag); /* validate the label name */
             ptr_in_line = skip_to_next_word(ptr_in_line, first_word_in_line_length + LENGTH_OF_COLON); /* skip the label name in the ptr*/
             if (is_end_of_line(ptr_in_line)) { /* if the line is empty after the label */
                 error_handler(ERROR_LABEL_CANNOT_BE_EMPTY_OF_COMMAND, am_version, line_counter);
-                *error_flag = 1;
+                *error_flag = TRUE;
                 continue;
             }
             ptr_location = line_location(ptr_in_line); /* check again the location of the new first word in the line */
@@ -69,17 +76,17 @@ int stage_1_process_file(const char *file_name, label_array *label_table, instru
                 continue;
         }
         if (ptr_location == DATA || ptr_location == STRING) {
-            if (label_flag == 1)
+            if (label_flag == 1) /* if the line has a label */
                 add_label_to_array(label_table, label_header, DC, ptr_location);
             if (ptr_location == DATA) {
                 if (parse_dot_data(ptr_in_line, &parced_array, &array_size, &DC, am_version, line_counter)) {
-                    *error_flag = 1;
+                    *error_flag = TRUE;
                     continue;
                 }
             }
             else {
                 if (parse_dot_string(ptr_in_line, &parced_array, &array_size, &DC, am_version, line_counter)){
-                    *error_flag = 1;
+                    *error_flag = TRUE;
                     free(parced_array);
                     continue;
                 }
@@ -92,14 +99,14 @@ int stage_1_process_file(const char *file_name, label_array *label_table, instru
             ptr_in_line = skip_to_next_word(ptr_in_line, strlen(".extern")); /* skip the ".extern" command */
             if(ptr_in_line == NULL){
                 error_handler(ERROR_NO_LABEL_ENTERED, am_version, line_counter);
-                *error_flag = 1;
+                *error_flag = TRUE;
                 continue;
             }
             first_word_in_line_length = first_word_length_counter(ptr_in_line);
             ptr_location = line_location(ptr_in_line); /* check the location of the first word in the line after skipping ".extern" command*/
             if (ptr_location == LABEL_DEFINITION) { /* if the location is a defining a new label with a command after it */
                 error_handler(ERROR_LABEL_CANNOT_BE_DEFINED_IN_EXTERN_COMMAND, am_version, line_counter);
-                *error_flag = 1;
+                *error_flag = TRUE;
                 continue;
             }
             strncpy(label_header, ptr_in_line, first_word_in_line_length); /* copy the label name to the label_header */
@@ -108,7 +115,7 @@ int stage_1_process_file(const char *file_name, label_array *label_table, instru
 
             if (!is_end_of_line(ptr_in_line)) { /* if there are characters after the label */
                 error_handler(ERROR_REDUNDANT_CHARACTERS_AFTER_LABEL, am_version, line_counter);
-                *error_flag = 1;
+                *error_flag = TRUE;
                 continue;
             }
             add_label_to_array(label_table, label_header, EXTERN_ADDRESS, EXTERN);
@@ -116,13 +123,13 @@ int stage_1_process_file(const char *file_name, label_array *label_table, instru
             ptr_in_line = skip_to_next_word(ptr_in_line, strlen(".entry")); /* skip the ".entry" command */
             if(ptr_in_line == NULL){
                 error_handler(ERROR_NO_LABEL_ENTERED, am_version, line_counter);
-                *error_flag = 1;
+                *error_flag = TRUE;
                 continue;
             }
             ptr_location = line_location(ptr_in_line); /* check the location of the first word in the line after skipping ".entry" command*/
             if (ptr_location == LABEL_DEFINITION) { /* if the location is a defining a new label with a command after it */
                 error_handler(ERROR_LABEL_CANNOT_BE_DEFINED_IN_ENTRY_COMMAND, am_version, line_counter);
-                *error_flag = 1;
+                *error_flag = TRUE;
                 continue;
             }
             first_word_in_line_length = first_word_length_counter(ptr_in_line);
@@ -131,7 +138,7 @@ int stage_1_process_file(const char *file_name, label_array *label_table, instru
                 if (!strcmp(label_table->label_element[i].name, ptr_in_line)) {
                     if (label_table -> label_element[i].characteristic == EXTERN) {
                         error_handler(ERROR_LABEL_IS_EXTERN, am_version, line_counter);
-                        *error_flag = 1;
+                        *error_flag = TRUE;
                         break;
                     }
                 }
@@ -139,7 +146,7 @@ int stage_1_process_file(const char *file_name, label_array *label_table, instru
             ptr_in_line = skip_to_next_word(ptr_in_line, first_word_in_line_length);
             if (!is_end_of_line(ptr_in_line)) { /* if there are characters after the label */
                 error_handler(ERROR_REDUNDANT_CHARACTERS_AFTER_LABEL, am_version, line_counter);
-                *error_flag = 1;
+                *error_flag = TRUE;
             }
         } else if (ptr_location == INSTRUCTION) {
             if (label_flag == 1)
@@ -147,11 +154,11 @@ int stage_1_process_file(const char *file_name, label_array *label_table, instru
             command_in_line = which_command(ptr_in_line); /* check which command is in the line */
             if (command_in_line == unknown_command) {
                 error_handler(ERROR_COMMAND_NOT_FOUND, am_version, line_counter);
-                *error_flag = 1;
+                *error_flag = TRUE;
             }
             else {
                 if (analyze_command(ptr_in_line, command_in_line, &L, word_in_binary, am_version, line_counter))
-                    *error_flag = 1;
+                    *error_flag = TRUE;
             }
             instruction_node = new_instruction_node(ptr_in_line, L, word_in_binary);
             instruction_node_add(instruction_image, instruction_node);
@@ -165,12 +172,12 @@ int stage_1_process_file(const char *file_name, label_array *label_table, instru
     ptr_in_line = NULL;
     fclose(am_extension_file);
     if (*error_flag)
-        return 1;
+        return EXIT_FAILURE;
     for (i = 0; i < label_table->rep; i++) { /* update the addresses of the labels */
         if (label_table->label_element[i].characteristic == DATA || label_table->label_element[i].characteristic == STRING)
             label_table->label_element[i].address += (IC + STARTING_POINT_OF_MEMORY);
     }
-    return 0;
+    return EXIT_SUCCESS;
 }
 
 
@@ -188,9 +195,9 @@ int is_duplicate_label_name(const label_array *label_table, const char *label_na
     int i;
     for (i = 0; i < label_table->rep; i++) {
         if (strcmp(label_table->label_element[i].name, label_name) == 0)
-            return 1;
+            return EXIT_FAILURE;
     }
-    return 0;
+    return EXIT_SUCCESS;
 }
 
 /**
@@ -207,20 +214,20 @@ int is_duplicate_label_name(const label_array *label_table, const char *label_na
 void validate_label_name(char *label_header, const label_array *label_table, const macro_name *macro_name, const char *am_version, const int line_counter, int *error_flag) {
     if (strlen(label_header) > MAX_LENGTH_OF_LABEL_HEADER) { /* check if the label name is too long */
         error_handler(ERROR_LABEL_NAME_TOO_LONG, am_version, line_counter);
-        *error_flag = 1;
+        *error_flag = TRUE;
     }
     if (is_reserved_word(label_header, strlen(label_header))) { /* check if the label name is a reserved word */
         error_handler(ERROR_LABEL_NAME_IS_A_RESERVED_WORD, am_version, line_counter);
-        *error_flag = 1;
+        *error_flag = TRUE;
     }
     if (is_duplicate_label_name(label_table, label_header)) { /* check if the label name was already set up else where */
         error_handler(ERROR_DUPLICATE_LABEL_NAME, am_version, line_counter);
-        *error_flag = 1;
+        *error_flag = TRUE;
     }
     while (macro_name != NULL) {
         if (strcmp(macro_name->name, label_header) == 0) { /* check if the label name is a macro name */
             error_handler(ERROR_LABEL_NAME_IS_A_MACRO_NAME, am_version, line_counter);
-            *error_flag = 1;
+            *error_flag = TRUE;
         }
         macro_name = macro_name->next;
     }

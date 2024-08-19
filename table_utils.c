@@ -58,7 +58,7 @@ instruction_node *new_instruction_node(const char *line, const int L, const char
     memset(new_node->second_operand.word_in_binary, NULL_TERMINATOR, SIZE_OF_REGISTER_IN_BITS + LENGTH_OF_NULL_TERMINATOR);
     strncpy(new_node->word_command_in_binary, word_in_binary,SIZE_OF_REGISTER_IN_BITS + LENGTH_OF_NULL_TERMINATOR);
     new_node->word_command_in_binary[SIZE_OF_REGISTER_IN_BITS] = NULL_TERMINATOR;
-    new_node->original_line = (char *)malloc(strlen(line) + LENGTH_OF_NULL_TERMINATOR); // for testing
+    new_node->original_line = (char *)malloc(strlen(line) + LENGTH_OF_NULL_TERMINATOR);
     if (new_node->original_line == NULL) {
         printf("%s\n", ERROR_FAILED_TO_ALLOCATE_MEM);
         free(new_node->word_command_in_binary);
@@ -132,14 +132,14 @@ data_node *new_data_node(const char *line, const int array_size, const int* data
     for (i = 0; i < array_size; i++)
         new_node->char_in_ASCII[i] = data[i];
 
-    new_node->original_line = (char *)malloc(strlen(line) + LENGTH_OF_NULL_TERMINATOR); // for testing
-    if (new_node->original_line == NULL) { // for testing
+    new_node->original_line = (char *)malloc(strlen(line) + LENGTH_OF_NULL_TERMINATOR);
+    if (new_node->original_line == NULL) {
         printf("%s\n", ERROR_FAILED_TO_ALLOCATE_MEM);
-        free(new_node->char_in_ASCII);  // for testing
-        free(new_node); // for testing purposes
-        exit(EXIT_FAILURE); // for testing
-    } // for testing
-    strcpy(new_node->original_line, line); // for testing
+        free(new_node->char_in_ASCII);
+        free(new_node);
+        exit(EXIT_FAILURE);
+    }
+    strcpy(new_node->original_line, line);
 
     new_node->length = array_size;
     new_node->next_node = NULL;
@@ -482,19 +482,18 @@ void free_macro_name_image(macro_name_image *macro_name_image) {
 /**
  * Allocates memory for a label array and initializes its elements.
  *
- * @param size The initial size of the label array.
  * @return A pointer to the allocated label array.
  *         Exits the program if memory allocation fails.
  */
-label_array *label_array_allocator(const int size) {
+label_array *label_array_allocator() {
     label_array *array = malloc(sizeof(label_array));
-    array->label_element = (label *)malloc(size * sizeof(label));
+    array->label_element = (label *)malloc(MIN_LENGTH_OF_LABEL_BODY * sizeof(label));
     if (array->label_element == NULL) {
         printf("%s\n", ERROR_FAILED_TO_ALLOCATE_MEM);
         exit(EXIT_FAILURE);
     }
     array->rep = 0;
-    array->length = size;
+    array->length = MIN_LENGTH_OF_LABEL_BODY;
     return array;
 }
 
@@ -512,11 +511,11 @@ void add_label_to_array(label_array *array, const char *name, const int address,
     const int number_of_reps = (array->rep);
     int length_of_array = (array->length);
 
-    if (number_of_reps == length_of_array) {
-        if (length_of_array == 0)
+    if (number_of_reps == length_of_array) { /* If the array is full, reallocate memory */
+        if (length_of_array == 0) /* If the array is empty, set the length to 1 */
             length_of_array = 1;
-        else
-            length_of_array = (length_of_array) * 2;
+        else /* Else double the size of the array */
+            length_of_array = length_of_array * 2;
         new_label = realloc(array->label_element, length_of_array * sizeof(label));
         if (new_label == NULL) {
             printf("%s\n", ERROR_FAILED_TO_ALLOCATE_MEM);
@@ -538,6 +537,22 @@ void add_label_to_array(label_array *array, const char *name, const int address,
 }
 
 /**
+ * Frees the memory allocated for the label array.
+ *
+ * @param array A pointer to the label array to be freed.
+ */
+void free_label_array(label_array *array) {
+    int i;
+    if (array != NULL) {
+        for (i = 0; i < array->rep; i++) {
+            free(array->label_element[i].name);
+        }
+        free(array->label_element);
+        free(array);
+    }
+}
+
+/**
  * Checks if a given name exists in the label array.
  *
  * @param label_table A pointer to the label array.
@@ -548,10 +563,10 @@ int is_label(const label_array *label_table, const char *name) {
     int i;
     for (i = 0; i < label_table->rep; i++) {
         if (strcmp(name, label_table->label_element[i].name) == 0) {
-            return 1;
+            return EXIT_FAILURE;
         }
     }
-    return 0;
+    return EXIT_SUCCESS;
 }
 
 /**

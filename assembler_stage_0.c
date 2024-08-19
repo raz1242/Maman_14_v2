@@ -7,7 +7,7 @@
  * @return 1 if the file was processed successfully, 0 otherwise
  */
 int stage_0_process_file(const char *file_name, macro_name_image *my_macro_name_image) {
-    int i, is_inside_macro = 0, first_word_in_line_length, macro_body_length = 0, macro_body_allocated_size = MIN_LENGTH_OF_MACRO_BODY, ptr_location, error_flag = 0, match_found = 0, line_counter = 0;
+    int i, is_inside_macro_flag = FALSE, first_word_in_line_length, macro_body_length = 0, macro_body_allocated_size = MIN_LENGTH_OF_MACRO_BODY, ptr_location, error_flag = FALSE, match_found = FALSE, line_counter = 0;
     macro_array macro_array;
     macro_name *macro_name;
     char macro_header[MAX_LENGTH_OF_MACRO_HEADER], line[MAX_ILLEGAL_LENGTH_OF_LINE];
@@ -17,7 +17,7 @@ int stage_0_process_file(const char *file_name, macro_name_image *my_macro_name_
 
     if (file_inspector(as_extension_file, as_version)) { /*check if the file is valid*/
         free(as_version);
-        return 1;
+        return EXIT_FAILURE;
     }
     macro_header[0] = NULL_TERMINATOR,
     macro_body = malloc(MIN_LENGTH_OF_MACRO_BODY);
@@ -29,35 +29,30 @@ int stage_0_process_file(const char *file_name, macro_name_image *my_macro_name_
 
     while (fgets(line, MAX_ILLEGAL_LENGTH_OF_LINE, as_extension_file)) {
         line_counter++;
-        if (is_line_length_overlimit(line)){ /*check if the line is longer than the max of 80 characters*/
-            error_handler(ERROR_LINE_TOO_LONG, as_version, line_counter);
-            error_flag = 1;
-            continue;
-        }
         ptr_in_line = skip_whitespace(line);
         if(is_end_of_line(ptr_in_line) || *ptr_in_line == SEMI_COLON) /*skip comments and empty lines*/
             continue;
         first_word_in_line_length = first_word_length_counter(ptr_in_line);
-        ptr_location = macro_location(ptr_in_line, is_inside_macro, first_word_in_line_length); /*check the type of content is inside the line*/
+        ptr_location = macro_location(ptr_in_line, is_inside_macro_flag, first_word_in_line_length); /*check the type of content is inside the line*/
 
         if (ptr_location == HEADER) {
-            is_inside_macro = 1;
+            is_inside_macro_flag = TRUE;
             ptr_in_line = skip_to_next_word(ptr_in_line, first_word_in_line_length); /*skip the macro start command*/
             first_word_in_line_length = first_word_length_counter(ptr_in_line);
             strncpy(macro_header, ptr_in_line, first_word_in_line_length);
             ptr_in_line = skip_to_next_word(ptr_in_line, first_word_in_line_length); /*skip the macro name*/
             if (!is_end_of_line(ptr_in_line)) { /*check if there are redundant characters after the macro name set up*/
                 error_handler(ERROR_REDUNDANT_CHARACTERS_AFTER_MACRO_NAME, as_version, line_counter);
-                error_flag = 1;
+                error_flag = TRUE;
             }
             macro_header[first_word_in_line_length] = NULL_TERMINATOR;
             if (is_reserved_word(macro_header, first_word_in_line_length)) { /*check if the macro name is a reserved word*/
                 error_handler(ERROR_MACRO_NAME_IS_RESERVED_WORD, as_version, line_counter);
-                error_flag = 1;
+                error_flag = TRUE;
             }
             if (is_duplicate_macro_name(&macro_array, macro_header)){ /*check if the macro name already exists*/
                 error_handler(ERROR_DUPLICATE_MACRO_NAME, as_version, line_counter);
-                error_flag = 1;
+                error_flag = TRUE;
             }
         } else if (ptr_location == BODY) {
             add_line_to_macro_body(&macro_body, ptr_in_line, &macro_body_length, &macro_body_allocated_size);
@@ -65,20 +60,21 @@ int stage_0_process_file(const char *file_name, macro_name_image *my_macro_name_
             ptr_in_line = skip_to_next_word(ptr_in_line, first_word_in_line_length); /*skip the endmacr command*/
             if (!is_end_of_line(ptr_in_line)) { /*check if there are redundant characters after the endmacr*/
                 error_handler(ERROR_REDUNDANT_CHARACTERS_AFTER_ENDMACRO, as_version, line_counter);
-                error_flag = 1;
+                error_flag = TRUE;
+                continue;
             }
             macro_array_add(&macro_array, macro_header, macro_body); /*add the macro to the macro array*/
-            macro_body_length = 0;
+            macro_body_length = 0; /*reset the macro body length*/
             macro_body_allocated_size = MIN_LENGTH_OF_MACRO_BODY; /*reset the macro body length and allocated size*/
             memset(macro_body, NULL_TERMINATOR, macro_body_length);
-            is_inside_macro = 0;
+            is_inside_macro_flag = FALSE;
         } else /* REGULAR */{
             if (error_flag)
                 continue;
             for (i = 0; i < macro_array.rep; i++) { /*check if the line is calling a macro and expand it*/
                 if (strncmp(ptr_in_line, macro_array.macro_element[i].name, first_word_in_line_length) == 0) {
                     if (is_end_of_line(ptr_in_line + first_word_in_line_length + LENGTH_OF_NULL_TERMINATOR)) {
-                        match_found = 1;
+                        match_found = TRUE;
                         add_to_macro_buffer(&output_buffer, macro_array.macro_element[i].body); /*add the macro body to the output buffer*/
                         break;
                     }
@@ -86,7 +82,7 @@ int stage_0_process_file(const char *file_name, macro_name_image *my_macro_name_
             }
             if (!match_found)
                 add_to_macro_buffer(&output_buffer, line); /*if the line is not a macro call, add it to the output buffer*/
-            match_found = 0; /*reset the match flag*/
+            match_found = FALSE; /*reset the match flag*/
         }
     }
     fclose(as_extension_file);
@@ -105,7 +101,7 @@ int stage_0_process_file(const char *file_name, macro_name_image *my_macro_name_
             printf("%s\n", ERROR_FAILED_TO_OPEN_FILE);
             free(output_buffer);
             macro_array_free(&macro_array);
-            return 0;
+            return EXIT_SUCCESS;
         }
         free(am_version);
         fputs(output_buffer, am_extension_file);
@@ -194,7 +190,7 @@ int macro_array_add(macro_array *array, const char *name, const char *body) {
     strcpy(array->macro_element[number_of_reps].name, name);
     strcpy(array->macro_element[number_of_reps].body, body);
     array->rep++;
-    return 0;
+    return EXIT_SUCCESS;
 }
 /**
  * Frees the memory allocated for the macro array.
@@ -279,7 +275,7 @@ int is_duplicate_macro_name(const macro_array *array, const char *name){
     int i;
     for(i = 0; i < array->rep; i++){
         if (strcmp(array->macro_element[i].name, name) == 0)
-            return 1;
+            return EXIT_FAILURE;
     }
-    return 0;
+    return EXIT_SUCCESS;
 }

@@ -21,7 +21,7 @@ typedef struct macro_array_structure{
     int length;
 } macro_array;
 
-enum pre_stage_line_structure{//maybe think of a better name
+enum pre_stage_line_structure{
     HEADER,
     BODY,
     END,

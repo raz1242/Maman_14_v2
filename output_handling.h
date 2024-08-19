@@ -40,7 +40,7 @@
 #define ERROR_REDUNDANT_CHARACTERS_AFTER_SECOND_OPERAND "Redundant characters after second operand"
 
 /* Data Handling Errors */
-#define ERROR_MISSING_DATA_VALUE "Missing data, No data entered"
+#define ERROR_MISSING_DATA_VALUE "Missing data, No valid data entered"
 #define ERROR_INVALID_DATA_VALUE "Invalid data value"
 #define ERROR_NUMBER_IS_OUT_OF_MACHINE_RANGE "Number is out of machine's range"
 
@@ -69,5 +69,9 @@
 #define ERROR_TOO_MANY_COMMAS "Too many commas"
 #define ERROR_MULTIPLE_COMMA_FOUND "Multiple commas found"
 
+/* Stages Reports */
+#define REPORT_STAGE_0_FAILED "Error encountered during Pre-Stage. Program will not continue onto the next stages"
+#define REPORT_STAGE_FAILED "Error encountered during the Stages"
+#define REPORT_ALL_STAGE_SUCCESS "All stages completed successfully"
 
 #endif /*OUTPUT_HANDLING_H*/

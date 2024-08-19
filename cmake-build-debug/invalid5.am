@@ -1,0 +1,9 @@
+.extern EXT_LABEL
+invalidOperand: mov r1, r2
+                add r3, r4
+                prn _string
+!labelName:     cmp r1, r2
+                bne LOOP
+add r3, #@5
+dataLabel: .data 100 200 -300 400 , 500
+.data 99999, -99999

@@ -15,8 +15,8 @@
  */
 int stage_2_process_file(const char *file_name, const label_array *label_table, const instruction_image *instruction_image,
                          const data_image *data_image, int *error_flag) {
-    int i, IC = 0, DC = 0, ptr_location, first_word_in_line_length, command_in_line, label_match_found, line_counter = 0, extern_flag = 0
-            , entry_flag = 0;
+    int i, IC = 0, DC = 0, ptr_location, total_memory_size, first_word_in_line_length, command_in_line, label_match_found, line_counter = 0, extern_flag = 0
+            , entry_flag = FALSE;
     char line[MAX_LEGAL_LENGTH_OF_LINE];
     char *ptr_in_line = NULL, *first_operand_in_binary = NULL, *second_operand_in_binary = NULL;
     instruction_node *instruction_node = instruction_image->first;
@@ -27,23 +27,34 @@ int stage_2_process_file(const char *file_name, const label_array *label_table, 
         printf("Error opening file\n");
         free(am_version);
         am_version = NULL;
-        return 1;
+        return EXIT_FAILURE;
     }
 
 
     while (fgets(line, MAX_LEGAL_LENGTH_OF_LINE + LENGTH_OF_NULL_TERMINATOR, am_extension_file)) {
+        total_memory_size = IC + DC + STARTING_POINT_OF_MEMORY;
+        if (total_memory_size >= MAX_SIZE_OF_MEMORY) {
+            printf("%s\n", ERROR_MEMORY_LIMIT_REACHED);
+            *error_flag = TRUE;
+            break;
+        }
         line_counter++;
-        label_match_found = 0;
+        label_match_found = FALSE;
         ptr_in_line = skip_whitespace(line);
         first_word_in_line_length = first_word_length_counter(ptr_in_line);
         ptr_location = line_location(ptr_in_line);
         if (ptr_location == LABEL_DEFINITION) {
             ptr_in_line = skip_to_next_word(ptr_in_line, first_word_in_line_length + LENGTH_OF_COLON); /* skipping the label header */
-            first_word_in_line_length = first_word_length_counter(ptr_in_line);
             ptr_location = line_location(ptr_in_line); /* checking the location of the first word after the label */
         }
+        if(ptr_location == DATA || ptr_location == STRING) {
+            if(data_node && !strcmp(data_node -> original_line, ptr_in_line)) { /* compare *ptr_in_line against a valid .data || .string commands to calculate DC */
+                DC += data_node->length; /* increase the DC */
+                data_node = data_node->next_node;
+            }
+        }
         if (ptr_location == ENTRY) {
-            entry_flag = 1; /* notify that there is an entry in the file */
+            entry_flag = TRUE; /* notify that there is an entry in the file */
             ptr_in_line = skip_to_next_word(ptr_in_line, strlen(".entry")); /* skip the ".entry" command */
             if(ptr_in_line == NULL) {
                 continue;
@@ -52,18 +63,18 @@ int stage_2_process_file(const char *file_name, const label_array *label_table, 
             ptr_in_line[first_word_in_line_length] = NULL_TERMINATOR;
             for (i = 0; i < label_table->rep; i++) {/* checking if the label is in the label table */
                 if (!strcmp(label_table->label_element[i].name, ptr_in_line)) {
-                    label_match_found = 1;
+                    label_match_found = TRUE;
                     label_table->label_element[i].characteristic = ENTRY;
                     break;
                 }
             }
             if (!label_match_found) { /* if the label is not in the label table, sends error */
                 error_handler(ERROR_LABEL_NOT_FOUND, am_version, line_counter);
-                *error_flag = 1;
+                *error_flag = TRUE;
             }
         }
         if (ptr_location == EXTERN) {
-            extern_flag = 1; /* notify that there is an extern in the file */
+            extern_flag = TRUE; /* notify that there is an extern in the file */
             ptr_in_line = skip_to_next_word(ptr_in_line, strlen(".extern")); /* skip the ".extern" command */
             if(ptr_in_line == NULL) {
                 continue;
@@ -74,7 +85,7 @@ int stage_2_process_file(const char *file_name, const label_array *label_table, 
                 if (!strcmp(label_table->label_element[i].name, ptr_in_line)) {
                     if (label_table -> label_element[i].characteristic == ENTRY) {
                         error_handler(ERROR_LABEL_IS_ENTRY, am_version, line_counter);
-                        *error_flag = 1;
+                        *error_flag = TRUE;
                     }
                 }
             }
@@ -86,12 +97,12 @@ int stage_2_process_file(const char *file_name, const label_array *label_table, 
             if (instruction_node->first_operand.name && strcmp(instruction_node->first_operand.name, "") != 0) /* if there is a first operand */
                 if (analyze_operand_stage_2(&instruction_node->first_operand, *label_table)) { /* analyze the first operand */
                     error_handler(ERROR_INVALID_FIRST_OPERAND, am_version, line_counter);
-                    *error_flag = 1;
+                    *error_flag = TRUE;
                 }
             if (instruction_node->second_operand.name && strcmp(instruction_node->second_operand.name, "") != 0) /* if there is a second operand */
                 if (analyze_operand_stage_2(&instruction_node->second_operand, *label_table)){ /* analyze the second operand */
                     error_handler(ERROR_INVALID_SECOND_OPERAND, am_version, line_counter);
-                    *error_flag = 1;
+                    *error_flag = TRUE;
                 }
             validate_operands(command_in_line, instruction_node->first_operand, instruction_node->second_operand, am_version, line_counter); /* validate the operands types fit command requirements*/
             if (instruction_node->length >= 2) {
@@ -115,9 +126,9 @@ int stage_2_process_file(const char *file_name, const label_array *label_table, 
                 instruction_node = instruction_node->next_node;
         }
     }
+    data_node = data_image->first;
     while(data_node != NULL) { /* converting all ascii data inside data_image into binary */
         convert_ascii_to_binary(data_node);
-        DC += data_node->length; /* increase the DC */
         data_node = data_node->next_node;
     }
 
@@ -125,14 +136,14 @@ int stage_2_process_file(const char *file_name, const label_array *label_table, 
     free(am_version);
     am_version = NULL;
     if (*error_flag) /* if there is an error in the file, stops here */
-        return 1;
+        return EXIT_FAILURE;
 
     if (entry_flag) /* if there is an entry in the file */
         ent_file_usher(file_name, label_table);
     if (extern_flag) /* if there is an extern in the file */
         ext_file_usher(file_name, instruction_image);
     ob_file_usher(file_name, data_image, instruction_image, IC, DC);
-    return 0;
+    return EXIT_SUCCESS;
 }
 
 /**
@@ -146,57 +157,57 @@ int stage_2_process_file(const char *file_name, const label_array *label_table, 
  * @return 0 if the operands are valid, 1 otherwise.
  */
 int validate_operands(const int command, const operand first_operand, const operand second_operand, const char *file_name, const int line_counter) {
-    int is_error = 0;
+    int error_flag = FALSE;
 
     if (command == mov || command == add || command == sub) {
         if (second_operand.type == IMMEDIATE) {
             error_handler(ERROR_INVALID_OPERAND_TYPE_IN_SECOND_OPERAND, file_name, line_counter);
-            is_error = 1;
+            error_flag = TRUE;
         }
     }
     if (command == lea) {
         if (first_operand.type != LABEL_VALUE) {
             error_handler(ERROR_INVALID_OPERAND_TYPE_IN_FIRST_OPERAND, file_name, line_counter);
-            is_error = 1;
+            error_flag = TRUE;
         }
         if (second_operand.type == IMMEDIATE) {
             error_handler(ERROR_INVALID_OPERAND_TYPE_IN_SECOND_OPERAND, file_name, line_counter);
-            is_error = 1;
+            error_flag = TRUE;
         }
     }
     if (command == clr || command == not || command == inc || command == dec || command == red) {
         if (first_operand.type == IMMEDIATE) {
             error_handler(ERROR_INVALID_OPERAND_TYPE_IN_FIRST_OPERAND, file_name, line_counter);
-            is_error = 1;
+            error_flag = TRUE;
         }
         if (second_operand.type != UNKNOWN) {
             error_handler(ERROR_REQUIERED_COMMAND_DOES_NOT_SUPPORT_A_SECOND_OPERAND, file_name, line_counter);
-            is_error = 1;
+            error_flag = TRUE;
         }
     }
     if (command == jmp || command == bne || command == jsr) {
         if (first_operand.type == IMMEDIATE || first_operand.type == REGISTER) {
             error_handler(ERROR_INVALID_OPERAND_TYPE_IN_FIRST_OPERAND, file_name, line_counter);
-            is_error = 1;
+            error_flag = TRUE;
         }
         if (second_operand.type != UNKNOWN) {
             error_handler(ERROR_REQUIERED_COMMAND_DOES_NOT_SUPPORT_A_SECOND_OPERAND, file_name, line_counter);
-            is_error = 1;
+            error_flag = TRUE;
         }
     }
     if (command == prn) {
         if (second_operand.type != UNKNOWN) {
             error_handler(ERROR_REQUIERED_COMMAND_DOES_NOT_SUPPORT_A_SECOND_OPERAND, file_name, line_counter);
-            is_error = 1;
+            error_flag = TRUE;
         }
     }
     if (command == rts || command == stop) {
         if (first_operand.type != UNKNOWN || second_operand.type != UNKNOWN) {
             error_handler(ERROR_REQUIERED_COMMAND_DOES_NOT_SUPPORT_OPERANDS, file_name, line_counter);
-            is_error = 1;
+            error_flag = TRUE;
         }
     }
-    return is_error;
+    return error_flag;
 }
 
 /**
@@ -222,10 +233,10 @@ int parse_instruction_stage_2(char *input_ptr, const int command, char **source,
 
     input_ptr = skip_to_next_word(input_ptr, command_length); /* skip the command */
     if (command == rts || command == stop) {/* if the command is rts or stop, there are no operands */
-        return 0;
+        return EXIT_SUCCESS;
     }
     if (input_ptr == NULL) { /* if there are no operands */
-        return 1;
+        return EXIT_FAILURE;
     }
     first_operand_length = operand_length_counter(input_ptr);
     first_operand_name = (char *)malloc(first_operand_length + LENGTH_OF_NULL_TERMINATOR);
@@ -239,13 +250,13 @@ int parse_instruction_stage_2(char *input_ptr, const int command, char **source,
         input_ptr = skip_to_next_word(input_ptr, first_operand_length);
         if(is_end_of_line(input_ptr)) { /* if there is no comma after first operand */
             free(first_operand_name);
-            return 1;
+            return EXIT_FAILURE;
         }
         if (strncmp(input_ptr, ",", 1) == 0)
             input_ptr = skip_whitespace(input_ptr + LENGTH_OF_COMMA); /* skip the comma */
         if(is_end_of_line(input_ptr)) { /* if there is no second operand */
             free(first_operand_name);
-            return 1;
+            return EXIT_FAILURE;
         }
         second_operand_length = operand_length_counter(input_ptr);
         second_operand_name = (char *)malloc(second_operand_length + LENGTH_OF_NULL_TERMINATOR);
@@ -285,7 +296,7 @@ int parse_instruction_stage_2(char *input_ptr, const int command, char **source,
         free(second_operand_name);
         second_operand_name = NULL;
     }
-    return 0;
+    return EXIT_SUCCESS;
 }
 
 /**
@@ -304,33 +315,33 @@ int analyze_operand_stage_2(operand *operand, const label_array label_array) {
         case '#':
             if (!(operand_name[1] == NULL_TERMINATOR || isdigit(operand_name[1]) || operand_name[1] == MINUS_SIGN || operand_name[1] == PLUS_SIGN)) { /* check if the immediate operand is valid */
                 operand->type = UNKNOWN;
-                return 1;
+                return EXIT_FAILURE;
             }
         for(i = 2; operand_name[i] != NULL_TERMINATOR; i++) {
             if (!isdigit(operand_name[i])) {/* check if the immediate operand is valid */
                 operand->type = UNKNOWN;
-                return 1;
+                return EXIT_FAILURE;
             }
         }
         operand->type = IMMEDIATE;
-        return 0;
+        return EXIT_SUCCESS;
         case '*':
             if (which_register(operand_name) != NOT_A_REGISTER) { /* check if the register pointer operand is valid */
                 operand->type = REGISTER_PTR;
-                return 0;
+                return EXIT_SUCCESS;
             }
-        return 1;
+        return EXIT_FAILURE;
         case 'r':
             if (which_register(operand_name) != NOT_A_REGISTER) { /* check if the register operand is valid */
                 operand->type = REGISTER;
-                return 0;
+                return EXIT_SUCCESS;
             }
         default: {
             if (is_label(&label_array, operand_name)) { /* check if the label operand is valid */
                 operand->type = LABEL_VALUE;
-                return 0;
+                return EXIT_SUCCESS;
             }
         }
     }
-    return 1;
+    return EXIT_FAILURE;
 }

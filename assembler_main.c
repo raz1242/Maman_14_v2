@@ -4,7 +4,7 @@
 
 
 int main(const int argc, char *argv[]) {
-    int index, error_flag = 0;
+    int index, error_flag = FALSE;
     macro_name_image *my_macro_name_image;
     data_image *my_data_image;
     instruction_image *my_instruction_image;
@@ -16,39 +16,37 @@ int main(const int argc, char *argv[]) {
         exit(EXIT_FAILURE);
     }
     for (index = 1; index < argc; index++) {
-        error_flag = 0;
-        if (strlen(argv[index]) > MAX_LENGTH_OF_FILE_NAME) { /* Check if the file name is too long */
+        error_flag = FALSE; /* reset the error flag */
+        if (strlen(argv[index]) > MAX_LENGTH_OF_FILE_NAME) { /* Check if the file name's too long */
             printf("%s\n", ERROR_FILE_NAME_IS_TOO_LONG);
-            return 1;
+            continue;
         }
         my_macro_name_image = macro_name_image_allocator();
 
-        if (stage_0_process_file(argv[index], my_macro_name_image)) {
-            printf("pre stage failed\n"); // for testing
+        if (stage_0_process_file(argv[index], my_macro_name_image)) { /* The Pre-Stage */
+            printf("%s\n", REPORT_STAGE_0_FAILED);
             free_macro_name_image(my_macro_name_image);
-            return 1;
+            continue;
         }
-        printf("pre stage success\n"); // for testing
 
-        label_table = label_array_allocator(MIN_LENGTH_OF_LABEL_BODY);
+        label_table = label_array_allocator();
         my_data_image = data_image_allocator();
         my_instruction_image = instruction_image_allocator();
 
-        if (stage_1_process_file(argv[index], label_table, my_instruction_image, my_data_image, my_macro_name_image, &error_flag))
-            printf("stage 1 failed\n"); // for testing
+        stage_1_process_file(argv[index], label_table, my_instruction_image, my_data_image, my_macro_name_image, &error_flag); /* The First Stage */
+        free_macro_name_image(my_macro_name_image); /* Macro_name_image is no longer needed after first stage*/
+
+        if (stage_2_process_file(argv[index], label_table, my_instruction_image, my_data_image, &error_flag)) /* The Second Stage */
+            printf("%s\n", REPORT_STAGE_FAILED);
         else
-            printf("stage 1 success\n"); // for testing
+            printf("%s\n", REPORT_ALL_STAGE_SUCCESS);
 
-        free_macro_name_image(my_macro_name_image); /* No longer needed */
-
-        if (stage_2_process_file(argv[index], label_table, my_instruction_image, my_data_image, &error_flag))
-            printf("stage 2 failed\n"); // for testing
-        else
-            printf("All stages completed successfully.\n");
-
+        /* Free the rest of the memory */
         free_label_array(label_table);
         free_instruction_image(my_instruction_image);
         free_data_image(my_data_image);
     }
-    return 0;
+    if(error_flag)
+        return EXIT_FAILURE;
+    return EXIT_SUCCESS;
 }

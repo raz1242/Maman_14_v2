@@ -1,0 +1,6 @@
+.extern someExternal
+start-label: mov r1, r2
+             sub r3, r4
+add r1, r2, r3, r4
+lea r3, ,, r4
+LONG_LABEL_NAME: .string "123456789123456789123456789123465789123456789123456789"

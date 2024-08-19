@@ -43,9 +43,9 @@ char *file_name_extender(const char *str, const char *type) {
 int file_inspector(const FILE *file, const char *file_name) {
     if (file == NULL) {
         printf("Failed to read file: %s\n", file_name);
-        return 1;
+        return EXIT_FAILURE;
     }
-    return 0;
+    return EXIT_SUCCESS;
 }
 
 /**
@@ -98,7 +98,7 @@ char *skip_to_next_word(char *str, const int length) {
 int first_word_length_counter(const char *str) {
     int counter;
     if (str == NULL) {
-        return 0;
+        return EXIT_SUCCESS;
     }
     for (counter = 0; *(str + counter) && !isspace(*(str + counter)) && *(str + counter) != ':'; counter++) {};
     return counter;
@@ -131,14 +131,14 @@ int is_reserved_word(char *word, const int length) {
     int i, size;
 
     if(length == 0)
-        return 0;
+        return EXIT_SUCCESS;
     size = sizeof(reserved_words) / sizeof(reserved_words[0]);
     for (i = 0; i < size; i++) {
         if (strncmp(word, reserved_words[i], length) == 0 && is_end_of_line(word + length)) {
-            return 1;
+            return EXIT_FAILURE;
         }
     }
-    return 0;
+    return EXIT_SUCCESS;
 }
 
 /**
@@ -151,8 +151,8 @@ int is_end_of_line(char *str) {
     const char *new_str = skip_whitespace(str);
 
     if (new_str == NULL || *new_str == NEW_LINE || *new_str == CARRIAGE_RETURN)
-        return 1;
-    return 0;
+        return EXIT_FAILURE;
+    return EXIT_SUCCESS;
 }
 
 /**
@@ -169,7 +169,7 @@ int is_end_of_line(char *str) {
 int parse_dot_data(const char *input, int **array, int *size, int *DC, const char *file_name, const int line_counter) {
     const int DATA_COMMAND_LENGTH = strlen(".data ");
     char *ptr = NULL;
-    int index = 0, commaFlag = 0, numberFlag = 0, current_number;
+    int index = 0, comma_flag = FALSE, number_flag = FALSE, current_number;
 
     *size = 0; /* Initialize the size of the array */
     *array = NULL;  /* Initialize as NULL for realloc */
@@ -178,35 +178,35 @@ int parse_dot_data(const char *input, int **array, int *size, int *DC, const cha
     if (ptr)
         ptr = skip_to_next_word(ptr, DATA_COMMAND_LENGTH);
     else
-        return 1;
+        return EXIT_FAILURE;
 
     if(ptr == NULL) { /* No data entered */
         error_handler(ERROR_MISSING_DATA_VALUE, file_name, line_counter);
         free(*array);
-        return 1;
+        return EXIT_FAILURE;
     }
 
     while (*ptr) { /* Parse the data values */
         if(*ptr != MINUS_SIGN && *ptr != PLUS_SIGN && !isdigit(*ptr) && *ptr != COMMA && !is_end_of_line(ptr) && !isspace(*ptr)) {
             error_handler(ERROR_INVALID_DATA_VALUE, file_name, line_counter);
             free(*array);
-            return 1;
+            return EXIT_FAILURE;
         }
-        if (numberFlag == 1 && !isspace(*ptr) && *ptr != COMMA && is_end_of_line(ptr)) {
+        if (number_flag == 1 && !isspace(*ptr) && *ptr != COMMA && is_end_of_line(ptr)) {
             error_handler(ERROR_INVALID_DATA_VALUE, file_name, line_counter);
             free(*array);
-            return 1;
+            return EXIT_FAILURE;
         }
         if (is_end_of_line(ptr)) {
-            if (commaFlag == 1) { /* No valid data found after comma */
+            if (comma_flag == 1) { /* No valid data found after comma */
                 error_handler(ERROR_MISSING_DATA_VALUE, file_name, line_counter);
                 free(*array);
-                return 1;
+                return EXIT_FAILURE;
             }
             if (index == 0) {  /* No valid data found */
                 error_handler(ERROR_MISSING_DATA_VALUE, file_name, line_counter);
                 free(*array);
-                return 1;
+                return EXIT_FAILURE;
             }
             break;
         }
@@ -214,14 +214,14 @@ int parse_dot_data(const char *input, int **array, int *size, int *DC, const cha
             ptr++;
             continue;
         }
-        if (commaFlag == 1 && *ptr == COMMA) {
+        if (comma_flag == 1 && *ptr == COMMA) {
             error_handler(ERROR_MULTIPLE_COMMA_FOUND, file_name, line_counter);
             free(*array);
-            return 1;
+            return EXIT_FAILURE;
         }
         if (*ptr == COMMA) {
-            commaFlag = 1;
-            numberFlag = 0;
+            comma_flag = TRUE;
+            number_flag = FALSE;
             ptr++;
             continue;
         }
@@ -239,14 +239,14 @@ int parse_dot_data(const char *input, int **array, int *size, int *DC, const cha
                 *array = temp_array;
                 (*array)[index++] = current_number;
             }
-            commaFlag = 0;
-            numberFlag = 1;
+            comma_flag = FALSE;
+            number_flag = TRUE;
         } else
             ptr++;
     }
     *size = index;
     *DC += index;
-    return 0;
+    return EXIT_SUCCESS;
 }
 
 /**
@@ -263,7 +263,7 @@ int parse_dot_data(const char *input, int **array, int *size, int *DC, const cha
 int parse_dot_string(const char *input, int **array, int *size, int *DC, const char *file_name, const int line_counter) {
     const int STRING_COMMAND_LENGTH = strlen(".string ");
     const char *string_start;
-    int index, count = 0, is_error = 0;
+    int index, count = 0, error_flag = FALSE;
     char *ptr;
     *size = 0;
 
@@ -273,7 +273,7 @@ int parse_dot_string(const char *input, int **array, int *size, int *DC, const c
     else {
         *array = NULL;
         *size = 0;
-        return 1;
+        return EXIT_FAILURE;
     }
 
     while (*string_start == SPACE || *string_start == NEW_LINE) {/*skips any additional spaces or tabs*/
@@ -284,7 +284,7 @@ int parse_dot_string(const char *input, int **array, int *size, int *DC, const c
         error_handler(ERROR_MISSING_OPENING_QUOTATION_MARK, file_name, line_counter);
         *array = NULL;
         *size = 0;
-        return 1;
+        return EXIT_FAILURE;
     }
     string_start++; /* Skip the opening quotation mark */
     ptr = (char *)string_start;
@@ -297,15 +297,15 @@ int parse_dot_string(const char *input, int **array, int *size, int *DC, const c
         error_handler(ERROR_MISSING_CLOSING_QUOTATION_MARK, file_name, line_counter);
         *array = NULL;
         *size = 0;
-        return 1;
+        return EXIT_FAILURE;
     }
 
     ptr++; /* Skip the closing quotation mark */
 
-    while (is_end_of_line(ptr) == 0) { /* Check for redundant characters after the closing quotation mark */ // need to debug
+    while (is_end_of_line(ptr) == 0) { /* Check for redundant characters after the closing quotation mark */
         if (*ptr != SPACE && *ptr != NEW_LINE) {
             error_handler(ERROR_INVALID_CHARACTER_FOUND_OUTSIDE_OF_QUOTATION_MARKS, file_name, line_counter);
-            is_error = 1;
+            error_flag = TRUE;
             break;
         }
         ptr++;
@@ -329,7 +329,7 @@ int parse_dot_string(const char *input, int **array, int *size, int *DC, const c
     (*DC)++; /* Increment the data counter */
     *size = ++count; /* Set the size of the array */
 
-    return is_error;
+    return error_flag;
 }
 
 /**
@@ -361,22 +361,22 @@ int parse_instruction(char *input_ptr, const int command, char **source, char **
     if (command == rts || command == stop) {
         if (!is_end_of_line(input_ptr)) { /* redundant characters after stop or rts command */
             error_handler(ERROR_REDUNDANT_CHARACTERS_AFTER_COMMAND, file_name, line_counter);
-            return 1;
+            return EXIT_FAILURE;
         }
-        return 0;
+        return EXIT_SUCCESS;
     }
 
     if (is_end_of_line(input_ptr)) { /* lacks the first operand */
         error_handler(ERROR_MISSING_FIRST_OPERAND, file_name, line_counter);
-        return 1;
+        return EXIT_FAILURE;
     }
     if (strncmp(input_ptr, ",", 1) == 0) { /* lacks the first operand */
         error_handler(ERROR_REDUNDANT_COMMA_AFTER_COMMAND, file_name, line_counter);
-        return 1;
+        return EXIT_FAILURE;
     }
     if (!isalpha(*input_ptr) && !isdigit(*input_ptr) && *input_ptr != '#' && *input_ptr != '*') { /* invalid first operand */
         error_handler(ERROR_INVALID_FIRST_OPERAND, file_name, line_counter);
-        return 1;
+        return EXIT_FAILURE;
     }
     first_operand_length = operand_length_counter(input_ptr);
     first_operand_name = (char *)malloc(first_operand_length + LENGTH_OF_NULL_TERMINATOR);
@@ -389,10 +389,10 @@ int parse_instruction(char *input_ptr, const int command, char **source, char **
 
     if (command == mov || command == cmp || command == add || command == sub || command == lea) {
         input_ptr = skip_to_next_word(input_ptr, first_operand_length);
-        if(is_end_of_line(input_ptr)) { /* missing a comma after first operand */
+        if(is_end_of_line(input_ptr) || *input_ptr != COMMA) { /* missing a comma after first operand */
             error_handler(ERROR_MISSING_A_COMMA, file_name, line_counter);
             free(first_operand_name);
-            return 1;
+            return EXIT_FAILURE;
         }
         if (strncmp(input_ptr, ",", 1) == 0) {
             input_ptr = skip_to_next_word(input_ptr, LENGTH_OF_COMMA);
@@ -400,17 +400,17 @@ int parse_instruction(char *input_ptr, const int command, char **source, char **
         if (is_end_of_line(input_ptr)) { /* lacks the second operand */
             error_handler(ERROR_MISSING_SECOND_OPERAND, file_name, line_counter);
             free(first_operand_name);
-            return 1;
+            return EXIT_FAILURE;
         }
         if (strncmp(input_ptr, ",", 1) == 0) { /* too many commas */
             error_handler(ERROR_TOO_MANY_COMMAS, file_name, line_counter);
             free(first_operand_name);
-            return 1;
+            return EXIT_FAILURE;
         }
         if (isalpha(*input_ptr) == 0 && !isdigit(*input_ptr) && *input_ptr != '#' && *input_ptr != '*') { /* invalid second operand */
             error_handler(ERROR_INVALID_SECOND_OPERAND, file_name, line_counter);
             free(first_operand_name);
-            return 1;
+            return EXIT_FAILURE;
         }
 
         second_operand_length = operand_length_counter(input_ptr);
@@ -434,7 +434,7 @@ int parse_instruction(char *input_ptr, const int command, char **source, char **
             error_handler(ERROR_REDUNDANT_CHARACTERS_AFTER_FIRST_OPERAND, file_name, line_counter);
             free(first_operand_name);
             free(second_operand_name);
-            return 1;
+            return EXIT_FAILURE;
         }
     }
 
@@ -462,7 +462,7 @@ int parse_instruction(char *input_ptr, const int command, char **source, char **
         free(second_operand_name);
         second_operand_name = NULL;
     }
-    return 0;
+    return EXIT_SUCCESS;
 }
 
 /**
@@ -770,11 +770,6 @@ char* binary_to_octal(const char *binary_str) {
     int i, j, value;
     char *octal_str;
 
-    if (strlen(binary_str) != SIZE_OF_REGISTER_IN_BITS) {
-        fprintf(stdout, "Error: binary_str must be 15 bits long.\n"); // for testing
-        return NULL;
-    }
-
     octal_str = malloc(SIZE_OF_WORD_IN_OCTAL + LENGTH_OF_NULL_TERMINATOR);
     if (octal_str == NULL) {
         printf("%s\n", ERROR_FAILED_TO_ALLOCATE_MEM);
@@ -789,22 +784,6 @@ char* binary_to_octal(const char *binary_str) {
         octal_str[i] = value + '0';
     }
     return octal_str;
-}
-
-/**
- * Frees the memory allocated for the label array.
- *
- * @param array A pointer to the label array to be freed.
- */
-void free_label_array(label_array *array) {
-    int i;
-    if (array != NULL) {
-        for (i = 0; i < array->rep; i++) {
-            free(array->label_element[i].name);
-        }
-        free(array->label_element);
-        free(array);
-    }
 }
 
 /**
@@ -830,9 +809,9 @@ int is_immidiate_out_of_bounds(const operand operand) {
     if (operand_name[0] == PLUS_SIGN || operand_name[0] == MINUS_SIGN)
         operand_name++;
     if (atoi(operand_name) > MAX_POSSIBLE_NUMBER_IN_12_BITS || atoi(operand_name) < MIN_POSSIBLE_NUMBER_IN_12_BITS)
-        return 1;
+        return EXIT_FAILURE;
 
-    return 0;
+    return EXIT_SUCCESS;
 }
 
 /**
@@ -845,12 +824,12 @@ int line_location(char *str) {
     int i = 0;
     const char *ptr_to_firstWord = skip_whitespace(str);
     if (ptr_to_firstWord){
-        if (isalpha(ptr_to_firstWord[0])) {
+        if (isalpha(ptr_to_firstWord[0])) { /* check if the first character is a letter */
             while (ptr_to_firstWord[i] && ptr_to_firstWord[i] != ':') {
-                if (!isalnum(ptr_to_firstWord[i])) {
+                if (!isalnum(ptr_to_firstWord[i])) { /* check if the characters are alphanumeric */
                     break;
                 }
-                i++;
+                i++; /* increment the index */
             }
             if (ptr_to_firstWord[i] == ':' && i > 0) {
                 return LABEL_DEFINITION;
@@ -881,9 +860,9 @@ int is_command(const char *command) {
 
     for (i = 0; i < COMMANDS_LIST_LENGTH; i++) {
         if (strncmp(command, commands_list[i], strlen(commands_list[i])) == 0)
-            return 1;
+            return EXIT_FAILURE;
     }
-    return 0;
+    return EXIT_SUCCESS;
 }
 
 /**
@@ -894,12 +873,12 @@ int is_command(const char *command) {
  * @return The index of the command in the commands_list if found, -1 otherwise.
  */
 int which_command(const char *command) {
-    int i;
+    int index_of_command;
     const int str_length = first_word_length_counter(command);
 
-    for (i = 0; i < COMMANDS_LIST_LENGTH; i++) {
-        if (strlen(commands_list[i]) == str_length && !strncmp(commands_list[i], command, str_length)) {
-            return i;
+    for (index_of_command = 0; index_of_command < COMMANDS_LIST_LENGTH; index_of_command++) {
+        if (strlen(commands_list[index_of_command]) == str_length && !strncmp(commands_list[index_of_command], command, str_length)) {
+            return index_of_command;
         }
     }
     return unknown_command;
@@ -918,14 +897,14 @@ int which_command(const char *command) {
  * @return 0 if the command was successfully analyzed, 1 otherwise.
  */
 int analyze_command(char *ptr, const int command, int *L, char *word_in_binary, const char *file_name, const int line_counter) {
-    int is_error = 0;
+    int error_flag = FALSE;
     char *first_operand_name = NULL, *second_operand_name = NULL, *command_in_binary;
     operand first_operand, second_operand;
 
     if (parse_instruction(ptr, command, &first_operand_name, &second_operand_name, file_name, line_counter)) /* parse the operands */
-        is_error = 1;
+        error_flag = TRUE;
 
-    if (first_operand_name) {
+    if (first_operand_name) { /* check if the first operand exists */
         first_operand.name = malloc(strlen(first_operand_name) + LENGTH_OF_NULL_TERMINATOR);
         if (first_operand.name) {
             strcpy(first_operand.name, first_operand_name);
@@ -936,7 +915,7 @@ int analyze_command(char *ptr, const int command, int *L, char *word_in_binary, 
         }
     }
 
-    if (second_operand_name) {
+    if (second_operand_name) { /* check if the second operand exists */
         second_operand.name = malloc(strlen(second_operand_name) + LENGTH_OF_NULL_TERMINATOR);
         if (second_operand.name) {
             strcpy(second_operand.name, second_operand_name);
@@ -953,29 +932,29 @@ int analyze_command(char *ptr, const int command, int *L, char *word_in_binary, 
     if (command != unknown_command) {
         (*L)++;
         if (command != rts && command != stop) {
-            if (!is_error) {
-                if (analyze_operand(&first_operand)) {
+            if (!error_flag) {
+                if (analyze_operand(&first_operand)) { /* analyze the first operand */
                     error_handler(ERROR_INVALID_FIRST_OPERAND, file_name, line_counter);
-                    is_error = 1;
+                    error_flag = TRUE;
                 }
                 if (first_operand.type == IMMEDIATE) {
-                    if (is_immidiate_out_of_bounds(first_operand)) {
+                    if (is_immidiate_out_of_bounds(first_operand)) { /* check if the immediate value is out of bounds */
                         error_handler(ERROR_OPERAND_VALUE_OUT_OF_BOUNDS, file_name, line_counter);
-                        is_error = 1;
+                        error_flag = TRUE;
                     }
                 }
             }
             (*L)++;
             if (command == mov || command == cmp || command == add || command == sub || command == lea) {
-                if (!is_error) {
-                    if (analyze_operand(&second_operand)) {
+                if (!error_flag) {
+                    if (analyze_operand(&second_operand)) { /* analyze the second operand */
                         error_handler(ERROR_INVALID_SECOND_OPERAND, file_name, line_counter);
-                        is_error = 1;
+                        error_flag = TRUE;
                     }
                     if (second_operand.type == IMMEDIATE) {
-                        if (is_immidiate_out_of_bounds(second_operand)) {
+                        if (is_immidiate_out_of_bounds(second_operand)) { /* check if the immediate value is out of bounds */
                             error_handler(ERROR_OPERAND_VALUE_OUT_OF_BOUNDS, file_name, line_counter);
-                            is_error = 1;
+                            error_flag = TRUE;
                         }
                     }
                 }
@@ -988,7 +967,7 @@ int analyze_command(char *ptr, const int command, int *L, char *word_in_binary, 
         }
     }
 
-    if (is_error) {
+    if (error_flag) {
         if (first_operand_name) {
             free(first_operand.name);
             free(first_operand_name);
@@ -997,14 +976,14 @@ int analyze_command(char *ptr, const int command, int *L, char *word_in_binary, 
             free(second_operand.name);
             free(second_operand_name);
         }
-        return 1;
+        return EXIT_FAILURE;
     }
     command_in_binary = command_to_binary(command, first_operand, second_operand);
     strcpy(word_in_binary, command_in_binary);
     free(command_in_binary);
     if (word_in_binary == NULL) {
         error_handler(ERROR_BINARY_VERSION_COULD_NOT_BE_CREATED, file_name, line_counter);
-        return 1;
+        return EXIT_FAILURE;
     }
     if (first_operand_name) {
         free(first_operand.name);
@@ -1014,7 +993,7 @@ int analyze_command(char *ptr, const int command, int *L, char *word_in_binary, 
         free(second_operand.name);
         free(second_operand_name);
     }
-    return 0;
+    return EXIT_SUCCESS;
 }
 
 /**
@@ -1035,40 +1014,40 @@ int analyze_operand(operand *operand) {
         case '#':
             if (!(operand_name[1] == NULL_TERMINATOR || isdigit(operand_name[1]) || operand_name[1] == MINUS_SIGN || operand_name[1] == PLUS_SIGN)) { /* check if the operand is a number or plus or minus sign*/
                 operand->type = UNKNOWN;
-                return 1;
+                return EXIT_FAILURE;
             }
             for(i = 2; operand_name[i] != NULL_TERMINATOR; i++) { /* check if the operand is a number */
                 if (!isdigit(operand_name[i])) {
                     operand->type = UNKNOWN;
-                    return 1;
+                    return EXIT_FAILURE;
                 }
             }
             operand->type = IMMEDIATE;
-        return 0;
+        return EXIT_SUCCESS;
         case '*':
             if (which_register(operand_name) != NOT_A_REGISTER) {
                 operand->type = REGISTER_PTR;
-                return 0;
+                return EXIT_SUCCESS;
             }
-        return 1;
+        return EXIT_FAILURE;
         case 'r':
             if (which_register(operand_name) != NOT_A_REGISTER) {
                 operand->type = REGISTER;
-                return 0;
+                return EXIT_SUCCESS;
             }
         default: {
             if (strlen(operand_name) <= MAX_LENGTH_OF_LABEL_VALUE && isalpha(operand_name[0])) {
                 for(i = 1; i < strlen(operand_name); i++) {
                     if (!isalnum(operand_name[i])) {
                         operand->type = UNKNOWN;
-                        return 1;
+                        return EXIT_FAILURE;
                     }
                 }
                 operand->type = LABEL_VALUE;
             }
         }
     }
-    return 0;
+    return EXIT_SUCCESS;
 }
 
 /**
@@ -1080,22 +1059,22 @@ int analyze_operand(operand *operand) {
  */
 int is_line_length_overlimit(const char *line) {
     if (strlen(line) > MAX_LEGAL_LENGTH_OF_LINE + LENGTH_OF_NULL_TERMINATOR) {
-        return 1;
+        return EXIT_FAILURE;
     }
     if (strlen(line) == MAX_LEGAL_LENGTH_OF_LINE + LENGTH_OF_NULL_TERMINATOR) {
         if (line[MAX_LEGAL_LENGTH_OF_LINE] != NEW_LINE) {
-            return 1;
+            return EXIT_FAILURE;
         }
-        return 0;
+        return EXIT_SUCCESS;
     }
-    return 0;
+    return EXIT_SUCCESS;
 }
 
 int is_location_valid(const int location, const int line_counter, const char *file_name, int* error_flag) {
     if(location == UNKNOWN_LOCATION) {
         error_handler(ERROR_UNKNOWN_COMMAND, file_name, line_counter);
-        *error_flag = 1;
-        return 0;
+        *error_flag = TRUE;
+        return EXIT_SUCCESS;
     }
-    return 1;
+    return EXIT_FAILURE;
 }

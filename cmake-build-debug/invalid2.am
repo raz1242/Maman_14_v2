@@ -1,0 +1,8 @@
+.extern extLabel1, extLabel2
+prn:    mov r1, r2
+        inc r7
+mov r1, r2, r3
+clr
+LableDUP: jmp extLabel1
+LabelDUP: prn r4
+2ndLabel: add r1, r2
